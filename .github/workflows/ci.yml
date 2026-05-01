@@ -58,3 +58,7 @@ jobs:
 
       - name: E2E tests
         run: pnpm --filter e2e-tests test
+
+      - name: Dump Autentico logs
+        if: failure()
+        run: cat tests/e2e/.autentico/autentico.log || true
