@@ -1,3 +1,12 @@
 export { AuthProvider, useAuth } from "./context.js";
-export { AuthRequired } from "./auth-required.js";
-export type { OidcConfig, OidcUser, TokenResponse } from "oidc-js";
+export { RequireAuth } from "./auth-required.js";
+
+export type {
+  IdTokenClaims,
+  AuthUser,
+  AuthTokens,
+  AuthActions,
+  AuthContextValue,
+} from "./types.js";
+
+export type { OidcConfig, OidcUser, TokenSet } from "oidc-js-core";
