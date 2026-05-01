@@ -35,7 +35,7 @@ jobs:
         run: pnpm -r lint
 
       - name: Test
-        run: pnpm --filter '!e2e-tests' test
+        run: pnpm -r --filter '!e2e-tests' --filter '!e2e-react-app' test
 
       - name: Get Playwright version
         id: playwright-version
