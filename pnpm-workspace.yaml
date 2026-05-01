@@ -1,2 +1,4 @@
 packages:
   - "packages/*"
+  - "tests/e2e"
+  - "tests/e2e/react-app"

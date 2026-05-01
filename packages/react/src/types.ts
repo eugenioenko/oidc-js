@@ -20,10 +20,16 @@ export interface AuthTokens {
   access: string | null;
   id: string | null;
   refresh: string | null;
+  expiresAt: number | null;
+}
+
+export interface LoginOptions {
+  returnTo?: string;
+  extraParams?: Record<string, string>;
 }
 
 export interface AuthActions {
-  login: (extraParams?: Record<string, string>) => void;
+  login: (options?: LoginOptions) => void;
   logout: () => void;
   refresh: () => Promise<void>;
   fetchProfile: () => Promise<void>;

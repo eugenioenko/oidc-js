@@ -36,3 +36,25 @@ jobs:
 
       - name: Test
         run: pnpm test
+
+      - name: Get Playwright version
+        id: playwright-version
+        run: echo "version=$(pnpm --filter e2e-tests exec playwright --version | head -1)" >> $GITHUB_OUTPUT
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
+
+      - name: Install Playwright browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: pnpm --filter e2e-tests exec playwright install --with-deps chromium
+
+      - name: Install Playwright deps
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: pnpm --filter e2e-tests exec playwright install-deps chromium
+
+      - name: E2E tests
+        run: pnpm --filter e2e-tests test
