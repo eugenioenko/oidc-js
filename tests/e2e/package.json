@@ -8,6 +8,7 @@
     "test:lit": "playwright test --config playwright.lit.config.ts",
     "test:vue": "playwright test --config=playwright.vue.config.ts",
     "test:ui": "playwright test --ui",
+    "test:angular": "playwright test --config=playwright.angular.config.ts",
     "test:stress": "npx playwright test --repeat-each=100"
   },
   "devDependencies": {
