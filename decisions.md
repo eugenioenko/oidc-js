@@ -85,3 +85,49 @@ Architectural and design decisions for the oidc-js project. Each entry captures 
 **Decision**: Every validation check and return path has an inline comment referencing the spec section: `// RFC NNNN §X.Y: description`. Tests quote the RFC section in test names. RFC source documents stored in `rfc/`.
 
 **Rationale**: Makes the code self-documenting for spec compliance. Reviewers can verify correctness against the RFC. Matches the pattern used in Autentico's Go codebase.
+
+### 008 - useAuth() returns flat state + grouped tokens and actions (2026-04-30)
+
+**Context**: Needed to design the `useAuth()` hook return shape. Every field at the top level makes destructuring noisy and mixes read-only state with imperative functions.
+
+**Alternatives considered**:
+1. Flat: `{ user, isAuthenticated, accessToken, login, logout, refresh }`
+2. Fully grouped: `{ state: {...}, actions: {...} }`
+3. Hybrid: flat state + grouped `tokens` + grouped `actions`
+
+**Decision**: Hybrid. State fields (`user`, `isAuthenticated`, `isLoading`, `error`, `config`) at top level, tokens grouped under `tokens`, functions grouped under `actions`.
+
+**Rationale**: State fields are read frequently and benefit from direct destructuring. Tokens are a natural group (access, id, refresh). Actions are imperative and group logically. The `tokens.refresh` / `actions.refresh()` name collision is fine since they're in different groups and nobody destructures both flat.
+
+### 009 - user.claims + user.profile separation (2026-04-30)
+
+**Context**: After login, user info comes from two sources: the ID token (always available, has required claims like sub, iss, aud, exp, iat) and the userinfo endpoint (richer profile, varies by IdP and scopes requested).
+
+**Alternatives considered**:
+1. Single `user: OidcUser` merged from both sources
+2. `user.claims` (ID token) + `user.profile` (userinfo), separate types
+
+**Decision**: Option 2. `user.claims` is `IdTokenClaims` (always set after login), `user.profile` is `OidcUser | null` (null until fetched).
+
+**Rationale**: Clear separation of what's guaranteed vs what depends on the IdP. `user.claims.sub` is always there. `user.profile` depends on scopes, IdP configuration, and whether the app opts in via `fetchProfile`. No ambiguity about where data came from.
+
+### 010 - fetchProfile prop on AuthProvider, default true (2026-04-30)
+
+**Context**: The userinfo endpoint provides richer user data than ID token claims, but it's an extra HTTP request. Some apps only need the sub claim.
+
+**Alternatives considered**:
+1. Always fetch userinfo (like oidc-client-ts)
+2. Never fetch, provide `actions.fetchProfile()` only
+3. `fetchProfile` prop, default `true`, with manual `actions.fetchProfile()` available either way
+
+**Decision**: Option 3. Default `true` since most apps need name/email for UI. Apps that don't can set `fetchProfile={false}`.
+
+**Rationale**: Opt-out is better than opt-in here. Most React apps display the user's name or email somewhere. One extra request during login is negligible. The manual `actions.fetchProfile()` is always available for apps that fetch it lazily or conditionally.
+
+### 011 - Tokens in memory, PKCE state in sessionStorage (2026-04-30)
+
+**Context**: Need to store tokens after login and PKCE parameters during the redirect round-trip.
+
+**Decision**: Tokens (access, id, refresh) stored in React state only. PKCE verifier, state, and nonce stored in sessionStorage during the redirect, cleared immediately after callback processing.
+
+**Rationale**: Memory-only tokens are the most secure option for SPAs (no XSS exfiltration from storage). PKCE state must survive a full page navigation (redirect to IdP and back), so sessionStorage is the only viable option. It's cleared as soon as the callback is processed.
