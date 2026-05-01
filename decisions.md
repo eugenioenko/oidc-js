@@ -224,3 +224,29 @@ Architectural and design decisions for the oidc-js project. Each entry captures 
 **Decision**: Option 3. AuthProvider checks for `code` and `state` query params on mount regardless of the current path. It validates `state` against the value saved in sessionStorage during login — only a matching state triggers callback processing.
 
 **Rationale**: No extra route setup, no callback component, works with any router or no router. The `state` validation prevents false positives — random query params won't trigger processing. The `redirectUri` in config is purely for the IdP ("where to send the browser"), not for the library. This is the same approach Auth0 uses.
+
+### 020 - Vanilla JS orchestration layer (`oidc-js`) reused by all framework adapters except Angular (2026-04-30)
+
+**Context**: The React adapter (`oidc-js-react`) wires together `oidc-js-core` functions with `fetch`, `AbortController`, `sessionStorage`, and state management. Vue, Svelte, and Solid adapters would need the same IO orchestration with different reactivity primitives.
+
+**Alternatives considered**:
+1. Each framework adapter directly imports `oidc-js-core` and re-implements the fetch/storage/callback orchestration
+2. Build a vanilla JS client (`oidc-js`) that handles discovery, login redirect, callback processing, token refresh, and logout — framework adapters wrap it with their reactivity system
+3. Same as 2 but include Angular
+
+**Decision**: Option 2. Build `oidc-js` as a stateful vanilla client on top of `oidc-js-core`. React, Vue, Svelte, and Solid adapters consume it. Angular gets its own adapter using `oidc-js-core` directly since it needs Angular's `HttpClient` and dependency injection patterns.
+
+**Rationale**: The orchestration logic (discovery fetch, PKCE round-trip, callback detection, token refresh) is identical across frameworks — only the reactivity layer differs. A shared vanilla client eliminates duplication and ensures consistent behavior. Angular is excluded because it has its own HTTP layer (`HttpClient` with interceptors), dependency injection, and idiomatic patterns that don't map well to a `fetch`-based vanilla client.
+
+### 021 - Shared E2E test specs with per-framework test apps (2026-04-30)
+
+**Context**: Every framework adapter needs E2E tests covering the same OIDC flows: login, logout, token display, profile fetch, RequireAuth, refresh. Writing separate Playwright specs per framework would duplicate test logic.
+
+**Alternatives considered**:
+1. Copy-paste specs per framework, adjust selectors
+2. Shared Playwright specs with a contract: all test apps use the same `data-testid` attributes and expose the same UI surface
+3. Abstract test helpers but keep separate spec files
+
+**Decision**: Option 2. One set of Playwright specs in `tests/e2e/specs/`. Each framework has its own test app (e.g., `tests/e2e/react-app/`, `tests/e2e/vue-app/`) that implements the same `data-testid` contract. The Playwright config or CI matrix selects which app to run against.
+
+**Rationale**: The tests verify OIDC behavior, not framework rendering. If a test app shows `data-testid="user-sub"` with the user's sub claim and `data-testid="login-button"` to trigger login, the Playwright spec doesn't care whether it's React or Svelte underneath. One spec suite, many apps, same contract.

@@ -11,7 +11,7 @@ export default defineConfig({
     },
     sourcemap: true,
     rollupOptions: {
-      external: ["react", "react/jsx-runtime", "oidc-js", "oidc-js-core"],
+      external: ["oidc-js-core"],
     },
   },
   test: {

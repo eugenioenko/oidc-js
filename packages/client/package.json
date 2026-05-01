@@ -1,7 +1,7 @@
 {
-  "name": "oidc-js-react",
+  "name": "oidc-js",
   "version": "0.0.1",
-  "description": "React bindings for oidc-js",
+  "description": "Stateful OIDC client for JavaScript — wraps oidc-js-core with fetch, sessionStorage, and event callbacks",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -25,23 +25,15 @@
     "oidc",
     "openid",
     "oauth2",
-    "react",
+    "pkce",
     "authentication"
   ],
   "author": "eugenioenko",
   "license": "MIT",
   "dependencies": {
-    "oidc-js": "workspace:*",
     "oidc-js-core": "workspace:*"
   },
-  "peerDependencies": {
-    "react": ">=18.0.0"
-  },
   "devDependencies": {
-    "@testing-library/react": "^16.0.0",
-    "@types/react": "^19.0.0",
-    "jsdom": "^26.0.0",
-    "react": "^19.0.0",
     "typescript": "^5.5.0",
     "vite": "^8.0.0",
     "vite-plugin-dts": "^4.0.0",
