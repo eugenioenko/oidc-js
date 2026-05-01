@@ -1,8 +1,8 @@
-import type { OidcConfig, OidcUser } from "oidc-js-core";
+import type { OidcConfig } from "oidc-js-core";
 
 export type { IdTokenClaims, AuthUser, AuthTokens, LoginOptions } from "oidc-js";
 
-import type { AuthUser, AuthTokens, LoginOptions } from "oidc-js";
+import type { LoginOptions } from "oidc-js";
 
 /**
  * Actions available on the OIDC service for triggering auth operations.
