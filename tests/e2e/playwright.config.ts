@@ -4,6 +4,7 @@ export default defineConfig({
   testDir: "./specs",
   timeout: 30_000,
   retries: 0,
+  reporter: process.env.CI ? [["list"], ["html", { open: "never" }]] : "list",
   use: {
     baseURL: "http://localhost:5173",
     headless: true,

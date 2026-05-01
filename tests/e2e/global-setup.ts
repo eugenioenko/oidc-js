@@ -1,5 +1,5 @@
 import { execSync, spawn } from "child_process";
-import { existsSync, writeFileSync, mkdirSync, rmSync, chmodSync } from "fs";
+import { createWriteStream, existsSync, writeFileSync, mkdirSync, rmSync, chmodSync } from "fs";
 import { join } from "path";
 
 const AUTENTICO_DIR = join(import.meta.dirname, ".autentico");
@@ -119,11 +119,14 @@ export default async function globalSetup() {
 
   // Start autentico
   console.log("Starting autentico...");
+  const logFile = createWriteStream(join(AUTENTICO_DIR, "autentico.log"));
   const proc = spawn(AUTENTICO_BIN, ["start"], {
     cwd: AUTENTICO_DIR,
-    stdio: "pipe",
+    stdio: ["ignore", "pipe", "pipe"],
     detached: true,
   });
+  proc.stdout?.pipe(logFile);
+  proc.stderr?.pipe(logFile);
   proc.unref();
 
   // Save PID for teardown
