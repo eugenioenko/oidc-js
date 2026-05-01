@@ -61,4 +61,4 @@ jobs:
 
       - name: Dump Autentico logs
         if: failure()
-        run: cat tests/e2e/.autentico/autentico.log || true
+        run: cat tests/e2e/autentico.log || true

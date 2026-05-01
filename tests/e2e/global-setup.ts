@@ -124,6 +124,13 @@ export default async function globalSetup() {
     cwd: AUTENTICO_DIR,
     stdio: ["ignore", "pipe", "pipe"],
     detached: true,
+    env: {
+      ...process.env,
+      AUTENTICO_RATE_LIMIT_RPS: "0",
+      AUTENTICO_RATE_LIMIT_RPM: "0",
+      AUTENTICO_ANTI_TIMING_MIN_MS: "0",
+      AUTENTICO_ANTI_TIMING_MAX_MS: "0",
+    },
   });
   proc.stdout?.pipe(logFile);
   proc.stderr?.pipe(logFile);

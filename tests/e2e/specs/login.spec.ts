@@ -48,8 +48,8 @@ async function login(page: Page) {
   await page.fill('input[name="username"]', TEST_USER);
   await page.fill('input[name="password"]', TEST_PASS);
   await page.click('button[type="submit"]');
-  await page.waitForURL(/localhost:5173/, { timeout: 15_000 });
-  await expect(page.getByTestId("authenticated")).toBeVisible({ timeout: 10_000 });
+  await page.waitForURL(/localhost:5173/, { timeout: 5_000 });
+  await expect(page.getByTestId("authenticated")).toBeVisible({ timeout: 5_000 });
 }
 
 async function revokeToken(token: string, hint?: string) {
@@ -249,7 +249,7 @@ test.describe("Error Handling", () => {
 
     // Navigate with a tampered state — should trigger state mismatch error
     await page.goto("/?code=fake-code&state=tampered-state");
-    await expect(page.getByTestId("auth-error")).toBeVisible({ timeout: 5_000 });
+    await expect(page.getByTestId("auth-error")).toBeVisible({ timeout: 3_000 });
     await expect(page.getByTestId("auth-error")).toContainText("State");
 
     expect(traffic.requests()).toEqual([
@@ -265,13 +265,13 @@ test.describe("Deep Linking", () => {
     const traffic = trackTraffic(page);
     await page.goto("/protected-a", { waitUntil: "networkidle" });
 
-    await expect(page.locator('input[name="username"]')).toBeVisible({ timeout: 15_000 });
+    await expect(page.locator('input[name="username"]')).toBeVisible({ timeout: 5_000 });
     await page.fill('input[name="username"]', TEST_USER);
     await page.fill('input[name="password"]', TEST_PASS);
     await page.click('button[type="submit"]');
 
     // After login, should land back on /protected-a (not /)
-    await expect(page.getByTestId("protected-a")).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByTestId("protected-a")).toBeVisible({ timeout: 5_000 });
     expect(page.url()).toContain("/protected-a");
 
     expect(traffic.requests()).toEqual(LOGIN_REQUESTS);
@@ -319,26 +319,28 @@ test.describe("RequireAuth", () => {
     await page.getByTestId("link-protected-a").click();
     await expect(page.getByTestId("protected-a")).toBeVisible();
 
-    // Advance clock 1ms past token expiry so RequireAuth detects it as expired.
-    // Save the real Date.now so we can restore it after the refresh fires.
+    // Override Date.now and patch fetch so the clock is restored from inside
+    // the browser's promise chain — before React re-renders with new tokens.
+    // Restoring via Playwright's page.evaluate() would arrive as a macrotask,
+    // after React's synchronous re-render from the microtask chain.
     await page.evaluate((exp) => {
-      (window as unknown as Record<string, unknown>).__realDateNow = Date.now;
+      const realDateNow = Date.now;
+      const originalFetch = window.fetch;
       Date.now = () => exp + 1;
-    }, expiresAt);
-
-    // Restore real clock once the refresh request fires, so the re-render
-    // after refresh uses real time and sees the new token as valid.
-    page.on("request", (req) => {
-      if (req.url().includes("/oauth2/token") && req.resourceType() === "fetch") {
-        page.evaluate(() => {
-          Date.now = (window as unknown as Record<string, () => number>).__realDateNow;
+      window.fetch = function (...args: Parameters<typeof fetch>) {
+        return originalFetch.apply(window, args).then((response) => {
+          if (new URL(response.url).pathname === "/oauth2/token") {
+            Date.now = realDateNow;
+            window.fetch = originalFetch;
+          }
+          return response;
         });
-      }
-    });
+      } as typeof fetch;
+    }, expiresAt);
 
     // Navigate to second protected page — RequireAuth should auto-refresh
     await page.getByTestId("link-protected-b").click();
-    await expect(page.getByTestId("protected-b")).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByTestId("protected-b")).toBeVisible({ timeout: 5_000 });
 
     expect(traffic.requests()).toEqual([
       ...LOGIN_REQUESTS,
@@ -360,12 +362,26 @@ test.describe("RequireAuth", () => {
 
     await revokeToken(refreshToken!, "refresh_token");
 
-    // Advance clock 1ms past token expiry
-    await page.evaluate((exp) => { Date.now = () => exp + 1; }, expiresAt);
+    // Override Date.now and patch fetch to restore the clock from inside
+    // the browser's promise chain — before React re-renders.
+    await page.evaluate((exp) => {
+      const realDateNow = Date.now;
+      const originalFetch = window.fetch;
+      Date.now = () => exp + 1;
+      window.fetch = function (...args: Parameters<typeof fetch>) {
+        return originalFetch.apply(window, args).then((response) => {
+          if (new URL(response.url).pathname === "/oauth2/token") {
+            Date.now = realDateNow;
+            window.fetch = originalFetch;
+          }
+          return response;
+        });
+      } as typeof fetch;
+    }, expiresAt);
 
     // Navigate to second protected page — refresh should fail, triggering login redirect
     await page.getByTestId("link-protected-b").click();
-    await expect(page.locator('input[name="username"]')).toBeVisible({ timeout: 15_000 });
+    await expect(page.locator('input[name="username"]')).toBeVisible({ timeout: 5_000 });
 
     // Failed refresh POST + redirect to authorize
     expect(traffic.requests()).toEqual([
