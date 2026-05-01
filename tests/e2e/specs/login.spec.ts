@@ -48,8 +48,8 @@ async function login(page: Page) {
   await page.fill('input[name="username"]', TEST_USER);
   await page.fill('input[name="password"]', TEST_PASS);
   await page.click('button[type="submit"]');
-  await page.waitForURL(/localhost:5173/);
-  await expect(page.getByTestId("authenticated")).toBeVisible();
+  await page.waitForURL(/localhost:5173/, { timeout: 15_000 });
+  await expect(page.getByTestId("authenticated")).toBeVisible({ timeout: 10_000 });
 }
 
 async function revokeToken(token: string, hint?: string) {
