@@ -1,0 +1,12 @@
+{{#if this.oidc.isLoading}}
+  <div data-testid="auth-loading">Refreshing...</div>
+{{else}}
+  <div data-testid="protected-a">
+    Protected content a
+  </div>
+  <nav>
+    <LinkTo @route="index" data-testid="link-home">Home</LinkTo>
+    <LinkTo @route="protected-a" data-testid="link-protected-a">Protected A</LinkTo>
+    <LinkTo @route="protected-b" data-testid="link-protected-b">Protected B</LinkTo>
+  </nav>
+{{/if}}

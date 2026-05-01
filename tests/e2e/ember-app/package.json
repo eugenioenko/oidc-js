@@ -1,0 +1,35 @@
+{
+  "name": "e2e-ember-app",
+  "version": "0.0.0",
+  "private": true,
+  "description": "E2E test app for oidc-js-ember",
+  "ember": {
+    "edition": "octane"
+  },
+  "scripts": {
+    "dev": "ember serve --port 5173",
+    "build": "ember build --environment=production",
+    "start": "ember serve --port 5173"
+  },
+  "dependencies": {
+    "oidc-js": "workspace:*",
+    "oidc-js-core": "workspace:*",
+    "oidc-js-ember": "workspace:*"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.26.0",
+    "@ember/optional-features": "^2.2.0",
+    "@ember/string": "^4.0.0",
+    "@glimmer/component": "^1.1.2",
+    "@glimmer/tracking": "^1.1.2",
+    "ember-auto-import": "^2.10.0",
+    "ember-cli": "~6.12.0",
+    "ember-cli-babel": "^8.2.0",
+    "ember-cli-htmlbars": "^6.3.0",
+    "ember-load-initializers": "^3.0.1",
+    "ember-resolver": "^13.1.0",
+    "ember-source": "~6.12.0",
+    "loader.js": "^4.7.0",
+    "webpack": "^5.98.0"
+  }
+}

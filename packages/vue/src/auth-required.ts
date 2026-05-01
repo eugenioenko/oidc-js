@@ -1,4 +1,4 @@
-import { defineComponent, h, ref, watch, type PropType, type VNode } from "vue";
+import { defineComponent, ref, watch, type PropType, type VNode } from "vue";
 import { useAuth } from "./composable.js";
 import type { LoginOptions } from "oidc-js";
 

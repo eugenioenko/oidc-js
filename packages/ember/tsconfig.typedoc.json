@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "declaration": true,
+    "lib": ["ES2022", "DOM"],
+    "experimentalDecorators": true,
+    "paths": {
+      "oidc-js-core": ["../core/src/index.ts"],
+      "oidc-js": ["../client/src/index.ts"]
+    }
+  },
+  "include": ["src"],
+  "exclude": ["src/tests"]
+}

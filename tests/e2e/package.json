@@ -10,6 +10,7 @@
     "test:angular": "playwright test --config=playwright.angular.config.ts",
     "test:solid": "playwright test --config playwright.solid.config.ts",
     "test:preact": "playwright test --config playwright.preact.config.ts",
+    "test:ember": "playwright test --config=playwright.ember.config.ts",
     "test:ui": "playwright test --ui",
     "test:stress": "npx playwright test --repeat-each=100"
   },

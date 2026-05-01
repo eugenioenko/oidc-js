@@ -1,0 +1,33 @@
+{{#if this.oidc.isLoading}}
+  <div data-testid="auth-loading">Loading...</div>
+{{else if this.oidc.error}}
+  <div data-testid="auth-error">Error: {{this.oidc.error.message}}</div>
+{{else if (not this.oidc.isAuthenticated)}}
+  <div data-testid="unauthenticated">
+    <h1>Not logged in</h1>
+    <button data-testid="login-button" type="button" {{on "click" this.login}}>Login</button>
+  </div>
+{{else}}
+  <div data-testid="authenticated">
+    <h1>Logged in</h1>
+    <div data-testid="user-sub">{{this.oidc.user.claims.sub}}</div>
+    <div data-testid="user-iss">{{this.oidc.user.claims.iss}}</div>
+    <div data-testid="user-aud">{{this.audString}}</div>
+    <div data-testid="user-exp">{{this.oidc.user.claims.exp}}</div>
+    <div data-testid="user-iat">{{this.oidc.user.claims.iat}}</div>
+    <div data-testid="user-email">{{this.emailDisplay}}</div>
+    <div data-testid="user-profile-null">{{this.profileNullString}}</div>
+    <div data-testid="access-token">{{this.accessTokenStatus}}</div>
+    <div data-testid="refresh-token">{{this.refreshTokenStatus}}</div>
+    <div data-testid="access-token-value" style="display: none">{{this.oidc.tokens.access}}</div>
+    <div data-testid="refresh-token-value" style="display: none">{{this.oidc.tokens.refresh}}</div>
+    <div data-testid="id-token">{{this.idTokenStatus}}</div>
+    <div data-testid="expires-at">{{this.expiresAtDisplay}}</div>
+    <button data-testid="logout-button" type="button" {{on "click" this.logout}}>Logout</button>
+    <button data-testid="refresh-button" type="button" {{on "click" this.refreshTokens}}>Refresh</button>
+    <nav>
+      <LinkTo @route="protected-a" data-testid="link-protected-a">Protected A</LinkTo>
+      <LinkTo @route="protected-b" data-testid="link-protected-b">Protected B</LinkTo>
+    </nav>
+  </div>
+{{/if}}
