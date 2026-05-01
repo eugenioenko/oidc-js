@@ -1,8 +1,49 @@
 {
   "name": "oidc-js-solid",
   "version": "0.0.1",
-  "description": "SolidJS bindings for oidc-js (coming soon)",
-  "license": "MIT",
+  "description": "SolidJS bindings for oidc-js",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "test": "vitest run",
+    "lint": "tsc --noEmit"
+  },
+  "keywords": [
+    "oidc",
+    "openid",
+    "oauth2",
+    "solid",
+    "solidjs",
+    "authentication"
+  ],
   "author": "eugenioenko",
-  "keywords": ["oidc", "openid", "oauth2", "solid", "solidjs", "authentication"]
+  "license": "MIT",
+  "dependencies": {
+    "oidc-js": "workspace:*",
+    "oidc-js-core": "workspace:*"
+  },
+  "peerDependencies": {
+    "solid-js": ">=1.8.0"
+  },
+  "devDependencies": {
+    "solid-js": "^1.9.0",
+    "typescript": "^5.5.0",
+    "vite": "^8.0.0",
+    "vite-plugin-dts": "^4.0.0",
+    "vite-plugin-solid": "^2.11.0",
+    "vitest": "^4.0.0"
+  }
 }
