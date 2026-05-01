@@ -1,10 +1,10 @@
 export interface OidcConfig {
   issuer: string;
   clientId: string;
-  redirectUri: string;
+  clientSecret?: string;
+  redirectUri?: string;
   scopes?: string[];
   postLogoutRedirectUri?: string;
-  storage?: Storage;
 }
 
 export interface OidcDiscovery {
@@ -22,6 +22,9 @@ export interface OidcDiscovery {
   scopes_supported?: string[];
   token_endpoint_auth_methods_supported?: string[];
   code_challenge_methods_supported?: string[];
+  grant_types_supported?: string[];
+  claims_supported?: string[];
+  prompt_values_supported?: string[];
 }
 
 export interface TokenResponse {
@@ -31,6 +34,10 @@ export interface TokenResponse {
   refresh_token?: string;
   id_token?: string;
   scope?: string;
+}
+
+export interface TokenSet extends TokenResponse {
+  expires_at?: number;
 }
 
 export interface AuthState {
@@ -48,8 +55,22 @@ export interface OidcUser {
   [claim: string]: unknown;
 }
 
-export interface Storage {
-  get(key: string): string | null;
-  set(key: string, value: string): void;
-  remove(key: string): void;
+export interface HttpRequest {
+  url: string;
+  method: string;
+  headers: Record<string, string>;
+  body: string;
+}
+
+export interface IntrospectionResponse {
+  active: boolean;
+  scope?: string;
+  client_id?: string;
+  username?: string;
+  token_type?: string;
+  exp?: number;
+  iat?: number;
+  sub?: string;
+  aud?: string;
+  iss?: string;
 }

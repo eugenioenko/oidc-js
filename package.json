@@ -1,13 +1,21 @@
 {
   "name": "oidc-js-monorepo",
   "private": true,
+  "type": "module",
   "description": "Zero-dependency OIDC client libraries",
   "scripts": {
     "build": "pnpm -r build",
     "test": "pnpm -r test",
-    "lint": "pnpm -r lint"
+    "lint": "eslint . && pnpm -r lint"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["esbuild"]
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.2.1",
+    "typescript-eslint": "^8.59.1"
   }
 }

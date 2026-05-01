@@ -1,0 +1,8 @@
+{
+  "name": "oidc-js-solid",
+  "version": "0.0.1",
+  "description": "SolidJS bindings for oidc-js (coming soon)",
+  "license": "MIT",
+  "author": "eugenioenko",
+  "keywords": ["oidc", "openid", "oauth2", "solid", "solidjs", "authentication"]
+}
