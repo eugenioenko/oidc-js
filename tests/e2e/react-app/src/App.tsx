@@ -35,6 +35,8 @@ function HomePage() {
       <div data-testid="user-profile-null">{user?.profile === null ? "true" : "false"}</div>
       <div data-testid="access-token">{tokens.access ? "present" : "missing"}</div>
       <div data-testid="refresh-token">{tokens.refresh ? "present" : "missing"}</div>
+      <div data-testid="access-token-value" style={{ display: "none" }}>{tokens.access ?? ""}</div>
+      <div data-testid="refresh-token-value" style={{ display: "none" }}>{tokens.refresh ?? ""}</div>
       <div data-testid="id-token">{tokens.id ? "present" : "missing"}</div>
       <div data-testid="expires-at">{tokens.expiresAt ?? "none"}</div>
       <button data-testid="logout-button" onClick={() => actions.logout()}>
@@ -55,9 +57,9 @@ function CallbackPage() {
   return <div data-testid="auth-loading">Processing login...</div>;
 }
 
-function ProtectedPage({ name }: { name: string }) {
+function ProtectedPage({ name, loginOptions }: { name: string; loginOptions?: { extraParams?: Record<string, string> } }) {
   return (
-    <RequireAuth fallback={<div data-testid="auth-loading">Refreshing...</div>}>
+    <RequireAuth fallback={<div data-testid="auth-loading">Refreshing...</div>} loginOptions={loginOptions}>
       <div data-testid={`protected-${name}`}>
         Protected content {name}
       </div>

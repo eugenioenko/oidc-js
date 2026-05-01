@@ -4,7 +4,7 @@ import { join } from "path";
 
 const AUTENTICO_DIR = join(import.meta.dirname, ".autentico");
 const AUTENTICO_BIN = join(AUTENTICO_DIR, "autentico");
-const AUTENTICO_RELEASE = "https://github.com/eugenioenko/autentico/releases/download/v1.6.18/autentico-linux-amd64";
+const AUTENTICO_RELEASE = "https://github.com/eugenioenko/autentico/releases/download/v2.0.0-beta.1/autentico-linux-amd64";
 const AUTENTICO_URL = "http://localhost:9999";
 const ADMIN_USER = "admin";
 const ADMIN_PASS = "TestAdmin123!";
@@ -89,6 +89,7 @@ async function configureCors(token: string) {
     },
     body: JSON.stringify({
       cors_allowed_origins: "*",
+      sso_enabled: "false",
     }),
   });
   if (!res.ok) throw new Error(`Failed to configure CORS: ${res.status} ${await res.text()}`);

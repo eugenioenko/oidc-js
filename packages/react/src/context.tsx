@@ -79,7 +79,7 @@ export function AuthProvider({
 
   const login = useCallback(
     async (options?: LoginOptions) => {
-      clientRef.current?.login(options);
+      await clientRef.current?.login(options);
     },
     [],
   );

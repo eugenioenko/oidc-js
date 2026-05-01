@@ -117,6 +117,38 @@ The `fetchProfile` setting is toggled via `localStorage`:
 
 Read this value at app startup (before the auth provider mounts) and pass it to the auth configuration.
 
+## Test Coverage
+
+The shared specs (`specs/login.spec.ts`) cover 13 tests across 4 groups:
+
+### OIDC Login Flow (7 tests)
+1. **Unauthenticated state** — shows login button, no user info
+2. **Full login with tokens** — completes PKCE flow, access/refresh/id tokens present
+3. **ID token claims** — sub, iss, aud, exp, iat populated correctly
+4. **Profile populated** — userinfo endpoint fetched, email visible
+5. **Profile null** — fetchProfile=false skips userinfo, profile is null
+6. **Logout** — clears state, subsequent visit shows unauthenticated
+7. **Manual refresh** — refresh button gets new tokens with different expiresAt
+
+### Security (2 tests)
+8. **Tokens not in storage** — after login, verifies localStorage and sessionStorage contain no token values. Validates the memory-only security model.
+9. **Back button after logout** — after logout, browser back does not show authenticated content. Verifies state is truly cleared.
+
+### Deep Linking (1 test)
+10. **Login from protected page returns to that page** — navigates directly to `/protected-a` while unauthenticated, RequireAuth triggers login, after login lands back on `/protected-a` (not `/`). Validates the `returnTo` flow.
+
+### RequireAuth (3 tests)
+11. **Shows protected content** — authenticated user navigates to protected page via client-side link
+12. **Auto-refresh on expired token** — access token set to 1s TTL, wait for expiry, navigate to second protected page, RequireAuth auto-refreshes
+13. **Redirects to login on revoked refresh token** — access token set to 1s TTL, all sessions revoked server-side, wait for expiry, navigate to second protected page, refresh fails, RequireAuth redirects to login
+
+### Admin API helpers used by tests
+
+The specs use Autentico's admin API for test setup:
+- `GET /admin/api/users` — find test user ID
+- `PUT /admin/api/clients/e2e-test-app` — set per-client `access_token_expiration` for TTL tests
+- `POST /admin/api/users/{id}/revoke-sessions` — revoke all user sessions/tokens for failed-refresh test
+
 ## IdP Setup
 
 The global setup (`global-setup.ts`) handles:

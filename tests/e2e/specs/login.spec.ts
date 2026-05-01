@@ -47,6 +47,19 @@ async function setClientTokenExpiration(expiration: string | null) {
   });
 }
 
+async function revokeToken(token: string, hint?: string) {
+  const body: Record<string, string> = { token, client_id: "e2e-test-app" };
+  if (hint) body.token_type_hint = hint;
+  const res = await fetch(`${AUTENTICO_URL}/oauth2/revoke`, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams(body),
+  });
+  if (!res.ok) {
+    throw new Error(`Revoke failed: ${res.status} ${await res.text()}`);
+  }
+}
+
 test.describe("OIDC Login Flow", () => {
   test("shows login button when not authenticated", async ({ page }) => {
     await page.goto("/");
@@ -110,6 +123,54 @@ test.describe("OIDC Login Flow", () => {
   });
 });
 
+test.describe("Security", () => {
+  test("tokens are not stored in localStorage or sessionStorage", async ({ page }) => {
+    await login(page);
+
+    const storedTokens = await page.evaluate(() => {
+      const storage: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        storage.push(localStorage.key(i) + "=" + localStorage.getItem(localStorage.key(i)!));
+      }
+      for (let i = 0; i < sessionStorage.length; i++) {
+        storage.push(sessionStorage.key(i) + "=" + sessionStorage.getItem(sessionStorage.key(i)!));
+      }
+      return storage.join("\n");
+    });
+
+    expect(storedTokens).not.toContain("access_token");
+    expect(storedTokens).not.toContain("refresh_token");
+    expect(storedTokens).not.toContain("id_token");
+  });
+
+  test("back button after logout does not show authenticated content", async ({ page }) => {
+    await login(page);
+    await expect(page.getByTestId("authenticated")).toBeVisible();
+
+    await page.getByTestId("logout-button").click();
+    await page.waitForURL(/localhost/);
+
+    await page.goBack();
+
+    await expect(page.getByTestId("authenticated")).not.toBeVisible({ timeout: 3000 });
+  });
+});
+
+test.describe("Deep Linking", () => {
+  test("login from protected page returns to that page", async ({ page }) => {
+    await page.goto("/protected-a", { waitUntil: "networkidle" });
+
+    await expect(page.locator('input[name="username"]')).toBeVisible({ timeout: 15_000 });
+    await page.fill('input[name="username"]', TEST_USER);
+    await page.fill('input[name="password"]', TEST_PASS);
+    await page.click('button[type="submit"]');
+
+    // After login, should land back on /protected-a (not /)
+    await expect(page.getByTestId("protected-a")).toBeVisible({ timeout: 10_000 });
+    expect(page.url()).toContain("/protected-a");
+  });
+});
+
 test.describe("RequireAuth", () => {
   test("shows protected content when authenticated", async ({ page }) => {
     await login(page);
@@ -130,6 +191,31 @@ test.describe("RequireAuth", () => {
       // Navigate to second protected page via client-side link — RequireAuth should auto-refresh
       await page.getByTestId("link-protected-b").click();
       await expect(page.getByTestId("protected-b")).toBeVisible({ timeout: 10_000 });
+    } finally {
+      await setClientTokenExpiration(null);
+    }
+  });
+
+  test("redirects to login when refresh token is revoked", async ({ page }) => {
+    await setClientTokenExpiration("5s");
+    try {
+      await login(page);
+
+      // Grab the refresh token from home page before navigating away
+      const refreshToken = await page.getByTestId("refresh-token-value").textContent();
+
+      await page.getByTestId("link-protected-a").click();
+      await expect(page.getByTestId("protected-a")).toBeVisible();
+
+      // Revoke the refresh token server-side
+      await revokeToken(refreshToken!, "refresh_token");
+
+      // Wait for access token to expire
+      await page.waitForTimeout(7000);
+
+      // Navigate to second protected page — refresh should fail, triggering login redirect
+      await page.getByTestId("link-protected-b").click();
+      await expect(page.locator('input[name="username"]')).toBeVisible({ timeout: 15_000 });
     } finally {
       await setClientTokenExpiration(null);
     }
