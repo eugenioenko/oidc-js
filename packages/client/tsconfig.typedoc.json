@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "declaration": true,
+    "lib": ["ES2022", "DOM"],
+    "paths": {
+      "oidc-js-core": ["../core/src/index.ts"]
+    }
+  },
+  "include": ["src"],
+  "exclude": ["src/tests"]
+}
