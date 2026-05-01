@@ -1,0 +1,8 @@
+{
+  "name": "oidc-js-svelte",
+  "version": "0.0.1",
+  "description": "Svelte bindings for oidc-js (coming soon)",
+  "license": "MIT",
+  "author": "eugenioenko",
+  "keywords": ["oidc", "openid", "oauth2", "svelte", "authentication"]
+}
