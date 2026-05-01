@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "test": "playwright test",
+    "test:svelte": "playwright test --config playwright.svelte.config.ts",
     "test:ui": "playwright test --ui",
     "test:stress": "npx playwright test --repeat-each=100"
   },

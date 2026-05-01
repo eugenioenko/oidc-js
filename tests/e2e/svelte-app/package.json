@@ -1,0 +1,19 @@
+{
+  "name": "e2e-svelte-app",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "oidc-js-core": "workspace:*",
+    "oidc-js-svelte": "workspace:*",
+    "svelte": "^5.0.0"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^5.0.0",
+    "typescript": "^5.5.0",
+    "vite": "^8.0.0"
+  }
+}
