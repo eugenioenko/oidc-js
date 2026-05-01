@@ -1,0 +1,96 @@
+---
+title: Token Refresh
+description: How oidc-js handles token refresh and expiry.
+---
+
+import { Aside } from "@astrojs/starlight/components";
+
+## How refresh works
+
+When the access token expires, oidc-js uses the refresh token to obtain a new access token without requiring the user to log in again.
+
+```mermaid
+sequenceDiagram
+    participant App
+    participant OidcClient
+    participant IdP
+
+    App->>OidcClient: Navigate to protected route
+    OidcClient->>OidcClient: Check token expiry
+    Note over OidcClient: Access token expired
+    OidcClient->>IdP: POST /token (grant_type=refresh_token)
+    IdP->>OidcClient: New access_token + refresh_token
+    OidcClient->>IdP: GET /userinfo
+    IdP->>OidcClient: User profile
+    OidcClient->>App: Render protected content
+```
+
+## Automatic refresh with RequireAuth
+
+`RequireAuth` handles refresh automatically. When a user navigates to a protected route with an expired token:
+
+1. Checks `tokens.expiresAt` against `Date.now()`
+2. If expired, calls `actions.refresh()`
+3. If refresh succeeds, renders the children with new tokens
+4. If refresh fails, redirects to login
+
+```tsx
+<RequireAuth>
+  <Dashboard />
+</RequireAuth>
+```
+
+## Manual refresh
+
+You can also trigger a refresh manually:
+
+```tsx
+import { useAuth } from "oidc-js-react";
+
+function RefreshButton() {
+  const { actions } = useAuth();
+
+  async function handleRefresh() {
+    try {
+      await actions.refresh();
+    } catch (error) {
+      console.error("Refresh failed:", error);
+    }
+  }
+
+  return <button onClick={handleRefresh}>Refresh Token</button>;
+}
+```
+
+## Checking token expiry
+
+The `tokens` object from `useAuth` includes expiry information:
+
+```tsx
+const { tokens } = useAuth();
+
+// Millisecond timestamp when the access token expires
+console.log(tokens.expiresAt);
+
+// Check if expired
+const isExpired = tokens.expiresAt !== null && tokens.expiresAt <= Date.now();
+```
+
+<Aside type="note">
+The `expiresAt` value is extracted from the `exp` claim in the JWT access token and converted to milliseconds. If the access token is not a JWT or doesn't contain an `exp` claim, `expiresAt` will be `null`.
+</Aside>
+
+## Requesting a refresh token
+
+To receive a refresh token, include `offline_access` in your scopes:
+
+```tsx
+const config = {
+  issuer: "https://auth.example.com",
+  clientId: "my-app",
+  redirectUri: "http://localhost:5173/callback",
+  scopes: ["openid", "profile", "email", "offline_access"],
+};
+```
+
+Without `offline_access`, the IdP may not issue a refresh token, and `actions.refresh()` will throw.

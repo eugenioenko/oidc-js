@@ -1,0 +1,75 @@
+---
+title: User Profile
+description: Accessing user identity claims and profile data.
+---
+
+import { Aside } from "@astrojs/starlight/components";
+
+## User object
+
+After login, the `user` object from `useAuth` contains two parts:
+
+```tsx
+const { user } = useAuth();
+
+// Claims from the ID token (always available after login)
+user?.claims.sub;       // Subject identifier
+user?.claims.iss;       // Issuer
+user?.claims.aud;       // Audience
+user?.claims.exp;       // Expiration (Unix timestamp)
+user?.claims.iat;       // Issued at (Unix timestamp)
+
+// Profile from the UserInfo endpoint (fetched separately)
+user?.profile?.email;
+user?.profile?.name;
+user?.profile?.preferred_username;
+```
+
+### Claims vs Profile
+
+- **Claims** come from the ID token. They're decoded locally (no network request) and contain identity assertions from the IdP.
+- **Profile** comes from the UserInfo endpoint (`GET /userinfo`). It requires a network request with the access token and contains the full user profile.
+
+## Controlling profile fetching
+
+By default, `AuthProvider` fetches the user profile after login. You can disable this:
+
+```tsx
+<AuthProvider config={config} fetchProfile={false}>
+  <App />
+</AuthProvider>
+```
+
+When `fetchProfile` is `false`:
+- `user.claims` is still available (decoded from the ID token)
+- `user.profile` is `null`
+- No request is made to the UserInfo endpoint
+
+This is useful when you only need the `sub` claim for API calls and don't need display information.
+
+## Manually fetching the profile
+
+If you disabled automatic profile fetching, you can fetch it on demand:
+
+```tsx
+const { user, actions } = useAuth();
+
+async function loadProfile() {
+  await actions.fetchProfile();
+  // user.profile is now populated
+}
+```
+
+## Available profile fields
+
+The profile fields depend on the scopes you requested and what the IdP returns:
+
+| Scope | Fields |
+|---|---|
+| `openid` | `sub` |
+| `profile` | `name`, `preferred_username`, `picture`, etc. |
+| `email` | `email`, `email_verified` |
+
+<Aside type="note">
+The `OidcUser` type uses an index signature (`[claim: string]: unknown`) so you can access any custom claim your IdP returns without type assertions.
+</Aside>

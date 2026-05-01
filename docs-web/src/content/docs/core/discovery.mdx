@@ -1,0 +1,69 @@
+---
+title: Discovery
+description: OIDC Discovery document fetching and parsing.
+---
+
+## buildDiscoveryUrl
+
+Constructs the well-known discovery URL for an issuer.
+
+```typescript
+import { buildDiscoveryUrl } from "oidc-js-core";
+
+const url = buildDiscoveryUrl("https://auth.example.com");
+// "https://auth.example.com/.well-known/openid-configuration"
+```
+
+**Parameters:**
+| Name | Type | Description |
+|---|---|---|
+| `issuer` | `string` | The OIDC issuer URL |
+
+**Returns:** `string` — the discovery endpoint URL.
+
+## parseDiscoveryResponse
+
+Validates a discovery document and returns a typed `OidcDiscovery` object.
+
+```typescript
+import { parseDiscoveryResponse } from "oidc-js-core";
+
+const response = await fetch(url);
+const json = await response.json();
+const discovery = parseDiscoveryResponse(json, "https://auth.example.com");
+```
+
+**Parameters:**
+| Name | Type | Description |
+|---|---|---|
+| `data` | `unknown` | Raw JSON response from the discovery endpoint |
+| `expectedIssuer` | `string` | The issuer URL to validate against |
+
+**Returns:** `OidcDiscovery`
+
+**Throws:**
+- `DISCOVERY_INVALID` — missing required fields (`authorization_endpoint`, `token_endpoint`, etc.)
+- `DISCOVERY_ISSUER_MISMATCH` — the `issuer` field in the response doesn't match `expectedIssuer`
+
+## OidcDiscovery type
+
+```typescript
+interface OidcDiscovery {
+  issuer: string;
+  authorization_endpoint: string;
+  token_endpoint: string;
+  userinfo_endpoint: string;
+  jwks_uri: string;
+  end_session_endpoint?: string;
+  revocation_endpoint?: string;
+  introspection_endpoint?: string;
+  response_types_supported: string[];
+  subject_types_supported: string[];
+  id_token_signing_alg_values_supported: string[];
+  scopes_supported?: string[];
+  token_endpoint_auth_methods_supported?: string[];
+  code_challenge_methods_supported?: string[];
+  grant_types_supported?: string[];
+  claims_supported?: string[];
+}
+```

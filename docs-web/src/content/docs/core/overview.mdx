@@ -1,0 +1,79 @@
+---
+title: Core API Overview
+description: The pure functional core of oidc-js.
+---
+
+import { Aside } from "@astrojs/starlight/components";
+
+The `oidc-js-core` package contains only pure functions. Every function takes data in and returns data out — no `fetch`, no storage, no side effects. This makes the core:
+
+- **Testable** without mocks or network
+- **Portable** across any JS runtime (browser, Node.js, Deno, Bun, Workers)
+- **Composable** — framework adapters build on top of these primitives
+
+## Function patterns
+
+Core functions follow two patterns:
+
+### Build functions
+
+`build*` functions construct HTTP requests or URLs. They return an `HttpRequest` object or a URL string — they never execute the request.
+
+```typescript
+const req = buildTokenRequest(discovery, config, code, codeVerifier);
+// req = { url, method, headers, body }
+// You call fetch(req.url, { method: req.method, headers: req.headers, body: req.body })
+```
+
+### Parse functions
+
+`parse*` functions validate and transform responses. They throw `OidcError` with a typed error code on invalid input.
+
+```typescript
+const discovery = parseDiscoveryResponse(json, expectedIssuer);
+// Throws OidcError("DISCOVERY_ISSUER_MISMATCH") if issuer doesn't match
+```
+
+## Module index
+
+| Module | Functions |
+|---|---|
+| [Discovery](/core/discovery/) | `buildDiscoveryUrl`, `parseDiscoveryResponse` |
+| [Authorization](/core/authorize/) | `buildAuthUrl`, `parseCallbackUrl` |
+| [Token](/core/token/) | `buildTokenRequest`, `buildRefreshRequest`, `parseTokenResponse` |
+| [UserInfo](/core/userinfo/) | `buildUserinfoRequest`, `parseUserinfoResponse` |
+| Introspection | `buildIntrospectRequest`, `parseIntrospectResponse` |
+| Revocation | `buildRevocationRequest` |
+| Logout | `buildLogoutUrl` |
+| JWT | `decodeJwtPayload`, `parseIdTokenClaims` |
+| Token Utils | `computeExpiresAt`, `isTokenExpired`, `timeUntilExpiry` |
+| Crypto | `generatePkce`, `generateState`, `generateNonce`, `computeCodeChallenge` |
+
+## Error handling
+
+All errors throw `OidcError` with a typed `code` field:
+
+```typescript
+import { OidcError } from "oidc-js-core";
+
+try {
+  parseDiscoveryResponse(data, issuer);
+} catch (e) {
+  if (e instanceof OidcError) {
+    switch (e.code) {
+      case "DISCOVERY_INVALID":
+        // Missing required fields
+        break;
+      case "DISCOVERY_ISSUER_MISMATCH":
+        // Issuer in response doesn't match expected
+        break;
+    }
+  }
+}
+```
+
+Error codes: `DISCOVERY_INVALID`, `DISCOVERY_ISSUER_MISMATCH`, `STATE_MISMATCH`, `NONCE_MISMATCH`, `MISSING_AUTH_CODE`, `INVALID_JWT`, `TOKEN_EXCHANGE_ERROR`, `AUTHORIZATION_ERROR`, `MISSING_REDIRECT_URI`, `MISSING_CLIENT_SECRET`.
+
+<Aside type="tip">
+Every validation check in the core has an inline RFC annotation (`// RFC NNNN §X.Y`) pointing to the specification section it implements.
+</Aside>

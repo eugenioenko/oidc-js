@@ -1,0 +1,89 @@
+---
+title: oidc-js
+template: splash
+hero:
+  tagline: Zero-dependency OIDC client for JavaScript & TypeScript.
+  actions:
+    - text: Quickstart
+      link: /getting-started/quickstart/
+      icon: right-arrow
+      variant: primary
+    - text: GitHub
+      link: https://github.com/eugenioenko/oidc-js
+      icon: external
+      variant: minimal
+---
+
+import { Card, CardGrid } from "@astrojs/starlight/components";
+
+## What is oidc-js?
+
+oidc-js is an OpenID Connect client library for JavaScript and TypeScript. It handles the full OIDC lifecycle — discovery, PKCE, token exchange, refresh, userinfo, and logout — with zero runtime dependencies and a pure-functional core that works in any JS runtime.
+
+The library follows a **functional core, imperative shell** architecture: the core package (`oidc-js-core`) contains only pure functions that build requests and parse responses. Framework adapters compose these functions with their own HTTP and storage layers.
+
+## Get started in 30 seconds
+
+```bash
+npm install oidc-js-react
+```
+
+```tsx
+import { AuthProvider } from "oidc-js-react";
+
+const config = {
+  issuer: "https://auth.example.com",
+  clientId: "my-app",
+  redirectUri: "http://localhost:3000/callback",
+  scopes: ["openid", "profile", "email"],
+};
+
+function App() {
+  return (
+    <AuthProvider config={config}>
+      <MyApp />
+    </AuthProvider>
+  );
+}
+```
+
+## Features
+
+<CardGrid>
+  <Card title="Zero Dependencies" icon="approve-check-circle">
+    No runtime dependencies in the core package. Only the Web Crypto API. Works
+    in browsers, Node.js, Deno, Bun, and Cloudflare Workers.
+  </Card>
+  <Card title="Pure Functional Core" icon="open-book">
+    Every core function takes data in and returns data out. No fetch, no storage,
+    no side effects. Fully testable without mocks.
+  </Card>
+  <Card title="Framework Adapters" icon="list-format">
+    First-class React support with AuthProvider, useAuth, and RequireAuth. Vue,
+    Svelte, Angular, and Solid adapters planned.
+  </Card>
+  <Card title="PKCE by Default" icon="approve-check-circle">
+    Authorization Code Flow with Proof Key for Code Exchange (RFC 7636). No
+    implicit flow, no client secrets in the browser.
+  </Card>
+  <Card title="Automatic Token Refresh" icon="setting">
+    RequireAuth detects expired tokens and silently refreshes them using the
+    refresh token. If the refresh fails, it redirects to login.
+  </Card>
+  <Card title="Contract-Tested" icon="approve-check-circle">
+    End-to-end Playwright tests against a real OIDC provider verify every flow:
+    login, logout, refresh, deep linking, error handling, and security.
+  </Card>
+</CardGrid>
+
+## Packages
+
+| Package | Description | Status |
+|---|---|---|
+| `oidc-js-core` | Pure functions, no IO | Stable |
+| `oidc-js` | Browser client (core + fetch + sessionStorage) | Stable |
+| `oidc-js-react` | React context, hooks, and guards | Stable |
+| `oidc-js-vue` | Vue composables | Planned |
+| `oidc-js-svelte` | Svelte stores | Planned |
+| `oidc-js-angular` | Angular service and guards | Planned |
+| `oidc-js-solid` | Solid signals | Planned |
