@@ -83,6 +83,7 @@ function cleanDb() {
 }
 
 export const test = base.extend<{ autentico: void }>({
+  // eslint-disable-next-line no-empty-pattern
   autentico: [async ({}, use) => {
     cleanDb();
 
