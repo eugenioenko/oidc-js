@@ -49,8 +49,8 @@ async function seedTestData(token: string) {
     body: JSON.stringify({
       client_id: "e2e-test-app",
       client_name: "E2E Test App",
-      redirect_uris: ["http://localhost:5173/callback"],
-      post_logout_redirect_uris: ["http://localhost:5173"],
+      redirect_uris: ["http://localhost:5173/callback", "http://localhost:5174/callback"],
+      post_logout_redirect_uris: ["http://localhost:5173", "http://localhost:5174"],
       grant_types: ["authorization_code", "refresh_token"],
       response_types: ["code"],
       scopes: "openid profile email offline_access",

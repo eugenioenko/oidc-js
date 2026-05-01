@@ -3,4 +3,5 @@ packages:
   - "tests/e2e"
   - "tests/e2e/react-app"
   - "tests/e2e/svelte-app"
+  - "tests/e2e/lit-app"
   - "docs-web"
