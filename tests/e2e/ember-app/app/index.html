@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>OIDC E2E Test App (Ember)</title>
+    {{content-for "head"}}
+    <link integrity="" rel="stylesheet" href="{{rootURL}}assets/e2e-ember-app.css">
+    {{content-for "head-footer"}}
+  </head>
+  <body>
+    {{content-for "body"}}
+    <script src="{{rootURL}}assets/vendor.js"></script>
+    <script src="{{rootURL}}assets/e2e-ember-app.js"></script>
+    {{content-for "body-footer"}}
+  </body>
+</html>
