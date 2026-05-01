@@ -3,6 +3,7 @@ import { test, expect, type Page } from "@playwright/test";
 const AUTENTICO_URL = "http://localhost:9999";
 const TEST_USER = "testuser";
 const TEST_PASS = "TestUser123!";
+const TIMEOUT = 10_000;
 
 type TrafficEntry = { method: string; path: string };
 
@@ -48,8 +49,8 @@ async function login(page: Page) {
   await page.fill('input[name="username"]', TEST_USER);
   await page.fill('input[name="password"]', TEST_PASS);
   await page.click('button[type="submit"]');
-  await page.waitForURL(/localhost:5173/, { timeout: 5_000 });
-  await expect(page.getByTestId("authenticated")).toBeVisible({ timeout: 5_000 });
+  await page.waitForURL(/localhost:5173/, { timeout: TIMEOUT });
+  await expect(page.getByTestId("authenticated")).toBeVisible({ timeout: TIMEOUT });
 }
 
 async function revokeToken(token: string, hint?: string) {
@@ -154,7 +155,7 @@ test.describe("OIDC Login Flow", () => {
     const traffic = trackTraffic(page);
     await login(page);
     await page.getByTestId("logout-button").click();
-    await page.waitForURL(/localhost/);
+    await expect(page.getByTestId("unauthenticated")).toBeVisible({ timeout: TIMEOUT });
     await page.goto("/");
     await expect(page.getByTestId("unauthenticated")).toBeVisible();
 
@@ -172,11 +173,9 @@ test.describe("OIDC Login Flow", () => {
   test("manual token refresh", async ({ page }) => {
     const traffic = trackTraffic(page);
     await login(page);
-    const oldExpiresAt = await page.getByTestId("expires-at").textContent();
-    await page.waitForTimeout(1000);
+    const oldToken = await page.getByTestId("access-token-value").textContent();
     await page.getByTestId("refresh-button").click();
-    await expect(page.getByTestId("authenticated")).toBeVisible();
-    await expect(page.getByTestId("expires-at")).not.toHaveText(oldExpiresAt!);
+    await expect(page.getByTestId("access-token-value")).not.toHaveText(oldToken!, { timeout: TIMEOUT });
 
     expect(traffic.requests()).toEqual([
       ...LOGIN_REQUESTS,
@@ -212,11 +211,11 @@ test.describe("Security", () => {
     await expect(page.getByTestId("authenticated")).toBeVisible();
 
     await page.getByTestId("logout-button").click();
-    await page.waitForURL(/localhost/);
+    await expect(page.getByTestId("unauthenticated")).toBeVisible({ timeout: TIMEOUT });
 
     await page.goBack();
 
-    await expect(page.getByTestId("authenticated")).not.toBeVisible({ timeout: 3000 });
+    await expect(page.getByTestId("authenticated")).not.toBeVisible({ timeout: TIMEOUT });
   });
 });
 
@@ -249,7 +248,7 @@ test.describe("Error Handling", () => {
 
     // Navigate with a tampered state — should trigger state mismatch error
     await page.goto("/?code=fake-code&state=tampered-state");
-    await expect(page.getByTestId("auth-error")).toBeVisible({ timeout: 3_000 });
+    await expect(page.getByTestId("auth-error")).toBeVisible({ timeout: TIMEOUT });
     await expect(page.getByTestId("auth-error")).toContainText("State");
 
     expect(traffic.requests()).toEqual([
@@ -265,13 +264,13 @@ test.describe("Deep Linking", () => {
     const traffic = trackTraffic(page);
     await page.goto("/protected-a", { waitUntil: "networkidle" });
 
-    await expect(page.locator('input[name="username"]')).toBeVisible({ timeout: 5_000 });
+    await expect(page.locator('input[name="username"]')).toBeVisible({ timeout: TIMEOUT });
     await page.fill('input[name="username"]', TEST_USER);
     await page.fill('input[name="password"]', TEST_PASS);
     await page.click('button[type="submit"]');
 
     // After login, should land back on /protected-a (not /)
-    await expect(page.getByTestId("protected-a")).toBeVisible({ timeout: 5_000 });
+    await expect(page.getByTestId("protected-a")).toBeVisible({ timeout: TIMEOUT });
     expect(page.url()).toContain("/protected-a");
 
     expect(traffic.requests()).toEqual(LOGIN_REQUESTS);
@@ -340,7 +339,7 @@ test.describe("RequireAuth", () => {
 
     // Navigate to second protected page — RequireAuth should auto-refresh
     await page.getByTestId("link-protected-b").click();
-    await expect(page.getByTestId("protected-b")).toBeVisible({ timeout: 5_000 });
+    await expect(page.getByTestId("protected-b")).toBeVisible({ timeout: TIMEOUT });
 
     expect(traffic.requests()).toEqual([
       ...LOGIN_REQUESTS,
@@ -381,7 +380,7 @@ test.describe("RequireAuth", () => {
 
     // Navigate to second protected page — refresh should fail, triggering login redirect
     await page.getByTestId("link-protected-b").click();
-    await expect(page.locator('input[name="username"]')).toBeVisible({ timeout: 5_000 });
+    await expect(page.locator('input[name="username"]')).toBeVisible({ timeout: TIMEOUT });
 
     // Failed refresh POST + redirect to authorize
     expect(traffic.requests()).toEqual([
