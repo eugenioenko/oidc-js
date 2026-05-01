@@ -1,0 +1,27 @@
+{
+  "name": "e2e-angular-app",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "ng serve --port 5173",
+    "build": "ng build"
+  },
+  "dependencies": {
+    "@angular/common": "^19.0.0",
+    "@angular/compiler": "^19.0.0",
+    "@angular/core": "^19.0.0",
+    "@angular/platform-browser": "^19.0.0",
+    "@angular/router": "^19.0.0",
+    "oidc-js-angular": "workspace:*",
+    "oidc-js-core": "workspace:*",
+    "rxjs": "^7.8.0",
+    "zone.js": "^0.15.0",
+    "tslib": "^2.6.0"
+  },
+  "devDependencies": {
+    "@angular/build": "^19.0.0",
+    "@angular/cli": "^19.0.0",
+    "@angular/compiler-cli": "^19.0.0",
+    "typescript": "~5.6.0"
+  }
+}
