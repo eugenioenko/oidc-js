@@ -1,3 +1,5 @@
+import { OidcError } from "./errors.js";
+
 // RFC 7636 §4.1: unreserved characters for code_verifier
 const UNRESERVED = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~";
 
@@ -10,22 +12,33 @@ export function base64UrlEncode(bytes: Uint8Array): string {
 }
 
 export function base64UrlDecode(str: string): Uint8Array {
-  const padded = str.replace(/-/g, "+").replace(/_/g, "/") + "=".repeat((4 - (str.length % 4)) % 4);
-  const binary = atob(padded);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) {
-    bytes[i] = binary.charCodeAt(i);
+  try {
+    const padded = str.replace(/-/g, "+").replace(/_/g, "/") + "=".repeat((4 - (str.length % 4)) % 4);
+    const binary = atob(padded);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+    return bytes;
+  } catch {
+    throw new OidcError("INVALID_JWT", "Invalid base64url input");
   }
-  return bytes;
 }
 
 // RFC 7636 §4.1: code_verifier has minimum 256 bits of entropy
+// Rejection sampling avoids modulo bias (256 % 66 != 0)
 export function generateRandom(length: number = 32): string {
-  const bytes = new Uint8Array(length);
-  crypto.getRandomValues(bytes);
+  const alphabetSize = UNRESERVED.length;
+  const limit = 256 - (256 % alphabetSize);
   let result = "";
-  for (const byte of bytes) {
-    result += UNRESERVED[byte % UNRESERVED.length];
+  while (result.length < length) {
+    const bytes = new Uint8Array(length - result.length);
+    crypto.getRandomValues(bytes);
+    for (const byte of bytes) {
+      if (byte < limit && result.length < length) {
+        result += UNRESERVED[byte % alphabetSize];
+      }
+    }
   }
   return result;
 }

@@ -15,6 +15,11 @@ const DISCOVERY: OidcDiscovery = {
   id_token_signing_alg_values_supported: ["RS256"],
 };
 
+const DISCOVERY_NO_INTROSPECT: OidcDiscovery = {
+  ...DISCOVERY,
+  introspection_endpoint: undefined,
+};
+
 const CONFIG: OidcConfig = {
   issuer: "https://auth.example.com",
   clientId: "my-api",
@@ -25,20 +30,22 @@ describe("buildIntrospectRequest", () => {
   // RFC 7662 §2.1: Introspection Request
   it("RFC 7662 §2.1: includes token parameter", () => {
     const req = buildIntrospectRequest(DISCOVERY, CONFIG, "at_xyz");
-    const params = new URLSearchParams(req.body);
+    expect(req).not.toBeNull();
+    const params = new URLSearchParams(req!.body);
 
     expect(params.get("token")).toBe("at_xyz");
-    expect(req.method).toBe("POST");
-    expect(req.url).toBe("https://auth.example.com/introspect");
+    expect(req!.method).toBe("POST");
+    expect(req!.url).toBe("https://auth.example.com/introspect");
   });
 
   // RFC 7662 §2.1: protected resource MUST authenticate
   it("RFC 7662 §2.1: adds Basic auth header", () => {
     const req = buildIntrospectRequest(DISCOVERY, CONFIG, "at_xyz");
+    expect(req).not.toBeNull();
     const expected = btoa("my-api:api-secret");
 
-    expect(req.headers["Authorization"]).toBe(`Basic ${expected}`);
-    expect(req.headers["Content-Type"]).toBe("application/x-www-form-urlencoded");
+    expect(req!.headers["Authorization"]).toBe(`Basic ${expected}`);
+    expect(req!.headers["Content-Type"]).toBe("application/x-www-form-urlencoded");
   });
 
   it("throws MISSING_CLIENT_SECRET without clientSecret", () => {
@@ -54,6 +61,11 @@ describe("buildIntrospectRequest", () => {
       expect(e).toBeInstanceOf(OidcError);
       expect((e as OidcError).code).toBe("MISSING_CLIENT_SECRET");
     }
+  });
+
+  it("returns null when no introspection_endpoint", () => {
+    const req = buildIntrospectRequest(DISCOVERY_NO_INTROSPECT, CONFIG, "at_xyz");
+    expect(req).toBeNull();
   });
 });
 
@@ -83,5 +95,31 @@ describe("parseIntrospectResponse", () => {
     const result = parseIntrospectResponse({ active: false });
 
     expect(result.active).toBe(false);
+  });
+
+  it("throws TOKEN_EXCHANGE_ERROR on non-object input", () => {
+    expect(() => parseIntrospectResponse(null)).toThrow(OidcError);
+    expect(() => parseIntrospectResponse("string")).toThrow(OidcError);
+    expect(() => parseIntrospectResponse(42)).toThrow(OidcError);
+  });
+
+  it("throws TOKEN_EXCHANGE_ERROR when active field is missing", () => {
+    try {
+      parseIntrospectResponse({ scope: "openid" });
+      expect.fail("should have thrown");
+    } catch (e) {
+      expect(e).toBeInstanceOf(OidcError);
+      expect((e as OidcError).code).toBe("TOKEN_EXCHANGE_ERROR");
+    }
+  });
+
+  it("throws TOKEN_EXCHANGE_ERROR when active field is not boolean", () => {
+    try {
+      parseIntrospectResponse({ active: "true" });
+      expect.fail("should have thrown");
+    } catch (e) {
+      expect(e).toBeInstanceOf(OidcError);
+      expect((e as OidcError).code).toBe("TOKEN_EXCHANGE_ERROR");
+    }
   });
 });
