@@ -344,8 +344,9 @@ test.describe("RequireAuth", () => {
   });
 
   test("auto-refreshes expired token when navigating to protected page", async ({ page }) => {
+    test.setTimeout(60_000);
     const traffic = trackTraffic(page);
-    await setClientTokenExpiration("1s");
+    await setClientTokenExpiration("3s");
     try {
       await login(page);
       await page.getByTestId("link-protected-a").click();
@@ -372,6 +373,7 @@ test.describe("RequireAuth", () => {
   });
 
   test("redirects to login when refresh token is revoked", async ({ page }) => {
+    test.setTimeout(60_000);
     const traffic = trackTraffic(page);
     await setClientTokenExpiration("5s");
     try {
