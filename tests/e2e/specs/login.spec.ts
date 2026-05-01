@@ -1,4 +1,5 @@
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect } from "./autentico.fixture.js";
+import type { Page } from "@playwright/test";
 
 const AUTENTICO_URL = "http://localhost:9999";
 const TEST_USER = "testuser";
