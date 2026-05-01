@@ -6,6 +6,8 @@ import sitemap from '@astrojs/sitemap';
 import starlightThemeGalaxy from 'starlight-theme-galaxy';
 
 export default defineConfig({
+	site: 'https://eugenioenko.github.io',
+	base: '/oidc-js',
 	integrations: [
 		sitemap(),
 		starlight({
