@@ -47,7 +47,7 @@ function extractExpiresAt(accessToken: string): number | null {
   try {
     const payload = decodeJwtPayload(accessToken);
     if (typeof payload.exp === "number") return payload.exp * 1000;
-  } catch {}
+  } catch { /* malformed JWT */ }
   return null;
 }
 

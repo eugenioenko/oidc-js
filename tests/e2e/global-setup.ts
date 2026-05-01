@@ -19,7 +19,7 @@ async function waitForHealthy(url: string, timeoutMs = 15_000) {
     try {
       const res = await fetch(url);
       if (res.ok) return;
-    } catch {}
+    } catch { /* server not ready */ }
     await new Promise((r) => setTimeout(r, 500));
   }
   throw new Error(`Autentico did not become healthy within ${timeoutMs}ms`);
