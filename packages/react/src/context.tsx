@@ -4,104 +4,233 @@ import {
   useState,
   useEffect,
   useCallback,
+  useRef,
+  useMemo,
   type ReactNode,
 } from "react";
-import { OidcClient, BrowserStorage, type OidcConfig, type OidcUser } from "oidc-js";
-
-interface AuthContextValue {
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  user: OidcUser | null;
-  accessToken: string | null;
-  login: (extraParams?: Record<string, string>) => Promise<void>;
-  logout: () => Promise<void>;
-  client: OidcClient;
-}
+import {
+  buildDiscoveryUrl,
+  parseDiscoveryResponse,
+  generatePkce,
+  generateState,
+  generateNonce,
+  buildAuthUrl,
+  parseCallbackUrl,
+  buildTokenRequest,
+  buildRefreshRequest,
+  parseTokenResponse,
+  buildUserinfoRequest,
+  parseUserinfoResponse,
+  buildLogoutUrl,
+  decodeJwtPayload,
+  type OidcConfig,
+  type OidcDiscovery,
+  type OidcUser,
+} from "oidc-js-core";
+import { executeFetch } from "./fetch.js";
+import { saveAuthState, loadAuthState, clearAuthState } from "./storage.js";
+import type { AuthContextValue, AuthUser, AuthTokens, IdTokenClaims } from "./types.js";
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 interface AuthProviderProps {
   config: OidcConfig;
+  fetchProfile?: boolean;
   children: ReactNode;
-  onCallback?: (url: string) => void;
 }
 
-export function AuthProvider({ config, children, onCallback }: AuthProviderProps) {
-  const [client] = useState(
-    () =>
-      new OidcClient({
-        storage: new BrowserStorage(sessionStorage),
-        ...config,
-      })
-  );
+const EMPTY_TOKENS: AuthTokens = { access: null, id: null, refresh: null };
+
+export function AuthProvider({
+  config,
+  fetchProfile = true,
+  children,
+}: AuthProviderProps) {
+  const discoveryRef = useRef<OidcDiscovery | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [user, setUser] = useState<OidcUser | null>(null);
-  const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [error, setError] = useState<Error | null>(null);
+  const [tokens, setTokens] = useState<AuthTokens>(EMPTY_TOKENS);
+
+  const configRef = useRef(config);
+  configRef.current = config;
+
+  const fetchProfileRef = useRef(fetchProfile);
+  fetchProfileRef.current = fetchProfile;
+
+  const fetchUserProfile = useCallback(
+    async (discovery: OidcDiscovery, accessToken: string, signal?: AbortSignal): Promise<OidcUser> => {
+      const req = buildUserinfoRequest(discovery, accessToken);
+      const data = await executeFetch(req, signal);
+      return parseUserinfoResponse(data);
+    },
+    [],
+  );
 
   useEffect(() => {
-    const url = window.location.href;
-    const params = new URL(url).searchParams;
+    const controller = new AbortController();
+    const { signal } = controller;
 
-    if (params.has("code") && params.has("state")) {
-      client
-        .handleCallback(url)
-        .then(() => {
-          setUser(client.getUser());
-          setAccessToken(client.getAccessToken());
+    (async () => {
+      try {
+        const url = buildDiscoveryUrl(configRef.current.issuer);
+        const data = await executeFetch({ url, method: "GET", headers: {} }, signal);
+        const discovery = parseDiscoveryResponse(data, configRef.current.issuer);
+        discoveryRef.current = discovery;
+
+        const params = new URLSearchParams(window.location.search);
+        if (params.has("code") && params.has("state")) {
+          const authState = loadAuthState();
+          if (!authState) {
+            setError(new Error("Missing auth state in session storage"));
+            setIsLoading(false);
+            return;
+          }
+
+          const { code } = parseCallbackUrl(window.location.href, authState.state);
+          const tokenReq = buildTokenRequest(
+            discovery,
+            configRef.current,
+            code,
+            authState.codeVerifier,
+          );
+          const tokenData = await executeFetch(tokenReq, signal);
+          const tokenSet = parseTokenResponse(tokenData, authState.nonce);
+
+          const newTokens: AuthTokens = {
+            access: tokenSet.access_token,
+            id: tokenSet.id_token ?? null,
+            refresh: tokenSet.refresh_token ?? null,
+          };
+          setTokens(newTokens);
+
+          if (tokenSet.id_token) {
+            const claims = decodeJwtPayload(tokenSet.id_token) as IdTokenClaims;
+            let profile: OidcUser | null = null;
+            if (fetchProfileRef.current) {
+              profile = await fetchUserProfile(discovery, tokenSet.access_token, signal);
+            }
+            setUser({ claims, profile });
+          }
+
           setIsAuthenticated(true);
-          const cleanUrl = url.split("?")[0]!;
-          window.history.replaceState({}, "", cleanUrl);
-          onCallback?.(cleanUrl);
-        })
-        .catch((err) => {
-          console.error("OIDC callback failed:", err);
-        })
-        .finally(() => setIsLoading(false));
-    } else {
-      setUser(client.getUser());
-      setAccessToken(client.getAccessToken());
-      setIsAuthenticated(client.isAuthenticated());
-      setIsLoading(false);
-    }
-  }, [client, onCallback]);
+          clearAuthState();
+          window.history.replaceState({}, "", window.location.pathname);
+        }
+      } catch (e) {
+        if ((e as Error).name === "AbortError") return;
+        setError(e instanceof Error ? e : new Error(String(e)));
+      } finally {
+        if (!signal.aborted) {
+          setIsLoading(false);
+        }
+      }
+    })();
+
+    return () => controller.abort();
+  }, [fetchUserProfile]);
 
   const login = useCallback(
     async (extraParams?: Record<string, string>) => {
-      const url = await client.buildAuthUrl(extraParams);
+      const discovery = discoveryRef.current;
+      if (!discovery) return;
+
+      const pkce = await generatePkce();
+      const state = generateState();
+      const nonce = generateNonce();
+
+      saveAuthState({
+        codeVerifier: pkce.verifier,
+        state,
+        nonce,
+        redirectUri: configRef.current.redirectUri ?? "",
+      });
+
+      const url = buildAuthUrl(discovery, configRef.current, pkce, state, nonce, extraParams);
       window.location.href = url;
     },
-    [client]
+    [],
   );
 
-  const logout = useCallback(async () => {
-    const logoutUrl = await client.buildLogoutUrl();
-    client.clearTokens();
+  const logout = useCallback(() => {
+    const discovery = discoveryRef.current;
+    const idToken = tokens.id;
+
     setUser(null);
-    setAccessToken(null);
+    setTokens(EMPTY_TOKENS);
     setIsAuthenticated(false);
+    setError(null);
 
-    if (logoutUrl) {
-      window.location.href = logoutUrl;
+    if (discovery) {
+      const logoutUrl = buildLogoutUrl(
+        discovery,
+        idToken ?? undefined,
+        configRef.current.postLogoutRedirectUri,
+      );
+      if (logoutUrl) {
+        window.location.href = logoutUrl;
+        return;
+      }
     }
-  }, [client]);
+  }, [tokens.id]);
 
-  return (
-    <AuthContext value={{
-      isAuthenticated,
-      isLoading,
-      user,
-      accessToken,
-      login,
-      logout,
-      client,
-    }}>
-      {children}
-    </AuthContext>
+  const refresh = useCallback(async () => {
+    const discovery = discoveryRef.current;
+    const refreshToken = tokens.refresh;
+
+    if (!discovery || !refreshToken) {
+      throw new Error("No refresh token available");
+    }
+
+    const req = buildRefreshRequest(discovery, configRef.current, refreshToken);
+    const data = await executeFetch(req);
+    const tokenSet = parseTokenResponse(data);
+
+    const newTokens: AuthTokens = {
+      access: tokenSet.access_token,
+      id: tokenSet.id_token ?? null,
+      refresh: tokenSet.refresh_token ?? null,
+    };
+    setTokens(newTokens);
+
+    if (tokenSet.id_token) {
+      const claims = decodeJwtPayload(tokenSet.id_token) as IdTokenClaims;
+      let profile: OidcUser | null = user?.profile ?? null;
+      if (fetchProfileRef.current) {
+        profile = await fetchUserProfile(discovery, tokenSet.access_token);
+      }
+      setUser({ claims, profile });
+    }
+
+    setIsAuthenticated(true);
+    setError(null);
+  }, [tokens.refresh, user?.profile, fetchUserProfile]);
+
+  const doFetchProfile = useCallback(async () => {
+    const discovery = discoveryRef.current;
+    if (!discovery || !tokens.access) {
+      throw new Error("No access token available");
+    }
+
+    const profile = await fetchUserProfile(discovery, tokens.access);
+    setUser((prev) => (prev ? { ...prev, profile } : null));
+  }, [tokens.access, fetchUserProfile]);
+
+  const actions = useMemo(
+    () => ({ login, logout, refresh, fetchProfile: doFetchProfile }),
+    [login, logout, refresh, doFetchProfile],
   );
+
+  const value: AuthContextValue = useMemo(
+    () => ({ config, user, isAuthenticated, isLoading, error, tokens, actions }),
+    [config, user, isAuthenticated, isLoading, error, tokens, actions],
+  );
+
+  return <AuthContext value={value}>{children}</AuthContext>;
 }
 
-export function useAuth(): AuthContextValue {
+export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {
     throw new Error("useAuth must be used within an AuthProvider");

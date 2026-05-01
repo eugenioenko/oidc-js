@@ -1,28 +1,45 @@
-import { type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useAuth } from "./context.js";
 
-interface AuthRequiredProps {
+interface RequireAuthProps {
   children: ReactNode;
   fallback?: ReactNode;
-  loginOnUnauth?: boolean;
+  autoRefresh?: boolean;
 }
 
-export function AuthRequired({
+export function RequireAuth({
   children,
-  fallback,
-  loginOnUnauth = true,
-}: AuthRequiredProps) {
-  const { isAuthenticated, isLoading, login } = useAuth();
+  fallback = null,
+  autoRefresh = true,
+}: RequireAuthProps) {
+  const { isAuthenticated, isLoading, actions } = useAuth();
+  const refreshAttempted = useRef(false);
+  const [refreshing, setRefreshing] = useState(false);
 
-  if (isLoading) {
-    return fallback ?? null;
-  }
-
-  if (!isAuthenticated) {
-    if (loginOnUnauth) {
-      login();
+  useEffect(() => {
+    if (isAuthenticated) {
+      refreshAttempted.current = false;
     }
-    return fallback ?? null;
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    if (isLoading || isAuthenticated || refreshing) return;
+
+    if (autoRefresh && !refreshAttempted.current) {
+      refreshAttempted.current = true;
+      setRefreshing(true);
+      actions
+        .refresh()
+        .catch(() => {})
+        .finally(() => setRefreshing(false));
+      return;
+    }
+
+    actions.login();
+  }, [isLoading, isAuthenticated, refreshing, autoRefresh, actions]);
+
+  if (isLoading || refreshing || !isAuthenticated) {
+    return fallback;
   }
 
   return children;
