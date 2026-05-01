@@ -1,5 +1,7 @@
 import { createRoot } from "react-dom/client";
+import { BrowserRouter, useNavigate } from "react-router";
 import { AuthProvider } from "oidc-js-react";
+import { useCallback } from "react";
 import { App } from "./App.js";
 
 const fetchProfile = localStorage.getItem("e2e-fetchProfile") !== "false";
@@ -12,8 +14,21 @@ const config = {
   postLogoutRedirectUri: "http://localhost:5173",
 };
 
+function Root() {
+  const navigate = useNavigate();
+  const onLogin = useCallback((returnTo: string) => {
+    navigate(returnTo, { replace: true });
+  }, [navigate]);
+
+  return (
+    <AuthProvider config={config} fetchProfile={fetchProfile} onLogin={onLogin}>
+      <App />
+    </AuthProvider>
+  );
+}
+
 createRoot(document.getElementById("root")!).render(
-  <AuthProvider config={config} fetchProfile={fetchProfile}>
-    <App />
-  </AuthProvider>,
+  <BrowserRouter>
+    <Root />
+  </BrowserRouter>,
 );

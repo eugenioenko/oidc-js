@@ -103,7 +103,6 @@ test.describe("OIDC Login Flow", () => {
   test("manual token refresh", async ({ page }) => {
     await login(page);
     const oldExpiresAt = await page.getByTestId("expires-at").textContent();
-    // Small delay so new token gets a different exp
     await page.waitForTimeout(1000);
     await page.getByTestId("refresh-button").click();
     await expect(page.getByTestId("authenticated")).toBeVisible();
@@ -114,7 +113,7 @@ test.describe("OIDC Login Flow", () => {
 test.describe("RequireAuth", () => {
   test("shows protected content when authenticated", async ({ page }) => {
     await login(page);
-    await page.evaluate(() => (window.location.hash = "#/protected-a"));
+    await page.getByTestId("link-protected-a").click();
     await expect(page.getByTestId("protected-a")).toBeVisible();
   });
 
@@ -122,14 +121,14 @@ test.describe("RequireAuth", () => {
     await setClientTokenExpiration("1s");
     try {
       await login(page);
-      await page.evaluate(() => (window.location.hash = "#/protected-a"));
+      await page.getByTestId("link-protected-a").click();
       await expect(page.getByTestId("protected-a")).toBeVisible();
 
       // Wait for token to expire
       await page.waitForTimeout(5000);
 
-      // Navigate to second protected page — RequireAuth should auto-refresh
-      await page.evaluate(() => (window.location.hash = "#/protected-b"));
+      // Navigate to second protected page via client-side link — RequireAuth should auto-refresh
+      await page.getByTestId("link-protected-b").click();
       await expect(page.getByTestId("protected-b")).toBeVisible({ timeout: 10_000 });
     } finally {
       await setClientTokenExpiration(null);
