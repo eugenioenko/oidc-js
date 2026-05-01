@@ -2,9 +2,12 @@
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 import starlightClientMermaid from '@pasqal-io/starlight-client-mermaid';
-import starlightTypeDoc from 'starlight-typedoc';
+import { createStarlightTypeDocPlugin } from 'starlight-typedoc';
 import sitemap from '@astrojs/sitemap';
 import starlightThemeGalaxy from 'starlight-theme-galaxy';
+
+const [coreTypeDoc, coreTypeDocSidebar] = createStarlightTypeDocPlugin();
+const [clientTypeDoc, clientTypeDocSidebar] = createStarlightTypeDocPlugin();
 
 export default defineConfig({
 	site: 'https://eugenioenko.github.io',
@@ -27,7 +30,7 @@ export default defineConfig({
 			plugins: [
 				starlightThemeGalaxy(),
 				starlightClientMermaid(),
-				starlightTypeDoc({
+				coreTypeDoc({
 					entryPoints: ['../packages/core/src/index.ts'],
 					tsconfig: '../packages/core/tsconfig.json',
 					output: 'api/core',
@@ -40,7 +43,7 @@ export default defineConfig({
 						excludeInternal: true,
 					},
 				}),
-				starlightTypeDoc({
+				clientTypeDoc({
 					entryPoints: ['../packages/client/src/index.ts'],
 					tsconfig: '../packages/client/tsconfig.typedoc.json',
 					output: 'api/client',
@@ -98,6 +101,8 @@ export default defineConfig({
 						{ label: 'Architecture', link: '/concepts/architecture/' },
 					],
 				},
+				coreTypeDocSidebar,
+				clientTypeDocSidebar,
 			],
 			customCss: ['./src/styles/custom.css'],
 		}),
