@@ -3,6 +3,15 @@ import { OidcError } from "./errors.js";
 import { decodeJwtPayload } from "./jwt.js";
 import { buildClientAuthHeaders } from "./auth.js";
 
+/**
+ * Builds an HTTP request to exchange an authorization code for tokens (RFC 6749 §4.1.3).
+ *
+ * @param discovery - The OIDC discovery document containing the token endpoint.
+ * @param config - Client configuration (clientId, redirectUri, optional clientSecret).
+ * @param code - The authorization code received from the authorization endpoint.
+ * @param codeVerifier - The PKCE code verifier that matches the code_challenge sent earlier (RFC 7636 §4.5).
+ * @returns An {@link HttpRequest} ready to be sent to the token endpoint.
+ */
 // RFC 6749 §4.1.3: Access Token Request
 // RFC 7636 §4.5: code_verifier MUST be sent when code_challenge was used
 export function buildTokenRequest(
@@ -34,6 +43,14 @@ export function buildTokenRequest(
   };
 }
 
+/**
+ * Builds an HTTP request to refresh an access token using a refresh token (RFC 6749 §6).
+ *
+ * @param discovery - The OIDC discovery document containing the token endpoint.
+ * @param config - Client configuration (clientId, optional clientSecret).
+ * @param refreshToken - The refresh token previously issued by the authorization server.
+ * @returns An {@link HttpRequest} ready to be sent to the token endpoint.
+ */
 // RFC 6749 §6: Refreshing an Access Token
 export function buildRefreshRequest(
   discovery: OidcDiscovery,
@@ -57,6 +74,17 @@ export function buildRefreshRequest(
   };
 }
 
+/**
+ * Parses and validates a raw token endpoint response into a {@link TokenSet} (RFC 6749 §5.1).
+ * Validates the nonce claim in the ID token when provided (OpenID Connect Core 1.0 §3.1.3.7).
+ * Computes `expires_at` as an absolute Unix timestamp when `expires_in` is present.
+ *
+ * @param data - The parsed JSON body from the token endpoint response.
+ * @param expectedNonce - If provided, the nonce claim in the ID token must match this value.
+ * @returns A validated {@link TokenSet} with computed `expires_at`.
+ * @throws {@link OidcError} with code `TOKEN_EXCHANGE_ERROR` if the response is malformed or missing `access_token`.
+ * @throws {@link OidcError} with code `NONCE_MISMATCH` if the ID token nonce does not match.
+ */
 // RFC 6749 §5.1: Successful Response
 // OIDC Core §3.1.3.7: nonce in ID token MUST match the nonce sent in the authorization request
 export function parseTokenResponse(data: unknown, expectedNonce?: string): TokenSet {

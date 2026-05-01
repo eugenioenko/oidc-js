@@ -2,6 +2,18 @@ import type { OidcConfig, OidcDiscovery, HttpRequest, IntrospectionResponse } fr
 import { OidcError } from "./errors.js";
 import { buildClientAuthHeaders } from "./auth.js";
 
+/**
+ * Builds an HTTP request for token introspection using HTTP Basic client authentication.
+ * Returns `null` if the discovery document has no `introspection_endpoint`.
+ *
+ * @param discovery - The OIDC discovery document.
+ * @param config - The OIDC client configuration (must include `clientSecret`).
+ * @param token - The token to introspect.
+ * @returns An {@link HttpRequest} for the introspection endpoint, or `null` if the endpoint is not available.
+ * @throws {@link OidcError} with code `MISSING_CLIENT_SECRET` if `clientSecret` is not configured.
+ *
+ * @see RFC 7662 §2.1 -- Introspection Request
+ */
 // RFC 7662 §2.1: Introspection Request
 export function buildIntrospectRequest(
   discovery: OidcDiscovery,
@@ -29,6 +41,15 @@ export function buildIntrospectRequest(
   };
 }
 
+/**
+ * Parses and validates a token introspection response, ensuring the required `active` field is present.
+ *
+ * @param data - The parsed JSON body returned from the introspection endpoint.
+ * @returns The validated {@link IntrospectionResponse}.
+ * @throws {@link OidcError} with code `TOKEN_EXCHANGE_ERROR` if the response is not an object or `active` is missing.
+ *
+ * @see RFC 7662 §2.2 -- Introspection Response
+ */
 // RFC 7662 §2.2: Introspection Response
 export function parseIntrospectResponse(data: unknown): IntrospectionResponse {
   if (!data || typeof data !== "object") {
