@@ -1,0 +1,13 @@
+{
+  "name": "oidc-js-monorepo",
+  "private": true,
+  "description": "Zero-dependency OIDC client libraries",
+  "scripts": {
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "lint": "pnpm -r lint"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["esbuild"]
+  }
+}

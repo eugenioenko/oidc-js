@@ -1,0 +1,46 @@
+{
+  "name": "oidc-js-react",
+  "version": "0.0.1",
+  "description": "React bindings for oidc-js",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run",
+    "lint": "tsc --noEmit"
+  },
+  "keywords": [
+    "oidc",
+    "openid",
+    "oauth2",
+    "react",
+    "authentication"
+  ],
+  "author": "eugenioenko",
+  "license": "MIT",
+  "dependencies": {
+    "oidc-js": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "react": "^19.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.5.0",
+    "vitest": "^3.0.0"
+  }
+}

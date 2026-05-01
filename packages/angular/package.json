@@ -1,0 +1,8 @@
+{
+  "name": "oidc-js-angular",
+  "version": "0.0.1",
+  "description": "Angular bindings for oidc-js (coming soon)",
+  "license": "MIT",
+  "author": "eugenioenko",
+  "keywords": ["oidc", "openid", "oauth2", "angular", "authentication"]
+}
