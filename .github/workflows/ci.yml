@@ -58,13 +58,3 @@ jobs:
 
       - name: E2E tests
         run: pnpm --filter e2e-tests test
-
-      - name: Upload E2E artifacts
-        uses: actions/upload-artifact@v4
-        if: failure()
-        with:
-          name: e2e-report
-          path: |
-            tests/e2e/playwright-report/
-            tests/e2e/.autentico/autentico.log
-          retention-days: 7
