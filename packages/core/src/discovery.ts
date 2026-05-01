@@ -6,11 +6,14 @@ export function buildDiscoveryUrl(issuer: string): string {
   return `${issuer.replace(/\/+$/, "")}/.well-known/openid-configuration`;
 }
 
-const REQUIRED_FIELDS: (keyof OidcDiscovery)[] = [
+const REQUIRED_STRING_FIELDS: (keyof OidcDiscovery)[] = [
   "issuer",
   "authorization_endpoint",
   "token_endpoint",
   "jwks_uri",
+];
+
+const REQUIRED_ARRAY_FIELDS: (keyof OidcDiscovery)[] = [
   "response_types_supported",
   "subject_types_supported",
   "id_token_signing_alg_values_supported",
@@ -24,9 +27,15 @@ export function parseDiscoveryResponse(data: unknown, expectedIssuer: string): O
 
   const doc = data as Record<string, unknown>;
 
-  for (const field of REQUIRED_FIELDS) {
-    if (doc[field] === undefined || doc[field] === null) {
-      throw new OidcError("DISCOVERY_INVALID", `Missing required field: ${field}`);
+  for (const field of REQUIRED_STRING_FIELDS) {
+    if (typeof doc[field] !== "string") {
+      throw new OidcError("DISCOVERY_INVALID", `Missing or invalid required field: ${field}`);
+    }
+  }
+
+  for (const field of REQUIRED_ARRAY_FIELDS) {
+    if (!Array.isArray(doc[field])) {
+      throw new OidcError("DISCOVERY_INVALID", `Missing or invalid required field: ${field}`);
     }
   }
 

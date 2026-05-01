@@ -72,4 +72,48 @@ describe("parseDiscoveryResponse", () => {
     const result = parseDiscoveryResponse(VALID_DISCOVERY, "https://auth.example.com/");
     expect(result.issuer).toBe("https://auth.example.com");
   });
+
+  it("throws DISCOVERY_INVALID when string fields have wrong type", () => {
+    const badIssuer = { ...VALID_DISCOVERY, issuer: 123 };
+    try {
+      parseDiscoveryResponse(badIssuer, "https://auth.example.com");
+      expect.fail("should have thrown");
+    } catch (e) {
+      expect(e).toBeInstanceOf(OidcError);
+      expect((e as OidcError).code).toBe("DISCOVERY_INVALID");
+      expect((e as OidcError).message).toContain("issuer");
+    }
+
+    const badEndpoint = { ...VALID_DISCOVERY, token_endpoint: true };
+    try {
+      parseDiscoveryResponse(badEndpoint, "https://auth.example.com");
+      expect.fail("should have thrown");
+    } catch (e) {
+      expect(e).toBeInstanceOf(OidcError);
+      expect((e as OidcError).code).toBe("DISCOVERY_INVALID");
+      expect((e as OidcError).message).toContain("token_endpoint");
+    }
+  });
+
+  it("throws DISCOVERY_INVALID when array fields have wrong type", () => {
+    const badArray = { ...VALID_DISCOVERY, response_types_supported: "code" };
+    try {
+      parseDiscoveryResponse(badArray, "https://auth.example.com");
+      expect.fail("should have thrown");
+    } catch (e) {
+      expect(e).toBeInstanceOf(OidcError);
+      expect((e as OidcError).code).toBe("DISCOVERY_INVALID");
+      expect((e as OidcError).message).toContain("response_types_supported");
+    }
+
+    const badSubjects = { ...VALID_DISCOVERY, subject_types_supported: null };
+    try {
+      parseDiscoveryResponse(badSubjects, "https://auth.example.com");
+      expect.fail("should have thrown");
+    } catch (e) {
+      expect(e).toBeInstanceOf(OidcError);
+      expect((e as OidcError).code).toBe("DISCOVERY_INVALID");
+      expect((e as OidcError).message).toContain("subject_types_supported");
+    }
+  });
 });

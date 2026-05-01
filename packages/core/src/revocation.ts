@@ -1,4 +1,5 @@
 import type { OidcConfig, OidcDiscovery, HttpRequest } from "./types.js";
+import { buildClientAuthHeaders } from "./auth.js";
 
 // RFC 7009 §2.1: Token Revocation Request
 export function buildRevocationRequest(
@@ -18,20 +19,13 @@ export function buildRevocationRequest(
     body.set("token_type_hint", tokenTypeHint);
   }
 
-  const headers: Record<string, string> = {
-    "Content-Type": "application/x-www-form-urlencoded",
-  };
-
-  // RFC 6749 §2.3.1: confidential clients authenticate via Basic auth
-  if (config.clientSecret) {
-    const credentials = btoa(`${config.clientId}:${config.clientSecret}`);
-    headers["Authorization"] = `Basic ${credentials}`;
-  }
-
   return {
     url: discovery.revocation_endpoint,
     method: "POST",
-    headers,
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      ...buildClientAuthHeaders(config),
+    },
     body: body.toString(),
   };
 }

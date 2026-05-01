@@ -1,13 +1,7 @@
 import type { OidcConfig, OidcDiscovery, HttpRequest, TokenSet } from "./types.js";
 import { OidcError } from "./errors.js";
 import { decodeJwtPayload } from "./jwt.js";
-
-function buildClientAuth(config: OidcConfig): Record<string, string> {
-  if (!config.clientSecret) return {};
-  // RFC 6749 §2.3.1: HTTP Basic authentication with client_id:client_secret
-  const credentials = btoa(`${config.clientId}:${config.clientSecret}`);
-  return { Authorization: `Basic ${credentials}` };
-}
+import { buildClientAuthHeaders } from "./auth.js";
 
 // RFC 6749 §4.1.3: Access Token Request
 // RFC 7636 §4.5: code_verifier MUST be sent when code_challenge was used
@@ -34,7 +28,7 @@ export function buildTokenRequest(
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
-      ...buildClientAuth(config),
+      ...buildClientAuthHeaders(config),
     },
     body: body.toString(),
   };
@@ -57,7 +51,7 @@ export function buildRefreshRequest(
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
-      ...buildClientAuth(config),
+      ...buildClientAuthHeaders(config),
     },
     body: body.toString(),
   };

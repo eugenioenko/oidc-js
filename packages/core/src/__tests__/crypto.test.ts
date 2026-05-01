@@ -8,6 +8,7 @@ import {
   base64UrlEncode,
   base64UrlDecode,
 } from "../crypto.js";
+import { OidcError } from "../errors.js";
 
 describe("base64UrlEncode / base64UrlDecode", () => {
   it("roundtrip preserves data", () => {
@@ -23,6 +24,16 @@ describe("base64UrlEncode / base64UrlDecode", () => {
     expect(encoded).not.toContain("+");
     expect(encoded).not.toContain("/");
     expect(encoded).not.toContain("=");
+  });
+
+  it("throws OidcError INVALID_JWT on invalid base64 input", () => {
+    try {
+      base64UrlDecode("!!!invalid-base64!!!");
+      expect.fail("should have thrown");
+    } catch (e) {
+      expect(e).toBeInstanceOf(OidcError);
+      expect((e as OidcError).code).toBe("INVALID_JWT");
+    }
   });
 });
 
@@ -42,6 +53,12 @@ describe("generateRandom", () => {
     const a = generateRandom();
     const b = generateRandom();
     expect(a).not.toBe(b);
+  });
+
+  it("produces uniform distribution without modulo bias", () => {
+    const result = generateRandom(1000);
+    expect(result.length).toBe(1000);
+    expect(result).toMatch(/^[A-Za-z0-9\-._~]+$/);
   });
 });
 

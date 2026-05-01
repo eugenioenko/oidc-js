@@ -19,6 +19,7 @@ export { buildRevocationRequest } from "./revocation.js";
 export { buildLogoutUrl } from "./logout.js";
 export { decodeJwtPayload, parseIdTokenClaims } from "./jwt.js";
 export { computeExpiresAt, isTokenExpired, timeUntilExpiry } from "./token-utils.js";
+export { buildClientAuthHeaders } from "./auth.js";
 
 export type {
   OidcConfig,
