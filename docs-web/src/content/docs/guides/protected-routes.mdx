@@ -1,0 +1,91 @@
+---
+title: Protected Routes
+description: How to protect routes and pages that require authentication.
+---
+
+import { Aside } from "@astrojs/starlight/components";
+
+## RequireAuth component
+
+Wrap any content that should only be visible to authenticated users:
+
+```tsx
+import { RequireAuth } from "oidc-js-react";
+
+function Dashboard() {
+  return (
+    <RequireAuth>
+      <h1>Dashboard</h1>
+      <p>Only visible when authenticated.</p>
+    </RequireAuth>
+  );
+}
+```
+
+If the user is not authenticated, `RequireAuth` automatically redirects to the IdP login page.
+
+## With React Router
+
+```tsx
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider, RequireAuth } from "oidc-js-react";
+
+function App() {
+  return (
+    <AuthProvider config={config}>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route
+            path="/dashboard"
+            element={
+              <RequireAuth>
+                <Dashboard />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <RequireAuth>
+                <Settings />
+              </RequireAuth>
+            }
+          />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
+  );
+}
+```
+
+## Loading fallback
+
+Show a custom loading state while authentication is being checked:
+
+```tsx
+<RequireAuth fallback={<Spinner />}>
+  <Dashboard />
+</RequireAuth>
+```
+
+## Automatic token refresh
+
+By default, `RequireAuth` checks if the access token is expired on each render. If it is, it silently refreshes using the refresh token before rendering the children.
+
+If the refresh fails (e.g., the refresh token was revoked), it redirects to login.
+
+```tsx
+// Disable auto-refresh if you want to handle it manually
+<RequireAuth autoRefresh={false}>
+  <Dashboard />
+</RequireAuth>
+```
+
+## Deep linking
+
+When an unauthenticated user navigates to a protected route, `RequireAuth` saves the current URL and restores it after login. The user lands on the page they originally requested, not the home page.
+
+<Aside type="tip">
+If you use a custom `onLogin` callback on `AuthProvider`, you're responsible for handling the `returnTo` URL yourself (e.g., with `navigate(returnTo)` from your router).
+</Aside>

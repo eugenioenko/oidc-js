@@ -1,0 +1,85 @@
+---
+title: Login & Logout
+description: How to implement login and logout with oidc-js.
+---
+
+import { Aside } from "@astrojs/starlight/components";
+
+## Login
+
+Call `actions.login()` to start the Authorization Code + PKCE flow. The user is redirected to the IdP's login page, then back to your `redirectUri` with an authorization code.
+
+```tsx
+import { useAuth } from "oidc-js-react";
+
+function LoginButton() {
+  const { actions } = useAuth();
+  return <button onClick={() => actions.login()}>Log in</button>;
+}
+```
+
+### Return to the current page
+
+By default, `login()` captures the current URL (`pathname + search + hash`) and restores it after the callback. You can override this:
+
+```tsx
+actions.login({ returnTo: "/dashboard" });
+```
+
+### Extra authorization parameters
+
+Pass additional parameters to the authorization endpoint:
+
+```tsx
+actions.login({
+  extraParams: {
+    prompt: "consent",
+    login_hint: "user@example.com",
+  },
+});
+```
+
+## Logout
+
+Call `actions.logout()` to clear the local session and redirect to the IdP's end-session endpoint (if available via OIDC discovery).
+
+```tsx
+function LogoutButton() {
+  const { actions } = useAuth();
+  return <button onClick={() => actions.logout()}>Log out</button>;
+}
+```
+
+The logout flow:
+1. Clears all tokens and user state from memory
+2. Looks up the `end_session_endpoint` from the discovery document
+3. Redirects to the IdP with the `id_token_hint` and `post_logout_redirect_uri`
+4. The IdP ends the session and redirects back to your app
+
+<Aside type="note">
+If the IdP doesn't advertise an `end_session_endpoint`, the local state is still cleared but no redirect happens. The user's session at the IdP remains active.
+</Aside>
+
+## Checking authentication state
+
+```tsx
+function App() {
+  const { isAuthenticated, isLoading, error } = useAuth();
+
+  if (isLoading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error.message}</div>;
+  if (!isAuthenticated) return <LoginButton />;
+
+  return <AuthenticatedApp />;
+}
+```
+
+## In-memory session
+
+Tokens are stored in memory only — not in `localStorage` or `sessionStorage`. This means:
+
+- **Page reload clears the session.** The user must log in again.
+- **Tokens are never exposed to XSS.** No persistent storage to steal from.
+- **Each tab has its own session.** Opening a new tab starts unauthenticated.
+
+This is a deliberate security choice. If the IdP supports SSO sessions, the re-login is seamless (no credentials prompt).

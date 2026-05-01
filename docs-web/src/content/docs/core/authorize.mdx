@@ -1,0 +1,73 @@
+---
+title: Authorization
+description: Building authorization URLs and parsing callbacks.
+---
+
+## buildAuthUrl
+
+Constructs the authorization URL with PKCE parameters for the Authorization Code flow.
+
+```typescript
+import { buildAuthUrl, generatePkce, generateState, generateNonce } from "oidc-js-core";
+
+const pkce = await generatePkce();
+const state = generateState();
+const nonce = generateNonce();
+
+const url = buildAuthUrl(discovery, config, pkce, state, nonce);
+// Redirect the user: window.location.href = url;
+```
+
+**Parameters:**
+| Name | Type | Description |
+|---|---|---|
+| `discovery` | `OidcDiscovery` | Parsed discovery document |
+| `config` | `OidcConfig` | Client configuration |
+| `pkce` | `{ verifier, challenge }` | PKCE code verifier and challenge |
+| `state` | `string` | Random state parameter for CSRF protection |
+| `nonce` | `string` | Random nonce embedded in the ID token |
+| `extraParams` | `Record<string, string>` | Optional extra query parameters |
+
+**Returns:** `string` — the full authorization URL.
+
+**Throws:** `MISSING_REDIRECT_URI` if `config.redirectUri` is not set.
+
+## parseCallbackUrl
+
+Extracts the authorization code from the callback URL and validates the state parameter.
+
+```typescript
+import { parseCallbackUrl } from "oidc-js-core";
+
+const { code } = parseCallbackUrl(window.location.href, expectedState);
+```
+
+**Parameters:**
+| Name | Type | Description |
+|---|---|---|
+| `callbackUrl` | `string` | The full callback URL with query parameters |
+| `expectedState` | `string` | The state value sent in the authorization request |
+
+**Returns:** `{ code: string }` — the authorization code.
+
+**Throws:**
+- `STATE_MISMATCH` — the `state` parameter doesn't match
+- `MISSING_AUTH_CODE` — no `code` parameter in the URL
+- `AUTHORIZATION_ERROR` — the URL contains an `error` parameter
+
+## PKCE helpers
+
+```typescript
+import { generatePkce, generateState, generateNonce } from "oidc-js-core";
+
+// Generate a code verifier and its SHA-256 challenge
+const pkce = await generatePkce();
+// pkce.verifier = "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk"
+// pkce.challenge = "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM"
+
+// Generate random values for state and nonce
+const state = generateState(); // cryptographically random string
+const nonce = generateNonce(); // cryptographically random string
+```
+
+All random values are generated using the Web Crypto API (`crypto.getRandomValues`).

@@ -1,0 +1,58 @@
+---
+title: UserInfo
+description: Building UserInfo requests and parsing responses.
+---
+
+## buildUserinfoRequest
+
+Constructs a request to the UserInfo endpoint.
+
+```typescript
+import { buildUserinfoRequest } from "oidc-js-core";
+
+const req = buildUserinfoRequest(discovery, accessToken);
+// req = { url, method: "GET", headers: { Authorization: "Bearer ..." } }
+
+const response = await fetch(req.url, { headers: req.headers });
+```
+
+**Parameters:**
+| Name | Type | Description |
+|---|---|---|
+| `discovery` | `OidcDiscovery` | Parsed discovery document |
+| `accessToken` | `string` | A valid access token |
+
+**Returns:** `HttpRequest`
+
+## parseUserinfoResponse
+
+Validates the UserInfo response and returns an `OidcUser`.
+
+```typescript
+import { parseUserinfoResponse } from "oidc-js-core";
+
+const data = await response.json();
+const user = parseUserinfoResponse(data);
+// user.sub, user.email, user.name, etc.
+```
+
+**Parameters:**
+| Name | Type | Description |
+|---|---|---|
+| `data` | `unknown` | Raw JSON response from the UserInfo endpoint |
+
+**Returns:** `OidcUser`
+
+## OidcUser type
+
+```typescript
+interface OidcUser {
+  sub: string;
+  email?: string;
+  name?: string;
+  preferred_username?: string;
+  [claim: string]: unknown;  // Any additional claims
+}
+```
+
+The `sub` claim is always present (required by the OIDC spec). All other fields depend on the scopes requested and the IdP's configuration.

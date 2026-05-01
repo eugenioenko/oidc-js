@@ -1,0 +1,95 @@
+---
+title: useAuth
+description: React hook for accessing authentication state and actions.
+---
+
+`useAuth` is the primary hook for interacting with the OIDC authentication state. It must be called within an `AuthProvider`.
+
+## Usage
+
+```tsx
+import { useAuth } from "oidc-js-react";
+
+function Profile() {
+  const { isAuthenticated, isLoading, user, tokens, error, actions } = useAuth();
+
+  if (isLoading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error.message}</div>;
+  if (!isAuthenticated) return <div>Not logged in</div>;
+
+  return (
+    <div>
+      <p>Hello, {user?.profile?.name}</p>
+      <button onClick={() => actions.logout()}>Log out</button>
+    </div>
+  );
+}
+```
+
+## Return value
+
+```typescript
+interface AuthContextValue {
+  config: OidcConfig;
+  user: AuthUser | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  error: Error | null;
+  tokens: AuthTokens;
+  actions: AuthActions;
+}
+```
+
+### user
+
+```typescript
+interface AuthUser {
+  claims: IdTokenClaims;     // Decoded ID token payload
+  profile: OidcUser | null;  // UserInfo endpoint response
+}
+```
+
+`null` when not authenticated. After login, `claims` is always populated from the ID token. `profile` is populated from the UserInfo endpoint if `fetchProfile` is `true` (default).
+
+### tokens
+
+```typescript
+interface AuthTokens {
+  access: string | null;     // Access token
+  id: string | null;         // ID token
+  refresh: string | null;    // Refresh token
+  expiresAt: number | null;  // Expiry timestamp in milliseconds
+}
+```
+
+Tokens are stored in memory only. They are never persisted to `localStorage` or `sessionStorage`.
+
+### actions
+
+```typescript
+interface AuthActions {
+  login: (options?: LoginOptions) => void;
+  logout: () => void;
+  refresh: () => Promise<void>;
+  fetchProfile: () => Promise<void>;
+}
+```
+
+| Action | Description |
+|---|---|
+| `login(options?)` | Redirect to IdP login. Options: `returnTo`, `extraParams` |
+| `logout()` | Clear state and redirect to IdP logout endpoint |
+| `refresh()` | Exchange refresh token for new tokens. Throws if no refresh token. |
+| `fetchProfile()` | Fetch the UserInfo endpoint and update `user.profile` |
+
+### isLoading
+
+`true` during initialization (discovery fetch, callback handling). `false` once the auth state is determined. Always check `isLoading` before rendering auth-dependent UI.
+
+### error
+
+Set when:
+- The IdP returns an error in the callback URL (`?error=access_denied`)
+- The state parameter doesn't match (CSRF protection)
+- Token exchange fails
+- Discovery document is invalid

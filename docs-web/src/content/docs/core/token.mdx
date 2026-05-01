@@ -1,0 +1,93 @@
+---
+title: Token
+description: Token exchange and refresh request building and response parsing.
+---
+
+## buildTokenRequest
+
+Constructs the token exchange request for the Authorization Code flow.
+
+```typescript
+import { buildTokenRequest } from "oidc-js-core";
+
+const req = buildTokenRequest(discovery, config, authorizationCode, codeVerifier);
+// req = { url, method: "POST", headers, body }
+
+const response = await fetch(req.url, {
+  method: req.method,
+  headers: req.headers,
+  body: req.body,
+});
+```
+
+**Parameters:**
+| Name | Type | Description |
+|---|---|---|
+| `discovery` | `OidcDiscovery` | Parsed discovery document |
+| `config` | `OidcConfig` | Client configuration |
+| `code` | `string` | Authorization code from the callback |
+| `codeVerifier` | `string` | PKCE code verifier |
+
+**Returns:** `HttpRequest` — ready to pass to `fetch`.
+
+## buildRefreshRequest
+
+Constructs a token refresh request.
+
+```typescript
+import { buildRefreshRequest } from "oidc-js-core";
+
+const req = buildRefreshRequest(discovery, config, refreshToken);
+const response = await fetch(req.url, {
+  method: req.method,
+  headers: req.headers,
+  body: req.body,
+});
+```
+
+**Parameters:**
+| Name | Type | Description |
+|---|---|---|
+| `discovery` | `OidcDiscovery` | Parsed discovery document |
+| `config` | `OidcConfig` | Client configuration |
+| `refreshToken` | `string` | The refresh token |
+
+**Returns:** `HttpRequest`
+
+## parseTokenResponse
+
+Validates and parses a token endpoint response.
+
+```typescript
+import { parseTokenResponse } from "oidc-js-core";
+
+const data = await response.json();
+const tokenSet = parseTokenResponse(data, expectedNonce);
+```
+
+**Parameters:**
+| Name | Type | Description |
+|---|---|---|
+| `data` | `unknown` | Raw JSON response from the token endpoint |
+| `nonce` | `string` | Expected nonce from the ID token (optional for refresh) |
+
+**Returns:** `TokenSet` — includes `access_token`, `token_type`, optional `refresh_token`, `id_token`, `expires_in`, and computed `expires_at`.
+
+**Throws:**
+- `TOKEN_EXCHANGE_ERROR` — response contains an `error` field
+- `NONCE_MISMATCH` — the ID token nonce doesn't match (when nonce is provided)
+
+## HttpRequest type
+
+All `build*Request` functions return this type:
+
+```typescript
+interface HttpRequest {
+  url: string;
+  method: string;
+  headers: Record<string, string>;
+  body?: string;
+}
+```
+
+This decouples request construction from execution — you can use `fetch`, `axios`, Angular's `HttpClient`, or any HTTP library.

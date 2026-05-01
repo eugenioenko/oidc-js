@@ -1,0 +1,129 @@
+---
+title: Types
+description: TypeScript type definitions exported by oidc-js-core.
+---
+
+## OidcConfig
+
+Configuration for the OIDC client.
+
+```typescript
+interface OidcConfig {
+  issuer: string;                    // IdP base URL
+  clientId: string;                  // Registered client ID
+  clientSecret?: string;             // For confidential clients
+  redirectUri?: string;              // Callback URL after login
+  scopes?: string[];                 // Requested scopes
+  postLogoutRedirectUri?: string;    // Redirect after logout
+}
+```
+
+- **Public clients** (SPAs): `clientId` + `redirectUri`, no `clientSecret`
+- **Confidential clients** (server-side): `clientId` + `clientSecret`, `redirectUri` optional
+
+## TokenResponse
+
+Raw response from the token endpoint.
+
+```typescript
+interface TokenResponse {
+  access_token: string;
+  token_type: string;
+  expires_in?: number;
+  refresh_token?: string;
+  id_token?: string;
+  scope?: string;
+}
+```
+
+## TokenSet
+
+Extends `TokenResponse` with a computed `expires_at` timestamp.
+
+```typescript
+interface TokenSet extends TokenResponse {
+  expires_at?: number;    // Unix timestamp (seconds)
+}
+```
+
+## AuthState
+
+State saved to `sessionStorage` during the authorization flow.
+
+```typescript
+interface AuthState {
+  codeVerifier: string;   // PKCE code verifier
+  state: string;          // Random state for CSRF protection
+  nonce: string;          // Random nonce for ID token replay protection
+  redirectUri: string;    // The redirect URI used in the request
+  returnTo?: string;      // URL to restore after login
+}
+```
+
+## OidcUser
+
+User profile from the UserInfo endpoint.
+
+```typescript
+interface OidcUser {
+  sub: string;
+  email?: string;
+  name?: string;
+  preferred_username?: string;
+  [claim: string]: unknown;
+}
+```
+
+## HttpRequest
+
+Describes an HTTP request without executing it.
+
+```typescript
+interface HttpRequest {
+  url: string;
+  method: string;
+  headers: Record<string, string>;
+  body?: string;
+}
+```
+
+## IntrospectionResponse
+
+Response from the token introspection endpoint (RFC 7662).
+
+```typescript
+interface IntrospectionResponse {
+  active: boolean;
+  scope?: string;
+  client_id?: string;
+  username?: string;
+  token_type?: string;
+  exp?: number;
+  iat?: number;
+  sub?: string;
+  aud?: string;
+  iss?: string;
+}
+```
+
+## OidcError
+
+All errors thrown by core functions.
+
+```typescript
+class OidcError extends Error {
+  code: OidcErrorCode;
+}
+
+type OidcErrorCode =
+  | "DISCOVERY_INVALID"
+  | "DISCOVERY_ISSUER_MISMATCH"
+  | "STATE_MISMATCH"
+  | "NONCE_MISMATCH"
+  | "MISSING_AUTH_CODE"
+  | "INVALID_JWT"
+  | "TOKEN_EXCHANGE_ERROR"
+  | "AUTHORIZATION_ERROR"
+  | "MISSING_REDIRECT_URI"
+  | "MISSING_CLIENT_SECRET";
+```
