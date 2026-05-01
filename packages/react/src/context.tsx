@@ -54,9 +54,11 @@ export function AuthProvider({
       const s = client.state;
       if (s.error) onErrorRef.current?.(s.error);
       if (returnTo) {
-        onLoginRef.current
-          ? onLoginRef.current(returnTo)
-          : window.history.replaceState({}, "", returnTo);
+        if (onLoginRef.current) {
+          onLoginRef.current(returnTo);
+        } else {
+          window.history.replaceState({}, "", returnTo);
+        }
       }
     });
 
