@@ -68,6 +68,20 @@ Core uses **Vite 8** (library mode) for dual ESM/CJS output with `vite-plugin-dt
 
 Every validation check and return path has an inline RFC annotation: `// RFC NNNN §X.Y: description`. RFC source documents are in `rfc/`. Tests quote the RFC section being validated in test names.
 
+## Decision Log
+
+After every merged PR that involves a design or architectural decision, update `decisions.md` at the repo root. Each entry should capture what was decided, what alternatives were considered, and why the chosen approach won. This serves as an informal ADR (Architecture Decision Record) and as source material for future articles.
+
+Format:
+```
+### NNNN - Title (YYYY-MM-DD)
+
+**Context**: what prompted the decision
+**Alternatives considered**: what else was on the table
+**Decision**: what we chose
+**Rationale**: why
+```
+
 ## Design Principles
 
 - **Zero dependencies** in core — only Web Crypto API
