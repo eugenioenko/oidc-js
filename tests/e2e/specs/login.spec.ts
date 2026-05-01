@@ -3,8 +3,6 @@ import { test, expect, type Page } from "@playwright/test";
 const AUTENTICO_URL = "http://localhost:9999";
 const TEST_USER = "testuser";
 const TEST_PASS = "TestUser123!";
-const ADMIN_USER = "admin";
-const ADMIN_PASS = "TestAdmin123!";
 
 type TrafficEntry = { method: string; path: string };
 
@@ -52,36 +50,6 @@ async function login(page: Page) {
   await page.click('button[type="submit"]');
   await page.waitForURL(/localhost:5173/);
   await expect(page.getByTestId("authenticated")).toBeVisible();
-}
-
-async function getAdminToken(): Promise<string> {
-  const res = await fetch(`${AUTENTICO_URL}/oauth2/token`, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      grant_type: "password",
-      username: ADMIN_USER,
-      password: ADMIN_PASS,
-      client_id: "autentico-admin",
-      scope: "openid",
-    }),
-  });
-  const data = (await res.json()) as { access_token: string };
-  return data.access_token;
-}
-
-async function setClientTokenExpiration(expiration: string | null) {
-  const token = await getAdminToken();
-  await fetch(`${AUTENTICO_URL}/admin/api/clients/e2e-test-app`, {
-    method: "PUT",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      access_token_expiration: expiration,
-    }),
-  });
 }
 
 async function revokeToken(token: string, hint?: string) {
@@ -345,63 +313,66 @@ test.describe("RequireAuth", () => {
 
   test("auto-refreshes expired token when navigating to protected page", async ({ page }) => {
     const traffic = trackTraffic(page);
-    await setClientTokenExpiration("3s");
-    try {
-      await login(page);
-      await page.getByTestId("link-protected-a").click();
-      await expect(page.getByTestId("protected-a")).toBeVisible();
+    await login(page);
+    const expiresAt = Number(await page.getByTestId("expires-at").textContent());
 
-      // Wait for token to expire
-      await page.waitForTimeout(5000);
+    await page.getByTestId("link-protected-a").click();
+    await expect(page.getByTestId("protected-a")).toBeVisible();
 
-      // Navigate to second protected page via client-side link — RequireAuth should auto-refresh
-      await page.getByTestId("link-protected-b").click();
-      await expect(page.getByTestId("protected-b")).toBeVisible({ timeout: 10_000 });
+    // Advance clock 1ms past token expiry so RequireAuth detects it as expired.
+    // Save the real Date.now so we can restore it after the refresh fires.
+    await page.evaluate((exp) => {
+      (window as any).__realDateNow = Date.now;
+      Date.now = () => exp + 1;
+    }, expiresAt);
 
-      expect(traffic.requests()).toEqual([
-        ...LOGIN_REQUESTS,
-        "POST /oauth2/token",
-        "GET /oauth2/userinfo",
-        "POST /oauth2/token",
-        "GET /oauth2/userinfo",
-      ]);
-      expect(traffic.navigations()).toEqual(LOGIN_NAVIGATIONS);
-    } finally {
-      await setClientTokenExpiration(null);
-    }
+    // Restore real clock once the refresh request fires, so the re-render
+    // after refresh uses real time and sees the new token as valid.
+    page.on("request", (req) => {
+      if (req.url().includes("/oauth2/token") && req.resourceType() === "fetch") {
+        page.evaluate(() => { Date.now = (window as any).__realDateNow; });
+      }
+    });
+
+    // Navigate to second protected page — RequireAuth should auto-refresh
+    await page.getByTestId("link-protected-b").click();
+    await expect(page.getByTestId("protected-b")).toBeVisible({ timeout: 10_000 });
+
+    expect(traffic.requests()).toEqual([
+      ...LOGIN_REQUESTS,
+      "POST /oauth2/token",
+      "GET /oauth2/userinfo",
+    ]);
+    expect(traffic.navigations()).toEqual(LOGIN_NAVIGATIONS);
   });
 
   test("redirects to login when refresh token is revoked", async ({ page }) => {
     const traffic = trackTraffic(page);
-    await setClientTokenExpiration("5s");
-    try {
-      await login(page);
+    await login(page);
 
-      const refreshToken = await page.getByTestId("refresh-token-value").textContent();
+    const refreshToken = await page.getByTestId("refresh-token-value").textContent();
+    const expiresAt = Number(await page.getByTestId("expires-at").textContent());
 
-      await page.getByTestId("link-protected-a").click();
-      await expect(page.getByTestId("protected-a")).toBeVisible();
+    await page.getByTestId("link-protected-a").click();
+    await expect(page.getByTestId("protected-a")).toBeVisible();
 
-      await revokeToken(refreshToken!, "refresh_token");
+    await revokeToken(refreshToken!, "refresh_token");
 
-      // Wait for access token to expire
-      await page.waitForTimeout(7000);
+    // Advance clock 1ms past token expiry
+    await page.evaluate((exp) => { Date.now = () => exp + 1; }, expiresAt);
 
-      // Navigate to second protected page — refresh should fail, triggering login redirect
-      await page.getByTestId("link-protected-b").click();
-      await expect(page.locator('input[name="username"]')).toBeVisible({ timeout: 15_000 });
+    // Navigate to second protected page — refresh should fail, triggering login redirect
+    await page.getByTestId("link-protected-b").click();
+    await expect(page.locator('input[name="username"]')).toBeVisible({ timeout: 15_000 });
 
-      // Failed refresh POST + redirect to authorize
-      expect(traffic.requests()).toEqual([
-        ...LOGIN_REQUESTS,
-        "POST /oauth2/token",
-      ]);
-      expect(traffic.navigations()).toEqual([
-        ...LOGIN_NAVIGATIONS,
-        "/oauth2/authorize",
-      ]);
-    } finally {
-      await setClientTokenExpiration(null);
-    }
+    // Failed refresh POST + redirect to authorize
+    expect(traffic.requests()).toEqual([
+      ...LOGIN_REQUESTS,
+      "POST /oauth2/token",
+    ]);
+    expect(traffic.navigations()).toEqual([
+      ...LOGIN_NAVIGATIONS,
+      "/oauth2/authorize",
+    ]);
   });
 });

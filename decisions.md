@@ -184,7 +184,7 @@ Architectural and design decisions for the oidc-js project. Each entry captures 
 
 **Rationale**: We control both sides of the OIDC flow. Mocking the IdP defeats the purpose of E2E tests. Using our own IdP means we can configure it exactly as needed (CORS, token expiration, client settings) via the admin API. The test app for each framework adapter is separate, but the Autentico setup is identical.
 
-### 016 - Short TTL for RequireAuth auto-refresh E2E test (2026-04-30)
+### 016 - Clock manipulation for RequireAuth auto-refresh E2E test (2026-04-30, updated 2026-05-01)
 
 **Context**: Needed to test that RequireAuth automatically refreshes an expired access token when navigating between protected pages. The challenge is triggering token expiration deterministically without flaky timing.
 
@@ -193,10 +193,11 @@ Architectural and design decisions for the oidc-js project. Each entry captures 
 2. Expose a test hook on AuthProvider — compromises library API security
 3. Short access token TTL (1s) via per-client override, wait 5s — simple, wide margin
 4. Revoke access token server-side — client doesn't know it's revoked
+5. Override `Date.now` in the browser via `page.evaluate` to jump past `expiresAt`
 
-**Decision**: Option 3. Set `access_token_expiration: "1s"` on the test client via Autentico's admin API before the test, wait 5 seconds for expiration, navigate to a second RequireAuth page. Reset after the test.
+**Decision**: Option 5. After login, read `tokens.expiresAt` from the page, then `page.evaluate(() => { Date.now = () => expiresAt + 1000 })`. RequireAuth sees the token as expired instantly — no wait, no short TTL.
 
-**Rationale**: 5x margin (5s wait vs 1s TTL) is reliable even on slow CI. No changes to the library API. Per-client override means other tests aren't affected. The test verifies the real flow: token expires → RequireAuth detects `expiresAt < now` → calls refresh → gets new tokens → renders protected content.
+**Rationale**: The original approach (option 3) failed on slow CI — with a 1-3s TTL, the token expired during the login flow itself before the test reached the expiration check. Clock manipulation is instant and deterministic regardless of CI speed. It only affects the browser's `Date.now`, not the Autentico server clock, so the server still issues fresh tokens with real timestamps. The refreshed token appears valid because its `exp` is 15 minutes from real server time, which is far ahead of our faked `Date.now` (only 1s past the old token's expiry).
 
 ### 017 - Token expiration buffer on AuthProvider (2026-04-30)
 
