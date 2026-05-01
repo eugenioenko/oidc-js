@@ -11,7 +11,7 @@ Existing OIDC libraries are either too complex ([oidc-client-ts](https://github.
 | Package | Description | Status |
 |---------|-------------|--------|
 | [`oidc-js-core`](./packages/core) | Pure functions for OIDC protocol operations | Published |
-| [`oidc-js`](./packages/vanilla) | Convenience client with `fetch` + `sessionStorage` | Planned |
+| [`oidc-js`](./packages/client) | Framework-agnostic client with `fetch` + `sessionStorage` | Published |
 | [`oidc-js-react`](./packages/react) | React provider, hooks, and route guards | Published |
 | [`oidc-js-angular`](./packages/angular) | Angular service, guard, and interceptor | Planned |
 | [`oidc-js-vue`](./packages/vue) | Vue plugin and composables | Planned |
@@ -323,6 +323,24 @@ Every validation and return path in the source code is annotated with the specif
 - [OpenID Connect Core 1.0](https://openid.net/specs/openid-connect-core-1_0.html)
 - [OpenID Connect Discovery 1.0](https://openid.net/specs/openid-connect-discovery-1_0.html)
 - [OpenID Connect RP-Initiated Logout 1.0](https://openid.net/specs/openid-connect-rpinitiated-1_0.html)
+
+## Testing
+
+Every framework adapter runs against a real OIDC identity provider — no mocked endpoints, no simulated responses. The E2E suite spins up a live [Autentico](https://github.com/eugenioenko/autentico) instance, performs actual OAuth 2.0 flows through a browser, and asserts on both the UI state and the exact OIDC network traffic.
+
+**16 tests** cover the full OIDC lifecycle:
+
+| Category | Tests |
+|----------|-------|
+| Login flow | Unauthenticated state, full login with tokens, ID token claims, userinfo profile, fetchProfile toggle, logout, manual refresh |
+| Security | Tokens not in storage, back-button after logout |
+| Error handling | IdP error callback, CSRF state mismatch |
+| Deep linking | Login from protected page preserves returnTo |
+| RequireAuth | Protected content, multi-page navigation without re-auth, auto-refresh on expired token, login redirect on revoked refresh token |
+
+Every test also asserts the exact sequence of OIDC fetch requests (`discovery → token → userinfo`) and page navigations (`/oauth2/authorize`, `/oauth2/logout`) to verify no unexpected network calls are made. This catches regressions that UI-only assertions would miss — like a silent double-refresh or a missing discovery call.
+
+The test harness is framework-agnostic: each adapter implements the same `data-testid` contract and runs the same Playwright spec. See [`tests/e2e/harness.md`](./tests/e2e/harness.md) for the full contract.
 
 ## Development
 

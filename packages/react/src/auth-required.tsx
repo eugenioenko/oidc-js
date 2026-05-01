@@ -18,30 +18,26 @@ export function RequireAuth({
   const { isAuthenticated, isLoading, tokens, actions } = useAuth();
   const refreshAttempted = useRef(false);
 
-  const effectivelyAuthenticated =
-    isAuthenticated && (tokens.expiresAt === null || tokens.expiresAt > Date.now());
+  const isExpired = tokens.expiresAt !== null && tokens.expiresAt <= Date.now();
+  const needsAuth = !isAuthenticated || isExpired;
 
   useEffect(() => {
-    if (effectivelyAuthenticated) {
+    if (!needsAuth) {
       refreshAttempted.current = false;
+      return;
     }
-  }, [effectivelyAuthenticated]);
-
-  useEffect(() => {
-    if (isLoading || effectivelyAuthenticated) return;
+    if (isLoading) return;
 
     if (autoRefresh && !refreshAttempted.current) {
       refreshAttempted.current = true;
-      actions.refresh().catch(() => {
-        actions.login(loginOptions);
-      });
+      actions.refresh().catch(() => actions.login(loginOptions));
       return;
     }
 
     actions.login(loginOptions);
-  }, [isLoading, effectivelyAuthenticated, autoRefresh, actions, loginOptions]);
+  }, [isLoading, needsAuth, autoRefresh, actions, loginOptions]);
 
-  if (isLoading || !effectivelyAuthenticated) {
+  if (isLoading || needsAuth) {
     return fallback;
   }
 

@@ -8,9 +8,9 @@ import {
   useMemo,
   type ReactNode,
 } from "react";
-import { OidcClient, type OidcClientConfig, type AuthTokens, type LoginOptions } from "oidc-js";
+import { OidcClient, type AuthState, type LoginOptions } from "oidc-js";
 import type { OidcConfig } from "oidc-js-core";
-import type { AuthContextValue, AuthUser } from "./types.js";
+import type { AuthContextValue } from "./types.js";
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
@@ -22,8 +22,6 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
-const EMPTY_TOKENS: AuthTokens = { access: null, id: null, refresh: null, expiresAt: null };
-
 export function AuthProvider({
   config,
   fetchProfile = true,
@@ -32,11 +30,13 @@ export function AuthProvider({
   children,
 }: AuthProviderProps) {
   const clientRef = useRef<OidcClient | null>(null);
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-  const [tokens, setTokens] = useState<AuthTokens>(EMPTY_TOKENS);
+  const [state, setState] = useState<AuthState>(() => ({
+    user: null,
+    isAuthenticated: false,
+    isLoading: true,
+    error: null,
+    tokens: { access: null, id: null, refresh: null, expiresAt: null },
+  }));
 
   const onLoginRef = useRef(onLogin);
   onLoginRef.current = onLogin;
@@ -45,29 +45,18 @@ export function AuthProvider({
   onErrorRef.current = onError;
 
   useEffect(() => {
-    const clientConfig: OidcClientConfig = { ...config, fetchProfile };
-    const client = new OidcClient(clientConfig);
+    const client = new OidcClient({ ...config, fetchProfile });
     clientRef.current = client;
 
-    const unsub = client.subscribe((state) => {
-      setUser(state.user);
-      setIsAuthenticated(state.isAuthenticated);
-      setIsLoading(state.isLoading);
-      setError(state.error);
-      setTokens(state.tokens);
-    });
+    const unsub = client.subscribe(setState);
 
     client.init().then(({ returnTo }) => {
-      const state = client.state;
-      if (state.error) {
-        onErrorRef.current?.(state.error);
-      }
+      const s = client.state;
+      if (s.error) onErrorRef.current?.(s.error);
       if (returnTo) {
-        if (onLoginRef.current) {
-          onLoginRef.current(returnTo);
-        } else {
-          window.history.replaceState({}, "", returnTo);
-        }
+        onLoginRef.current
+          ? onLoginRef.current(returnTo)
+          : window.history.replaceState({}, "", returnTo);
       }
     });
 
@@ -102,8 +91,8 @@ export function AuthProvider({
   );
 
   const value: AuthContextValue = useMemo(
-    () => ({ config, user, isAuthenticated, isLoading, error, tokens, actions }),
-    [config, user, isAuthenticated, isLoading, error, tokens, actions],
+    () => ({ config, ...state, actions }),
+    [config, state, actions],
   );
 
   return <AuthContext value={value}>{children}</AuthContext>;
