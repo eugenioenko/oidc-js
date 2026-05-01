@@ -9,7 +9,7 @@ vi.mock("../context.js", () => ({
   useAuth: () => mockUseAuth(),
 }));
 
-const EMPTY_TOKENS = { access: null, id: null, refresh: null };
+const EMPTY_TOKENS = { access: null, id: null, refresh: null, expiresAt: null };
 
 function makeActions(overrides: Partial<AuthContextValue["actions"]> = {}) {
   return {
@@ -45,7 +45,9 @@ afterEach(() => {
 
 describe("RequireAuth", () => {
   it("renders children when authenticated", () => {
-    mockUseAuth.mockReturnValue(makeAuth({ isAuthenticated: true }));
+    mockUseAuth.mockReturnValue(
+      makeAuth({ isAuthenticated: true, tokens: { access: "token", id: null, refresh: null, expiresAt: Date.now() + 3600_000 } }),
+    );
 
     render(
       <RequireAuth>
@@ -103,6 +105,46 @@ describe("RequireAuth", () => {
     await waitFor(() => {
       expect(actions.login).toHaveBeenCalled();
     });
+  });
+
+  it("triggers refresh when access token is expired", async () => {
+    const actions = makeActions({
+      refresh: vi.fn().mockResolvedValue(undefined),
+    });
+    mockUseAuth.mockReturnValue(
+      makeAuth({
+        isAuthenticated: true,
+        tokens: { access: "expired", id: null, refresh: "valid-refresh", expiresAt: Date.now() - 60_000 },
+        actions,
+      }),
+    );
+
+    render(
+      <RequireAuth>
+        <div>Protected</div>
+      </RequireAuth>,
+    );
+
+    await waitFor(() => {
+      expect(actions.refresh).toHaveBeenCalled();
+    });
+  });
+
+  it("renders children when token is not expired", () => {
+    mockUseAuth.mockReturnValue(
+      makeAuth({
+        isAuthenticated: true,
+        tokens: { access: "token", id: null, refresh: null, expiresAt: Date.now() + 3600_000 },
+      }),
+    );
+
+    render(
+      <RequireAuth>
+        <div>Protected</div>
+      </RequireAuth>,
+    );
+
+    expect(screen.getByText("Protected")).toBeDefined();
   });
 
   it("renders fallback while refreshing", async () => {

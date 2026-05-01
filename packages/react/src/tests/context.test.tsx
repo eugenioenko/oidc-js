@@ -142,7 +142,7 @@ describe("AuthProvider", () => {
     expect(result.current.isAuthenticated).toBe(false);
     expect(result.current.user).toBeNull();
     expect(result.current.error).toBeNull();
-    expect(result.current.tokens).toEqual({ access: null, id: null, refresh: null });
+    expect(result.current.tokens).toEqual({ access: null, id: null, refresh: null, expiresAt: null });
   });
 
   it("exposes config in context", async () => {
@@ -252,13 +252,59 @@ describe("AuthProvider", () => {
     expect(result.current.error?.message).toContain("Missing auth state");
   });
 
-  it("sets error on discovery fetch failure", async () => {
-    fetchMock.mockResolvedValueOnce({
-      ok: false,
-      status: 500,
-      statusText: "Internal Server Error",
-      json: () => Promise.reject(new Error("no json")),
+  it("captures IdP error from callback URL and calls onError", async () => {
+    Object.defineProperty(window, "location", {
+      value: {
+        href: "http://localhost:3000?error=access_denied&error_description=User+denied+the+request",
+        search: "?error=access_denied&error_description=User+denied+the+request",
+        pathname: "/",
+      },
+      writable: true,
+      configurable: true,
     });
+
+    sessionStorage.setItem(
+      "oidc-js:auth-state",
+      JSON.stringify({
+        codeVerifier: "test-verifier",
+        state: "test-state",
+        nonce: "test-nonce",
+        redirectUri: "http://localhost:3000/callback",
+      }),
+    );
+
+    mockFetchResponses(DISCOVERY);
+
+    const onError = vi.fn();
+    const { result } = renderHook(() => useAuth(), {
+      wrapper: ({ children }: { children: ReactNode }) => (
+        <AuthProvider config={CONFIG} onError={onError}>{children}</AuthProvider>
+      ),
+    });
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    expect(result.current.error?.message).toBe("User denied the request");
+    expect(result.current.isAuthenticated).toBe(false);
+    expect(onError).toHaveBeenCalledWith(expect.objectContaining({ message: "User denied the request" }));
+    expect(sessionStorage.getItem("oidc-js:auth-state")).toBeNull();
+    expect(window.history.replaceState).toHaveBeenCalled();
+  });
+
+  it("captures IdP error without description", async () => {
+    Object.defineProperty(window, "location", {
+      value: {
+        href: "http://localhost:3000?error=server_error",
+        search: "?error=server_error",
+        pathname: "/",
+      },
+      writable: true,
+      configurable: true,
+    });
+
+    mockFetchResponses(DISCOVERY);
 
     const { result } = renderHook(() => useAuth(), { wrapper });
 
@@ -266,7 +312,30 @@ describe("AuthProvider", () => {
       expect(result.current.isLoading).toBe(false);
     });
 
+    expect(result.current.error?.message).toBe("server_error");
+  });
+
+  it("sets error on discovery fetch failure and calls onError", async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: false,
+      status: 500,
+      statusText: "Internal Server Error",
+      json: () => Promise.reject(new Error("no json")),
+    });
+
+    const onError = vi.fn();
+    const { result } = renderHook(() => useAuth(), {
+      wrapper: ({ children }: { children: ReactNode }) => (
+        <AuthProvider config={CONFIG} onError={onError}>{children}</AuthProvider>
+      ),
+    });
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
     expect(result.current.error).not.toBeNull();
+    expect(onError).toHaveBeenCalledWith(expect.any(Error));
   });
 
   it("actions.logout clears state", async () => {
@@ -304,6 +373,6 @@ describe("AuthProvider", () => {
 
     expect(result.current.isAuthenticated).toBe(false);
     expect(result.current.user).toBeNull();
-    expect(result.current.tokens).toEqual({ access: null, id: null, refresh: null });
+    expect(result.current.tokens).toEqual({ access: null, id: null, refresh: null, expiresAt: null });
   });
 });

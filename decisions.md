@@ -131,3 +131,96 @@ Architectural and design decisions for the oidc-js project. Each entry captures 
 **Decision**: Tokens (access, id, refresh) stored in React state only. PKCE verifier, state, and nonce stored in sessionStorage during the redirect, cleared immediately after callback processing.
 
 **Rationale**: Memory-only tokens are the most secure option for SPAs (no XSS exfiltration from storage). PKCE state must survive a full page navigation (redirect to IdP and back), so sessionStorage is the only viable option. It's cleared as soon as the callback is processed.
+
+### 012 - RequireAuth checks access token `exp` claim, not just `isAuthenticated` boolean (2026-04-30)
+
+**Context**: RequireAuth initially only checked the `isAuthenticated` boolean from context. This meant an expired access token was invisible to the component — a user who left a tab open for hours would see stale "authenticated" UI until something explicitly set `isAuthenticated` to false.
+
+**Alternatives considered**:
+1. Check only `isAuthenticated` boolean (original behavior)
+2. Decode JWT and check `exp` on every render
+3. Decode `exp` once when tokens arrive, store `expiresAt` in state, compare on render
+
+**Decision**: Option 3. AuthProvider decodes `exp` from the access token once during token exchange and stores `tokens.expiresAt` (milliseconds since epoch). RequireAuth compares `expiresAt` to `Date.now()` — if expired, it triggers auto-refresh (if enabled) before showing children.
+
+**Rationale**: Option 2 decodes a JWT on every render, which is wasteful. `expiresAt` is derived once and stored alongside the tokens. RequireAuth uses `effectivelyAuthenticated = isAuthenticated && (expiresAt === null || expiresAt > Date.now())`, making the check a simple number comparison.
+
+### 013 - `tokens.expiresAt` naming over `tokens.accessExpiresAt` (2026-04-30)
+
+**Context**: The `AuthTokens` type groups `access`, `id`, `refresh`, and the expiration timestamp. The timestamp is derived from the access token's `exp` claim.
+
+**Alternatives considered**:
+1. `accessExpiresAt` — explicit about which token
+2. `expiresAt` — shorter, relies on context
+
+**Decision**: `expiresAt`. Inside the `tokens` object, the fields `access`, `id`, `refresh` already establish that this is token-related. `accessExpiresAt` is redundant — like `user.userName`. If we ever need refresh token expiration, it can be `refreshExpiresAt` while `expiresAt` stays as the primary (access token) expiration.
+
+### 014 - `onLogin(returnTo)` callback for post-login navigation (2026-04-30)
+
+**Context**: After OAuth callback, the library needs to navigate the user back to the page they were on before login. With memory-only tokens, the full page reload during the redirect wipes React state, so the library can't rely on in-memory state for the return URL.
+
+**Alternatives considered**:
+1. `onLogin({ returnTo, user })` — structured object with user info for routing decisions (Auth0 pattern)
+2. `onLogin(returnTo: string)` — just the URL string
+3. `onRedirectCallback(appState)` — extensible app state object (Auth0's `appState` pattern)
+4. No callback, always `replaceState` (oidc-client-ts default)
+
+**Decision**: `onLogin(returnTo: string)` prop on AuthProvider. `returnTo` is automatically captured from `window.location.href` when `actions.login()` is called, saved in sessionStorage alongside PKCE state, and passed to the callback after token exchange. Default when no `onLogin` provided: `window.history.replaceState({}, "", returnTo)`.
+
+**Rationale**: Passing `user` in the callback was considered, but `onLogin` runs inside AuthProvider before context propagates to children — so `useAuth()` isn't available there anyway. User-dependent routing decisions belong in child components via `useAuth()`, not in the provider callback. A plain string keeps the API simple and router-agnostic. Override with `actions.login({ returnTo: "/custom" })`.
+
+### 015 - E2E test harness with Autentico as real OIDC IdP (2026-04-30)
+
+**Context**: Needed E2E tests that verify the full OIDC flow (redirect, login, callback, token exchange, refresh, logout) against a real identity provider, not mocks.
+
+**Alternatives considered**:
+1. Mock the IdP endpoints in the test
+2. Use a third-party test IdP service
+3. Use Autentico (our own IdP) as a real test server
+
+**Decision**: Option 3. Playwright global-setup downloads the Autentico release binary, initializes a fresh instance, creates test users and clients via the admin API, and tears it down after tests. The harness lives in `tests/e2e/` with the backend setup shared across framework adapters.
+
+**Rationale**: We control both sides of the OIDC flow. Mocking the IdP defeats the purpose of E2E tests. Using our own IdP means we can configure it exactly as needed (CORS, token expiration, client settings) via the admin API. The test app for each framework adapter is separate, but the Autentico setup is identical.
+
+### 016 - Short TTL for RequireAuth auto-refresh E2E test (2026-04-30)
+
+**Context**: Needed to test that RequireAuth automatically refreshes an expired access token when navigating between protected pages. The challenge is triggering token expiration deterministically without flaky timing.
+
+**Alternatives considered**:
+1. `page.evaluate()` to corrupt the access token in React state — deterministic but couples test to internals
+2. Expose a test hook on AuthProvider — compromises library API security
+3. Short access token TTL (1s) via per-client override, wait 5s — simple, wide margin
+4. Revoke access token server-side — client doesn't know it's revoked
+
+**Decision**: Option 3. Set `access_token_expiration: "1s"` on the test client via Autentico's admin API before the test, wait 5 seconds for expiration, navigate to a second RequireAuth page. Reset after the test.
+
+**Rationale**: 5x margin (5s wait vs 1s TTL) is reliable even on slow CI. No changes to the library API. Per-client override means other tests aren't affected. The test verifies the real flow: token expires → RequireAuth detects `expiresAt < now` → calls refresh → gets new tokens → renders protected content.
+
+### 017 - Token expiration buffer on AuthProvider (2026-04-30)
+
+**Context**: RequireAuth compares `tokens.expiresAt` to `Date.now()` to detect expired tokens. An exact comparison creates a race: a request can go out with a token that expires mid-flight.
+
+**Decision**: Add `tokenExpirationBuffer` prop on AuthProvider (default 30 seconds). RequireAuth treats the token as expired `buffer` seconds before actual expiration: `expiresAt - buffer > Date.now()`.
+
+**Rationale**: 30s default is conservative enough to cover most request round-trips without triggering unnecessary refreshes. Configurable for apps with different needs (long-running uploads, real-time connections).
+
+### 018 - `onError` callback on AuthProvider (2026-04-30)
+
+**Context**: When token exchange or discovery fails during the redirect callback, the library sets `error` state. Apps may want to handle errors externally (logging, analytics, error reporting) without watching state changes.
+
+**Decision**: Add `onError(error: Error)` prop on AuthProvider. Called when discovery, token exchange, or refresh fails. Does not replace the `error` state — both fire.
+
+**Rationale**: Mirrors the `onLogin` pattern. Auth0 passes errors to its callback too. Separating error handling from rendering keeps components focused on UI while infrastructure concerns (logging, reporting) live at the provider level.
+
+### 019 - Callback detection is URL-agnostic, no dedicated callback route needed (2026-04-30)
+
+**Context**: After the IdP redirects back with `code` and `state` params, the library needs to detect and process the callback. Some libraries require a dedicated `/callback` route component.
+
+**Alternatives considered**:
+1. Require a `<CallbackHandler>` component at a specific route
+2. Match current URL against `redirectUri` before processing
+3. Detect `code` + `state` params anywhere, validate against saved session state
+
+**Decision**: Option 3. AuthProvider checks for `code` and `state` query params on mount regardless of the current path. It validates `state` against the value saved in sessionStorage during login — only a matching state triggers callback processing.
+
+**Rationale**: No extra route setup, no callback component, works with any router or no router. The `state` validation prevents false positives — random query params won't trigger processing. The `redirectUri` in config is purely for the IdP ("where to send the browser"), not for the library. This is the same approach Auth0 uses.

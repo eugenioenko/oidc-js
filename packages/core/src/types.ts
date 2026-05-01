@@ -45,6 +45,7 @@ export interface AuthState {
   state: string;
   nonce: string;
   redirectUri: string;
+  returnTo?: string;
 }
 
 export interface OidcUser {

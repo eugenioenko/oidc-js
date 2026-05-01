@@ -29,21 +29,33 @@ import {
 } from "oidc-js-core";
 import { executeFetch } from "./fetch.js";
 import { saveAuthState, loadAuthState, clearAuthState } from "./storage.js";
-import type { AuthContextValue, AuthUser, AuthTokens, IdTokenClaims } from "./types.js";
+import type { AuthContextValue, AuthUser, AuthTokens, IdTokenClaims, LoginOptions } from "./types.js";
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 interface AuthProviderProps {
   config: OidcConfig;
   fetchProfile?: boolean;
+  onLogin?: (returnTo: string) => void;
+  onError?: (error: Error) => void;
   children: ReactNode;
 }
 
-const EMPTY_TOKENS: AuthTokens = { access: null, id: null, refresh: null };
+const EMPTY_TOKENS: AuthTokens = { access: null, id: null, refresh: null, expiresAt: null };
+
+function extractExpiresAt(accessToken: string): number | null {
+  try {
+    const payload = decodeJwtPayload(accessToken);
+    if (typeof payload.exp === "number") return payload.exp * 1000;
+  } catch { /* malformed JWT */ }
+  return null;
+}
 
 export function AuthProvider({
   config,
   fetchProfile = true,
+  onLogin,
+  onError,
   children,
 }: AuthProviderProps) {
   const discoveryRef = useRef<OidcDiscovery | null>(null);
@@ -58,6 +70,12 @@ export function AuthProvider({
 
   const fetchProfileRef = useRef(fetchProfile);
   fetchProfileRef.current = fetchProfile;
+
+  const onLoginRef = useRef(onLogin);
+  onLoginRef.current = onLogin;
+
+  const onErrorRef = useRef(onError);
+  onErrorRef.current = onError;
 
   const fetchUserProfile = useCallback(
     async (discovery: OidcDiscovery, accessToken: string, signal?: AbortSignal): Promise<OidcUser> => {
@@ -80,6 +98,17 @@ export function AuthProvider({
         discoveryRef.current = discovery;
 
         const params = new URLSearchParams(window.location.search);
+        if (params.has("error")) {
+          const description = params.get("error_description") ?? params.get("error")!;
+          const err = new Error(description);
+          setError(err);
+          onErrorRef.current?.(err);
+          clearAuthState();
+          window.history.replaceState({}, "", window.location.pathname);
+          setIsLoading(false);
+          return;
+        }
+
         if (params.has("code") && params.has("state")) {
           const authState = loadAuthState();
           if (!authState) {
@@ -102,6 +131,7 @@ export function AuthProvider({
             access: tokenSet.access_token,
             id: tokenSet.id_token ?? null,
             refresh: tokenSet.refresh_token ?? null,
+            expiresAt: extractExpiresAt(tokenSet.access_token),
           };
           setTokens(newTokens);
 
@@ -115,12 +145,19 @@ export function AuthProvider({
           }
 
           setIsAuthenticated(true);
+          const returnTo = authState.returnTo ?? "/";
           clearAuthState();
-          window.history.replaceState({}, "", window.location.pathname);
+          if (onLoginRef.current) {
+            onLoginRef.current(returnTo);
+          } else {
+            window.history.replaceState({}, "", returnTo);
+          }
         }
       } catch (e) {
         if ((e as Error).name === "AbortError") return;
-        setError(e instanceof Error ? e : new Error(String(e)));
+        const err = e instanceof Error ? e : new Error(String(e));
+        setError(err);
+        onErrorRef.current?.(err);
       } finally {
         if (!signal.aborted) {
           setIsLoading(false);
@@ -132,7 +169,7 @@ export function AuthProvider({
   }, [fetchUserProfile]);
 
   const login = useCallback(
-    async (extraParams?: Record<string, string>) => {
+    async (options?: LoginOptions) => {
       const discovery = discoveryRef.current;
       if (!discovery) return;
 
@@ -140,14 +177,18 @@ export function AuthProvider({
       const state = generateState();
       const nonce = generateNonce();
 
+      const returnTo = options?.returnTo
+        ?? window.location.pathname + window.location.search + window.location.hash;
+
       saveAuthState({
         codeVerifier: pkce.verifier,
         state,
         nonce,
         redirectUri: configRef.current.redirectUri ?? "",
+        returnTo,
       });
 
-      const url = buildAuthUrl(discovery, configRef.current, pkce, state, nonce, extraParams);
+      const url = buildAuthUrl(discovery, configRef.current, pkce, state, nonce, options?.extraParams);
       window.location.href = url;
     },
     [],
@@ -191,6 +232,7 @@ export function AuthProvider({
       access: tokenSet.access_token,
       id: tokenSet.id_token ?? null,
       refresh: tokenSet.refresh_token ?? null,
+      expiresAt: extractExpiresAt(tokenSet.access_token),
     };
     setTokens(newTokens);
 

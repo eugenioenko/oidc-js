@@ -7,6 +7,7 @@ export type {
   AuthTokens,
   AuthActions,
   AuthContextValue,
+  LoginOptions,
 } from "./types.js";
 
 export type { OidcConfig, OidcUser, TokenSet } from "oidc-js-core";
