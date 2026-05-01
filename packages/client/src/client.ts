@@ -20,10 +20,17 @@ import { executeFetch } from "./fetch.js";
 import { saveAuthState, loadAuthState, clearAuthState } from "./storage.js";
 import type { OidcClientConfig, AuthState, AuthUser, AuthTokens, IdTokenClaims, LoginOptions } from "./types.js";
 
+/** Callback invoked whenever the {@link AuthState} changes. */
 type Subscriber = (state: AuthState) => void;
 
 const EMPTY_TOKENS: AuthTokens = { access: null, id: null, refresh: null, expiresAt: null };
 
+/**
+ * Extracts the `exp` claim from an access token JWT and converts it to milliseconds.
+ *
+ * @param accessToken - A JWT access token string.
+ * @returns The expiration time in milliseconds, or null if the token cannot be decoded.
+ */
 function extractExpiresAt(accessToken: string): number | null {
   try {
     const payload = decodeJwtPayload(accessToken);
@@ -32,6 +39,13 @@ function extractExpiresAt(accessToken: string): number | null {
   return null;
 }
 
+/**
+ * Browser OIDC client that wraps oidc-js-core with `fetch` and `sessionStorage`.
+ *
+ * Handles the full Authorization Code + PKCE flow: discovery, redirect-based login,
+ * callback handling, token refresh, userinfo fetching, and logout.
+ * Exposes reactive {@link AuthState} via a subscribe/notify pattern.
+ */
 export class OidcClient {
   private config: OidcClientConfig;
   private discovery: OidcDiscovery | null = null;
@@ -46,19 +60,34 @@ export class OidcClient {
     tokens: EMPTY_TOKENS,
   };
 
+  /**
+   * Creates a new OidcClient instance.
+   *
+   * @param config - OIDC configuration including issuer, clientId, and redirectUri.
+   */
   constructor(config: OidcClientConfig) {
     this.config = config;
   }
 
+  /** The current authentication state. */
   get state(): AuthState {
     return this._state;
   }
 
+  /**
+   * Registers a callback that fires whenever the auth state changes.
+   *
+   * @param fn - Subscriber function receiving the updated {@link AuthState}.
+   * @returns An unsubscribe function that removes the listener.
+   */
   subscribe(fn: Subscriber): () => void {
     this.subscribers.add(fn);
     return () => this.subscribers.delete(fn);
   }
 
+  /**
+   * Merges a partial state update into the current state and notifies all subscribers.
+   */
   private setState(partial: Partial<AuthState>) {
     this._state = { ...this._state, ...partial };
     for (const fn of this.subscribers) {
@@ -66,6 +95,15 @@ export class OidcClient {
     }
   }
 
+  /**
+   * Initializes the client by fetching OIDC discovery and processing any callback parameters.
+   *
+   * If the current URL contains an authorization code, it completes the token exchange,
+   * optionally fetches the userinfo profile, and returns the `returnTo` path saved before login.
+   * If the URL contains an error, it sets the error state.
+   *
+   * @returns An object with an optional `returnTo` path indicating where the app should navigate.
+   */
   async init(): Promise<{ returnTo?: string }> {
     this.abortController = new AbortController();
     const { signal } = this.abortController;
@@ -138,6 +176,14 @@ export class OidcClient {
     }
   }
 
+  /**
+   * Starts the Authorization Code + PKCE login flow by redirecting the browser to the authorization endpoint.
+   *
+   * Generates PKCE, state, and nonce values, persists them in sessionStorage, then navigates away.
+   * Does nothing if discovery has not been fetched yet (i.e., {@link init} was not called).
+   *
+   * @param options - Optional login parameters such as `returnTo` and `extraParams`.
+   */
   async login(options?: LoginOptions): Promise<void> {
     if (!this.discovery) return;
 
@@ -160,6 +206,12 @@ export class OidcClient {
     window.location.href = url;
   }
 
+  /**
+   * Logs the user out by clearing local auth state and redirecting to the OP's end-session endpoint.
+   *
+   * If the discovery document has an `end_session_endpoint`, the browser is redirected there
+   * with the current ID token hint and `postLogoutRedirectUri` from config.
+   */
   logout(): void {
     const idToken = this._state.tokens.id;
 
@@ -182,6 +234,14 @@ export class OidcClient {
     }
   }
 
+  /**
+   * Uses the stored refresh token to obtain a new set of tokens from the token endpoint.
+   *
+   * Updates the auth state with the new tokens and, if an ID token is returned,
+   * re-decodes the claims and optionally re-fetches the userinfo profile.
+   *
+   * @throws Error if no refresh token is available or discovery has not been fetched.
+   */
   async refresh(): Promise<void> {
     const refreshToken = this._state.tokens.refresh;
 
@@ -218,6 +278,13 @@ export class OidcClient {
     });
   }
 
+  /**
+   * Fetches the user's profile from the userinfo endpoint using the current access token.
+   *
+   * Updates the `user.profile` field in the auth state with the response.
+   *
+   * @throws Error if no access token is available or discovery has not been fetched.
+   */
   async fetchProfile(): Promise<void> {
     if (!this.discovery || !this._state.tokens.access) {
       throw new Error("No access token available");
@@ -229,11 +296,21 @@ export class OidcClient {
     }
   }
 
+  /**
+   * Tears down the client by aborting any in-flight requests and removing all subscribers.
+   */
   destroy(): void {
     this.abortController?.abort();
     this.subscribers.clear();
   }
 
+  /**
+   * Internal helper that calls the userinfo endpoint and parses the response.
+   *
+   * @param accessToken - Bearer token to authorize the request.
+   * @param signal - Optional abort signal for cancellation.
+   * @returns The parsed userinfo response.
+   */
   private async fetchProfileInternal(accessToken: string, signal?: AbortSignal): Promise<OidcUser> {
     const req = buildUserinfoRequest(this.discovery!, accessToken);
     const data = await executeFetch(req, signal);

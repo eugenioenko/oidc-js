@@ -2,6 +2,7 @@
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 import starlightClientMermaid from '@pasqal-io/starlight-client-mermaid';
+import starlightTypeDoc from 'starlight-typedoc';
 import sitemap from '@astrojs/sitemap';
 import starlightThemeGalaxy from 'starlight-theme-galaxy';
 
@@ -23,7 +24,36 @@ export default defineConfig({
 			editLink: {
 				baseUrl: 'https://github.com/eugenioenko/oidc-js/edit/main/docs-web/',
 			},
-			plugins: [starlightThemeGalaxy(), starlightClientMermaid()],
+			plugins: [
+				starlightThemeGalaxy(),
+				starlightClientMermaid(),
+				starlightTypeDoc({
+					entryPoints: ['../packages/core/src/index.ts'],
+					tsconfig: '../packages/core/tsconfig.json',
+					output: 'api/core',
+					sidebar: {
+						label: 'API Reference (Core)',
+						collapsed: true,
+					},
+					typeDoc: {
+						excludePrivate: true,
+						excludeInternal: true,
+					},
+				}),
+				starlightTypeDoc({
+					entryPoints: ['../packages/client/src/index.ts'],
+					tsconfig: '../packages/client/tsconfig.json',
+					output: 'api/client',
+					sidebar: {
+						label: 'API Reference (Client)',
+						collapsed: true,
+					},
+					typeDoc: {
+						excludePrivate: true,
+						excludeInternal: true,
+					},
+				}),
+			],
 			sidebar: [
 				{ label: 'Introduction', link: '/' },
 				{

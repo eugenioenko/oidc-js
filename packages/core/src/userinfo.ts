@@ -1,6 +1,16 @@
 import type { OidcDiscovery, HttpRequest, OidcUser } from "./types.js";
 import { OidcError } from "./errors.js";
 
+/**
+ * Builds an HTTP request to the UserInfo endpoint using a Bearer access token.
+ *
+ * @param discovery - The OIDC discovery document containing the `userinfo_endpoint`.
+ * @param accessToken - A valid access token issued by the authorization server.
+ * @returns An {@link HttpRequest} configured with the Bearer Authorization header.
+ *
+ * @see OpenID Connect Core 1.0 §5.3.1 -- UserInfo Request
+ * @see RFC 6750 §2.1 -- Bearer token in Authorization header
+ */
 // OIDC Core §5.3.1: UserInfo Request
 // RFC 6750 §2.1: Bearer token in Authorization header
 export function buildUserinfoRequest(discovery: OidcDiscovery, accessToken: string): HttpRequest {
@@ -13,6 +23,15 @@ export function buildUserinfoRequest(discovery: OidcDiscovery, accessToken: stri
   };
 }
 
+/**
+ * Parses and validates a UserInfo response, ensuring the required `sub` claim is present.
+ *
+ * @param data - The parsed JSON body returned from the UserInfo endpoint.
+ * @returns The validated {@link OidcUser} object.
+ * @throws {@link OidcError} with code `TOKEN_EXCHANGE_ERROR` if the response is not an object or `sub` is missing.
+ *
+ * @see OpenID Connect Core 1.0 §5.3.2 -- UserInfo Response
+ */
 // OIDC Core §5.3.2: UserInfo Response
 export function parseUserinfoResponse(data: unknown): OidcUser {
   if (!data || typeof data !== "object") {
