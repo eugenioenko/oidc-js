@@ -42,7 +42,7 @@ export default defineConfig({
 				}),
 				starlightTypeDoc({
 					entryPoints: ['../packages/client/src/index.ts'],
-					tsconfig: '../packages/client/tsconfig.json',
+					tsconfig: '../packages/client/tsconfig.typedoc.json',
 					output: 'api/client',
 					sidebar: {
 						label: 'API Reference (Client)',
