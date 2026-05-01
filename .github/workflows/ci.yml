@@ -28,11 +28,11 @@ jobs:
       - name: Lint
         run: npx eslint .
 
-      - name: Type check
-        run: pnpm -r lint
-
       - name: Build
         run: pnpm build
+
+      - name: Type check
+        run: pnpm -r lint
 
       - name: Test
         run: pnpm test
