@@ -84,6 +84,53 @@ export default defineConfig({
 					],
 				},
 				{
+					label: 'Vue',
+					items: [
+						{ label: 'Plugin', link: '/vue/plugin/' },
+						{ label: 'useAuth', link: '/vue/use-auth/' },
+						{ label: 'RequireAuth', link: '/vue/require-auth/' },
+					],
+				},
+				{
+					label: 'Svelte',
+					items: [
+						{ label: 'AuthProvider', link: '/svelte/auth-provider/' },
+						{ label: 'getAuthContext', link: '/svelte/get-auth-context/' },
+						{ label: 'RequireAuth', link: '/svelte/require-auth/' },
+					],
+				},
+				{
+					label: 'Angular',
+					items: [
+						{ label: 'provideAuth', link: '/angular/provide-auth/' },
+						{ label: 'AuthService', link: '/angular/auth-service/' },
+						{ label: 'authGuard', link: '/angular/auth-guard/' },
+					],
+				},
+				{
+					label: 'Solid',
+					items: [
+						{ label: 'AuthProvider', link: '/solid/auth-provider/' },
+						{ label: 'useAuth', link: '/solid/use-auth/' },
+						{ label: 'RequireAuth', link: '/solid/require-auth/' },
+					],
+				},
+				{
+					label: 'Preact',
+					items: [
+						{ label: 'AuthProvider', link: '/preact/auth-provider/' },
+						{ label: 'useAuth', link: '/preact/use-auth/' },
+						{ label: 'RequireAuth', link: '/preact/require-auth/' },
+					],
+				},
+				{
+					label: 'Lit',
+					items: [
+						{ label: 'AuthController', link: '/lit/auth-controller/' },
+						{ label: 'RequireAuth', link: '/lit/require-auth/' },
+					],
+				},
+				{
 					label: 'Core API',
 					items: [
 						{ label: 'Overview', link: '/core/overview/' },

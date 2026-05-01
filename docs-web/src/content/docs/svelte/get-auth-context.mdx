@@ -1,0 +1,56 @@
+---
+title: getAuthContext
+description: Svelte function for accessing authentication state and actions.
+---
+
+`getAuthContext` retrieves the reactive authentication context from the nearest `AuthProvider` ancestor. It must be called during component initialization (not inside event handlers or async callbacks).
+
+## Installation
+
+```bash
+npm install oidc-js-svelte
+```
+
+## Usage
+
+```svelte
+<script lang="ts">
+  import { getAuthContext } from "oidc-js-svelte";
+
+  const auth = getAuthContext();
+</script>
+
+{#if auth.isLoading}
+  <p>Loading...</p>
+{:else if auth.error}
+  <p>Error: {auth.error.message}</p>
+{:else if auth.isAuthenticated}
+  <p>Hello, {auth.user?.claims.sub}</p>
+  <button onclick={() => auth.actions.logout()}>Log out</button>
+{:else}
+  <button onclick={() => auth.actions.login()}>Log in</button>
+{/if}
+```
+
+## Return value
+
+All properties on the returned object are reactive getters powered by Svelte 5 runes. They update automatically when the authentication state changes.
+
+| Property | Type | Description |
+|---|---|---|
+| `config` | `OidcConfig` | The OIDC configuration |
+| `user` | `AuthUser \| null` | The authenticated user (claims + profile) |
+| `isAuthenticated` | `boolean` | Whether the user is logged in |
+| `isLoading` | `boolean` | Whether initialization is in progress |
+| `error` | `Error \| null` | The most recent auth error |
+| `tokens` | `AuthTokens` | Current access, id, and refresh tokens |
+| `actions` | `AuthActions` | Methods for login, logout, refresh, fetchProfile |
+
+## Actions
+
+| Action | Description |
+|---|---|
+| `login(options?)` | Redirect to IdP login. Options: `returnTo`, `extraParams` |
+| `logout()` | Clear state and redirect to IdP logout endpoint |
+| `refresh()` | Exchange refresh token for new tokens |
+| `fetchProfile()` | Fetch the UserInfo endpoint and update `user.profile` |

@@ -1,0 +1,70 @@
+---
+title: authGuard
+description: Angular route guard for protecting routes that require authentication.
+---
+
+`authGuard` is a functional `CanActivateFn` route guard that protects routes behind authentication. It checks the auth state, attempts token refresh when needed, and redirects to the IdP login if the user is not authenticated.
+
+## Installation
+
+```bash
+npm install oidc-js-angular
+```
+
+## Usage
+
+```typescript
+import { Routes } from "@angular/router";
+import { authGuard } from "oidc-js-angular";
+
+export const routes: Routes = [
+  { path: "", component: HomeComponent },
+  {
+    path: "dashboard",
+    component: DashboardComponent,
+    canActivate: [authGuard],
+  },
+  {
+    path: "settings",
+    component: SettingsComponent,
+    canActivate: [authGuard],
+  },
+];
+```
+
+## Behavior
+
+1. If the auth service is still loading, waits for initialization to complete
+2. If the user is authenticated and the token is not expired, allows navigation
+3. If the token is expired and a refresh token exists, attempts a silent refresh
+4. If the user is not authenticated or refresh fails, redirects to IdP login
+
+## Deep linking
+
+The guard preserves the current URL as `returnTo` when redirecting to login. After authentication, the user returns to the page they originally requested.
+
+## Full example
+
+```typescript
+import { bootstrapApplication } from "@angular/platform-browser";
+import { provideRouter } from "@angular/router";
+import { provideAuth } from "oidc-js-angular";
+import { authGuard } from "oidc-js-angular";
+
+bootstrapApplication(AppComponent, {
+  providers: [
+    provideAuth({
+      config: {
+        issuer: "https://auth.example.com",
+        clientId: "my-app",
+        redirectUri: "http://localhost:4200/callback",
+        scopes: ["openid", "profile", "email"],
+      },
+    }),
+    provideRouter([
+      { path: "", component: HomeComponent },
+      { path: "protected", component: ProtectedComponent, canActivate: [authGuard] },
+    ]),
+  ],
+});
+```

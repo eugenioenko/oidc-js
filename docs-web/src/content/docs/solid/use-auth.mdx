@@ -1,0 +1,69 @@
+---
+title: useAuth
+description: SolidJS hook for accessing authentication state and actions.
+---
+
+`useAuth` returns the current authentication context with reactive getter properties backed by SolidJS signals. It must be called within an `AuthProvider`.
+
+## Installation
+
+```bash
+npm install oidc-js-solid
+```
+
+## Usage
+
+```tsx
+import { useAuth } from "oidc-js-solid";
+import { Show } from "solid-js";
+
+function Profile() {
+  const auth = useAuth();
+
+  return (
+    <Show when={!auth.isLoading} fallback={<div>Loading...</div>}>
+      <Show when={auth.isAuthenticated} fallback={<button onClick={() => auth.actions.login()}>Log in</button>}>
+        <p>Hello, {auth.user?.claims.sub}</p>
+        <button onClick={() => auth.actions.logout()}>Log out</button>
+      </Show>
+    </Show>
+  );
+}
+```
+
+## Return value
+
+The returned object has reactive getter properties. Access them directly (not destructured) to preserve reactivity.
+
+| Property | Type | Description |
+|---|---|---|
+| `config` | `OidcConfig` | The OIDC configuration |
+| `user` | `AuthUser \| null` | The authenticated user (claims + profile) |
+| `isAuthenticated` | `boolean` | Whether the user is logged in |
+| `isLoading` | `boolean` | Whether initialization is in progress |
+| `error` | `Error \| null` | The most recent auth error |
+| `tokens` | `AuthTokens` | Current access, id, and refresh tokens |
+| `actions` | `AuthActions` | Methods for login, logout, refresh, fetchProfile |
+
+## Actions
+
+| Action | Description |
+|---|---|
+| `login(options?)` | Redirect to IdP login. Options: `returnTo`, `extraParams` |
+| `logout()` | Clear state and redirect to IdP logout endpoint |
+| `refresh()` | Exchange refresh token for new tokens |
+| `fetchProfile()` | Fetch the UserInfo endpoint and update `user.profile` |
+
+## Reactivity note
+
+Because `useAuth` returns an object with getter properties, you should access properties inside JSX or `createEffect` to track them properly:
+
+```tsx
+// Correct - reads inside JSX are tracked
+<p>{auth.user?.claims.sub}</p>
+
+// Correct - reads inside createEffect are tracked
+createEffect(() => {
+  console.log(auth.isAuthenticated);
+});
+```

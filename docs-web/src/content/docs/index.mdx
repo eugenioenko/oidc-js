@@ -58,17 +58,17 @@ function App() {
     Every core function takes data in and returns data out. No fetch, no storage,
     no side effects. Fully testable without mocks.
   </Card>
-  <Card title="Framework Adapters" icon="list-format">
-    First-class React support with AuthProvider, useAuth, and RequireAuth. Vue,
-    Svelte, Angular, and Solid adapters planned.
+  <Card title="7 Framework Adapters" icon="list-format">
+    First-class support for React, Vue, Svelte, Angular, Solid, Preact, and Lit.
+    Each adapter wraps the core in framework-native patterns.
   </Card>
   <Card title="PKCE by Default" icon="approve-check-circle">
     Authorization Code Flow with Proof Key for Code Exchange (RFC 7636). No
     implicit flow, no client secrets in the browser.
   </Card>
   <Card title="Automatic Token Refresh" icon="setting">
-    RequireAuth detects expired tokens and silently refreshes them using the
-    refresh token. If the refresh fails, it redirects to login.
+    Auth guards detect expired tokens and silently refresh them using the
+    refresh token. If the refresh fails, they redirect to login.
   </Card>
   <Card title="Contract-Tested" icon="approve-check-circle">
     End-to-end Playwright tests against a real OIDC provider verify every flow:
@@ -83,7 +83,9 @@ function App() {
 | `oidc-js-core` | Pure functions, no IO | Stable |
 | `oidc-js` | Browser client (core + fetch + sessionStorage) | Stable |
 | `oidc-js-react` | React context, hooks, and guards | Stable |
-| `oidc-js-vue` | Vue composables | Planned |
-| `oidc-js-svelte` | Svelte stores | Planned |
-| `oidc-js-angular` | Angular service and guards | Planned |
-| `oidc-js-solid` | Solid signals | Planned |
+| `oidc-js-vue` | Vue plugin, composables, and navigation guard | Stable |
+| `oidc-js-svelte` | Svelte context and components | Stable |
+| `oidc-js-angular` | Angular service, DI, and route guard | Stable |
+| `oidc-js-solid` | SolidJS signals, context, and components | Stable |
+| `oidc-js-preact` | Preact hooks and components | Stable |
+| `oidc-js-lit` | Lit reactive controllers | Stable |

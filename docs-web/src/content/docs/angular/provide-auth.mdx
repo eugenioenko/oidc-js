@@ -1,0 +1,65 @@
+---
+title: provideAuth
+description: Angular provider function for setting up OIDC authentication.
+---
+
+`provideAuth` returns `EnvironmentProviders` that register the `AuthService`, its configuration, and an `APP_INITIALIZER` that automatically initializes the OIDC client during application bootstrap.
+
+## Installation
+
+```bash
+npm install oidc-js-angular
+```
+
+## Usage
+
+```typescript
+import { bootstrapApplication } from "@angular/platform-browser";
+import { provideAuth } from "oidc-js-angular";
+import { AppComponent } from "./app.component";
+
+bootstrapApplication(AppComponent, {
+  providers: [
+    provideAuth({
+      config: {
+        issuer: "https://auth.example.com",
+        clientId: "my-app",
+        redirectUri: "http://localhost:4200/callback",
+        scopes: ["openid", "profile", "email", "offline_access"],
+        postLogoutRedirectUri: "http://localhost:4200",
+      },
+    }),
+  ],
+});
+```
+
+## Options
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `config` | `OidcConfig` | **required** | OIDC configuration (issuer, clientId, redirectUri, etc.) |
+| `fetchProfile` | `boolean` | `true` | Whether to fetch the UserInfo endpoint after login |
+| `onLogin` | `(returnTo: string) => void` | - | Called after successful login with the URL to restore |
+| `onError` | `(error: Error) => void` | - | Called when an error occurs during initialization |
+
+## Default navigation
+
+By default, after a successful login callback, the adapter uses Angular's `Router.navigateByUrl` to restore the pre-login URL. You can override this with `onLogin`:
+
+```typescript
+provideAuth({
+  config: { /* ... */ },
+  onLogin: (returnTo) => {
+    // Custom navigation logic
+    window.location.href = returnTo;
+  },
+}),
+```
+
+## Lifecycle
+
+1. During bootstrap, `APP_INITIALIZER` calls `AuthService.init()`
+2. `init()` creates an `OidcClient` and fetches the OIDC discovery document
+3. If the URL contains a `code` and `state` parameter (callback from IdP), it exchanges the code for tokens
+4. If the URL contains an `error` parameter, it calls `onError`
+5. On destroy, the service unsubscribes and destroys the client via `DestroyRef`
