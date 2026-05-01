@@ -7,4 +7,5 @@ packages:
   - "tests/e2e/vue-app"
   - "tests/e2e/angular-app"
   - "tests/e2e/solid-app"
+  - "tests/e2e/preact-app"
   - "docs-web"
