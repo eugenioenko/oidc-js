@@ -187,6 +187,51 @@ test.describe("OIDC Login Flow", () => {
   });
 });
 
+test.describe("Session Lifecycle", () => {
+  test("cleans callback URL params after login", async ({ page }) => {
+    await login(page);
+    const url = new URL(page.url());
+    expect(url.searchParams.has("code")).toBe(false);
+    expect(url.searchParams.has("state")).toBe(false);
+  });
+
+  test("loses session on page reload (in-memory only)", async ({ page }) => {
+    await login(page);
+    await expect(page.getByTestId("authenticated")).toBeVisible();
+
+    await page.reload();
+
+    await expect(page.getByTestId("unauthenticated")).toBeVisible({ timeout: TIMEOUT });
+  });
+
+  test("completes multiple login/logout cycles without stale state", async ({ page }) => {
+    await login(page);
+    await expect(page.getByTestId("authenticated")).toBeVisible();
+
+    await page.getByTestId("logout-button").click();
+    await expect(page.getByTestId("unauthenticated")).toBeVisible({ timeout: TIMEOUT });
+
+    await page.getByTestId("login-button").click();
+    await page.waitForURL(/localhost:9999/);
+    await page.fill('input[name="username"]', TEST_USER);
+    await page.fill('input[name="password"]', TEST_PASS);
+    await page.click('button[type="submit"]');
+    await page.waitForURL(/localhost:5173/, { timeout: TIMEOUT });
+    await expect(page.getByTestId("authenticated")).toBeVisible({ timeout: TIMEOUT });
+    await expect(page.getByTestId("access-token")).toHaveText("present");
+  });
+
+  test("recovers from error state with fresh login", async ({ page }) => {
+    await page.goto("/?error=access_denied&error_description=User+denied+consent");
+    await expect(page.getByTestId("auth-error")).toBeVisible();
+
+    await page.goto("/");
+    await login(page);
+    await expect(page.getByTestId("authenticated")).toBeVisible();
+    await expect(page.getByTestId("access-token")).toHaveText("present");
+  });
+});
+
 test.describe("Security", () => {
   test("tokens are not stored in localStorage or sessionStorage", async ({ page }) => {
     await login(page);
