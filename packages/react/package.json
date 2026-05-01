@@ -16,11 +16,7 @@
   "files": [
     "dist"
   ],
-  "scripts": {
-    "build": "tsup",
-    "test": "vitest run",
-    "lint": "tsc --noEmit"
-  },
+  "scripts": {},
   "keywords": [
     "oidc",
     "openid",
