@@ -1,6 +1,8 @@
 # oidc-js-svelte
 
-Svelte 5 adapter for [oidc-js](https://github.com/eugenioenko/oidc-js) -- reactive OIDC authentication using runes and the Svelte context API.
+Simple OIDC authentication for Svelte 5. Drop-in context, runes, and auth guards with zero dependencies.
+
+Part of the [oidc-js](https://github.com/eugenioenko/oidc-js) family -- OpenID Connect for every JavaScript framework.
 
 ## Install
 

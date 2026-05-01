@@ -1,6 +1,8 @@
 # oidc-js-preact
 
-Preact adapter for [oidc-js](https://github.com/eugenioenko/oidc-js). Provides `AuthProvider`, `useAuth` hook, and `RequireAuth` component for OpenID Connect authentication.
+Simple OIDC authentication for Preact. Drop-in hooks, provider, and auth guards with zero dependencies.
+
+Part of the [oidc-js](https://github.com/eugenioenko/oidc-js) family -- OpenID Connect for every JavaScript framework.
 
 ## Install
 

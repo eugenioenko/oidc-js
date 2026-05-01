@@ -1,6 +1,8 @@
 # oidc-js-solid
 
-SolidJS adapter for [oidc-js](https://github.com/eugenioenko/oidc-js). Provides `AuthProvider`, `useAuth` accessor, and `RequireAuth` component for OpenID Connect authentication using Solid signals and context.
+Simple OIDC authentication for SolidJS. Drop-in signals, context, and auth guards with zero dependencies.
+
+Part of the [oidc-js](https://github.com/eugenioenko/oidc-js) family -- OpenID Connect for every JavaScript framework.
 
 ## Install
 

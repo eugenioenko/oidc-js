@@ -1,7 +1,7 @@
 {
   "name": "oidc-js-lit",
-  "version": "0.0.1",
-  "description": "Lit (Web Components) bindings for oidc-js",
+  "version": "1.0.2",
+  "description": "Simple OIDC authentication for Lit. Reactive controllers for login, logout, and token refresh with zero dependencies.",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",

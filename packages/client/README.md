@@ -1,8 +1,8 @@
 # oidc-js
 
-Stateful OIDC client for JavaScript -- wraps `oidc-js-core` with `fetch`, `sessionStorage`, and state change callbacks.
+Simple OIDC authentication for JavaScript. Drop-in client with login, logout, token refresh, and zero dependencies.
 
-`oidc-js` is the framework-agnostic layer that React, Vue, Svelte, Solid, and Preact adapters build on top of. It handles the full Authorization Code + PKCE flow: discovery, redirect-based login, callback handling, token refresh, userinfo fetching, and logout. Zero dependencies beyond `oidc-js-core`.
+Handles the full Authorization Code + PKCE flow: discovery, redirect-based login, callback handling, token refresh, userinfo fetching, and logout. Framework-agnostic -- use it directly or through one of the [framework adapters](https://github.com/eugenioenko/oidc-js).
 
 ## Install
 

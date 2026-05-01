@@ -1,6 +1,8 @@
 # oidc-js-angular
 
-Angular adapter for [oidc-js](https://github.com/eugenioenko/oidc-js). Provides `provideAuth`, `AuthService`, and `authGuard` for OpenID Connect authentication using Angular signals and dependency injection.
+Simple OIDC authentication for Angular. Drop-in signals, DI, and route guards with zero dependencies.
+
+Part of the [oidc-js](https://github.com/eugenioenko/oidc-js) family -- OpenID Connect for every JavaScript framework.
 
 ## Install
 

@@ -1,6 +1,8 @@
 # oidc-js-vue
 
-Vue 3 adapter for [oidc-js](https://github.com/eugenioenko/oidc-js). Provides `oidcPlugin`, `useAuth` composable, `RequireAuth` component, and `createAuthGuard` for OpenID Connect authentication.
+Simple OIDC authentication for Vue 3. Drop-in plugin, composables, and navigation guards with zero dependencies.
+
+Part of the [oidc-js](https://github.com/eugenioenko/oidc-js) family -- OpenID Connect for every JavaScript framework.
 
 ## Install
 

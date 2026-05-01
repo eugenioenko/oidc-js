@@ -1,6 +1,8 @@
 # oidc-js-lit
 
-Lit (Web Components) adapter for [oidc-js](https://github.com/eugenioenko/oidc-js). Provides `AuthController` and `RequireAuthController` as Lit ReactiveControllers for OpenID Connect authentication.
+Simple OIDC authentication for Lit. Drop-in reactive controllers for login, logout, and token refresh with zero dependencies.
+
+Part of the [oidc-js](https://github.com/eugenioenko/oidc-js) family -- OpenID Connect for every JavaScript framework.
 
 ## Install
 

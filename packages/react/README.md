@@ -1,6 +1,8 @@
 # oidc-js-react
 
-React adapter for [oidc-js](https://github.com/eugenioenko/oidc-js). Provides `AuthProvider`, `useAuth` hook, and `RequireAuth` component for OpenID Connect authentication.
+Simple OIDC authentication for React. Drop-in provider, hooks, and route guards with zero dependencies.
+
+Part of the [oidc-js](https://github.com/eugenioenko/oidc-js) family -- OpenID Connect for every JavaScript framework.
 
 ## Install
 

@@ -1,7 +1,7 @@
 {
   "name": "oidc-js-svelte",
-  "version": "0.0.1",
-  "description": "Svelte 5 bindings for oidc-js",
+  "version": "1.0.2",
+  "description": "Simple OIDC authentication for Svelte 5. Context, runes, and auth guards with zero dependencies.",
   "type": "module",
   "svelte": "./dist/index.js",
   "main": "./dist/index.js",
