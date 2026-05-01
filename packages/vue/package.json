@@ -1,8 +1,47 @@
 {
   "name": "oidc-js-vue",
   "version": "0.0.1",
-  "description": "Vue bindings for oidc-js (coming soon)",
-  "license": "MIT",
+  "description": "Vue bindings for oidc-js",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "test": "vitest run",
+    "lint": "tsc --noEmit"
+  },
+  "keywords": [
+    "oidc",
+    "openid",
+    "oauth2",
+    "vue",
+    "authentication"
+  ],
   "author": "eugenioenko",
-  "keywords": ["oidc", "openid", "oauth2", "vue", "authentication"]
+  "license": "MIT",
+  "dependencies": {
+    "oidc-js": "workspace:*",
+    "oidc-js-core": "workspace:*"
+  },
+  "peerDependencies": {
+    "vue": ">=3.3.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0",
+    "vite": "^8.0.0",
+    "vite-plugin-dts": "^4.0.0",
+    "vitest": "^4.0.0",
+    "vue": "^3.5.0"
+  }
 }

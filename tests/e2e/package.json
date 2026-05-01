@@ -6,6 +6,7 @@
     "test": "playwright test",
     "test:svelte": "playwright test --config playwright.svelte.config.ts",
     "test:lit": "playwright test --config playwright.lit.config.ts",
+    "test:vue": "playwright test --config=playwright.vue.config.ts",
     "test:ui": "playwright test --ui",
     "test:stress": "npx playwright test --repeat-each=100"
   },
