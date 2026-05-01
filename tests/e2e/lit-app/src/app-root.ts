@@ -11,9 +11,9 @@ const fetchProfile = localStorage.getItem("e2e-fetchProfile") !== "false";
 const config = {
   issuer: "http://localhost:9999/oauth2",
   clientId: "e2e-test-app",
-  redirectUri: "http://localhost:5174/callback",
+  redirectUri: "http://localhost:5173/callback",
   scopes: ["openid", "profile", "email", "offline_access"],
-  postLogoutRedirectUri: "http://localhost:5174",
+  postLogoutRedirectUri: "http://localhost:5173",
 };
 
 @customElement("app-root")
