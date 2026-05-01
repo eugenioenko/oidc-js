@@ -143,7 +143,9 @@ Architectural and design decisions for the oidc-js project. Each entry captures 
 
 **Decision**: Option 3. AuthProvider decodes `exp` from the access token once during token exchange and stores `tokens.expiresAt` (milliseconds since epoch). RequireAuth compares `expiresAt` to `Date.now()` — if expired, it triggers auto-refresh (if enabled) before showing children.
 
-**Rationale**: Option 2 decodes a JWT on every render, which is wasteful. `expiresAt` is derived once and stored alongside the tokens. RequireAuth uses `effectivelyAuthenticated = isAuthenticated && (expiresAt === null || expiresAt > Date.now())`, making the check a simple number comparison.
+**Rationale**: Option 2 decodes a JWT on every render, which is wasteful. `expiresAt` is derived once and stored alongside the tokens. The expiry check is a simple number comparison: `isExpired = expiresAt !== null && expiresAt <= Date.now()`.
+
+**Update (2026-05-01)**: The initial implementation used `useMemo` with `[isAuthenticated, tokens.expiresAt]` deps. This is fundamentally broken for time-dependent checks — `Date.now()` is not a React dependency, so when navigating between protected pages (neither dep changes), `useMemo` returns a stale cached result. Fix: compute `isExpired` directly on every render (no `useMemo`). A number comparison per render is negligible.
 
 ### 013 - `tokens.expiresAt` naming over `tokens.accessExpiresAt` (2026-04-30)
 
@@ -182,7 +184,7 @@ Architectural and design decisions for the oidc-js project. Each entry captures 
 
 **Rationale**: We control both sides of the OIDC flow. Mocking the IdP defeats the purpose of E2E tests. Using our own IdP means we can configure it exactly as needed (CORS, token expiration, client settings) via the admin API. The test app for each framework adapter is separate, but the Autentico setup is identical.
 
-### 016 - Short TTL for RequireAuth auto-refresh E2E test (2026-04-30)
+### 016 - Clock manipulation for RequireAuth auto-refresh E2E test (2026-04-30, updated 2026-05-01)
 
 **Context**: Needed to test that RequireAuth automatically refreshes an expired access token when navigating between protected pages. The challenge is triggering token expiration deterministically without flaky timing.
 
@@ -191,10 +193,11 @@ Architectural and design decisions for the oidc-js project. Each entry captures 
 2. Expose a test hook on AuthProvider — compromises library API security
 3. Short access token TTL (1s) via per-client override, wait 5s — simple, wide margin
 4. Revoke access token server-side — client doesn't know it's revoked
+5. Override `Date.now` in the browser via `page.evaluate` to jump past `expiresAt`
 
-**Decision**: Option 3. Set `access_token_expiration: "1s"` on the test client via Autentico's admin API before the test, wait 5 seconds for expiration, navigate to a second RequireAuth page. Reset after the test.
+**Decision**: Option 5. After login, read `tokens.expiresAt` from the page, then `page.evaluate(() => { Date.now = () => expiresAt + 1000 })`. RequireAuth sees the token as expired instantly — no wait, no short TTL.
 
-**Rationale**: 5x margin (5s wait vs 1s TTL) is reliable even on slow CI. No changes to the library API. Per-client override means other tests aren't affected. The test verifies the real flow: token expires → RequireAuth detects `expiresAt < now` → calls refresh → gets new tokens → renders protected content.
+**Rationale**: The original approach (option 3) failed on slow CI — with a 1-3s TTL, the token expired during the login flow itself before the test reached the expiration check. Clock manipulation is instant and deterministic regardless of CI speed. It only affects the browser's `Date.now`, not the Autentico server clock, so the server still issues fresh tokens with real timestamps. The refreshed token appears valid because its `exp` is 15 minutes from real server time, which is far ahead of our faked `Date.now` (only 1s past the old token's expiry).
 
 ### 017 - Token expiration buffer on AuthProvider (2026-04-30)
 
@@ -250,3 +253,27 @@ Architectural and design decisions for the oidc-js project. Each entry captures 
 **Decision**: Option 2. One set of Playwright specs in `tests/e2e/specs/`. Each framework has its own test app (e.g., `tests/e2e/react-app/`, `tests/e2e/vue-app/`) that implements the same `data-testid` contract. The Playwright config or CI matrix selects which app to run against.
 
 **Rationale**: The tests verify OIDC behavior, not framework rendering. If a test app shows `data-testid="user-sub"` with the user's sub claim and `data-testid="login-button"` to trigger login, the Playwright spec doesn't care whether it's React or Svelte underneath. One spec suite, many apps, same contract.
+
+### 022 - `loginOptions` prop on RequireAuth (2026-05-01)
+
+**Context**: RequireAuth calls `actions.login()` when a user isn't authenticated (or when auto-refresh fails). Some IdPs support extra parameters on the authorize URL — e.g., `prompt=login` to force re-authentication, `login_hint` to pre-fill the username, or custom parameters.
+
+**Alternatives considered**:
+1. RequireAuth always calls `actions.login()` with no options — apps that need custom params must build their own guard
+2. `loginOptions` prop on RequireAuth, forwarded to `actions.login(loginOptions)`
+
+**Decision**: Option 2. RequireAuth accepts an optional `loginOptions` prop (same `LoginOptions` type used by `actions.login()`), forwarded when triggering a login redirect.
+
+**Rationale**: Simple pass-through, no new types. Apps that don't need it ignore the prop. Apps that do (e.g., forcing `prompt=login` on sensitive pages) get it without reimplementing the auth guard.
+
+### 023 - E2E traffic auditing: separate fetch tracking from navigation tracking (2026-05-01)
+
+**Context**: E2E tests need to verify that the OIDC flow makes exactly the expected protocol requests (discovery, token exchange, userinfo) and page navigations (authorize redirect, logout redirect). Initially both were tracked in a single log.
+
+**Alternatives considered**:
+1. Single combined log of all requests, assert order and type together
+2. Separate tracking: `fetch`/`xhr` requests in one log, `document` navigations in another, assert independently
+
+**Decision**: Option 2. `trackTraffic(page)` returns `{ requests(), navigations() }`. Requests are captured via `page.on("request")` filtered to `resourceType === "fetch" | "xhr"`. Navigations are captured via `page.on("request")` filtered to `resourceType === "document"`. Both filter to OIDC-relevant paths only.
+
+**Rationale**: Fetch requests and full-page navigations are fundamentally different — mixing them creates race condition risks since a navigation triggers multiple events (request, response, `framenavigated`). Separate tracking makes assertions clear: `LOGIN_REQUESTS` for protocol calls, `LOGIN_NAVIGATIONS` for redirects. Constants like `DISCOVERY` and `LOGIN_REQUESTS` keep assertions DRY across tests.

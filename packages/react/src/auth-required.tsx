@@ -1,49 +1,43 @@
-import { useEffect, useRef, useState, useMemo, type ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { useAuth } from "./context.js";
+import type { LoginOptions } from "oidc-js";
 
 interface RequireAuthProps {
   children: ReactNode;
   fallback?: ReactNode;
   autoRefresh?: boolean;
+  loginOptions?: LoginOptions;
 }
 
 export function RequireAuth({
   children,
   fallback = null,
   autoRefresh = true,
+  loginOptions,
 }: RequireAuthProps) {
   const { isAuthenticated, isLoading, tokens, actions } = useAuth();
   const refreshAttempted = useRef(false);
-  const [refreshing, setRefreshing] = useState(false);
 
-  const effectivelyAuthenticated = useMemo(
-    () => isAuthenticated && (tokens.expiresAt === null || tokens.expiresAt > Date.now()),
-    [isAuthenticated, tokens.expiresAt],
-  );
+  const isExpired = tokens.expiresAt !== null && tokens.expiresAt <= Date.now();
+  const needsAuth = !isAuthenticated || isExpired;
 
   useEffect(() => {
-    if (effectivelyAuthenticated) {
+    if (!needsAuth) {
       refreshAttempted.current = false;
+      return;
     }
-  }, [effectivelyAuthenticated]);
-
-  useEffect(() => {
-    if (isLoading || effectivelyAuthenticated || refreshing) return;
+    if (isLoading) return;
 
     if (autoRefresh && !refreshAttempted.current) {
       refreshAttempted.current = true;
-      setRefreshing(true);
-      actions
-        .refresh()
-        .catch(() => {})
-        .finally(() => setRefreshing(false));
+      actions.refresh().catch(() => actions.login(loginOptions));
       return;
     }
 
-    actions.login();
-  }, [isLoading, effectivelyAuthenticated, refreshing, autoRefresh, actions]);
+    actions.login(loginOptions);
+  }, [isLoading, needsAuth, autoRefresh, actions, loginOptions]);
 
-  if (isLoading || refreshing || !effectivelyAuthenticated) {
+  if (isLoading || needsAuth) {
     return fallback;
   }
 

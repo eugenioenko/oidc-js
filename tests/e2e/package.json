@@ -4,7 +4,8 @@
   "type": "module",
   "scripts": {
     "test": "playwright test",
-    "test:ui": "playwright test --ui"
+    "test:ui": "playwright test --ui",
+    "test:stress": "npx playwright test --repeat-each=100"
   },
   "devDependencies": {
     "@playwright/test": "^1.50.0",
