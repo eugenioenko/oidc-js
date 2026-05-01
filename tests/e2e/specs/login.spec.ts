@@ -322,7 +322,7 @@ test.describe("RequireAuth", () => {
     // Advance clock 1ms past token expiry so RequireAuth detects it as expired.
     // Save the real Date.now so we can restore it after the refresh fires.
     await page.evaluate((exp) => {
-      (window as any).__realDateNow = Date.now;
+      (window as unknown as Record<string, unknown>).__realDateNow = Date.now;
       Date.now = () => exp + 1;
     }, expiresAt);
 
@@ -330,7 +330,9 @@ test.describe("RequireAuth", () => {
     // after refresh uses real time and sees the new token as valid.
     page.on("request", (req) => {
       if (req.url().includes("/oauth2/token") && req.resourceType() === "fetch") {
-        page.evaluate(() => { Date.now = (window as any).__realDateNow; });
+        page.evaluate(() => {
+          Date.now = (window as unknown as Record<string, () => number>).__realDateNow;
+        });
       }
     });
 
