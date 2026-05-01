@@ -50,7 +50,7 @@ async function login(page: Page) {
   await page.fill('input[name="username"]', TEST_USER);
   await page.fill('input[name="password"]', TEST_PASS);
   await page.click('button[type="submit"]');
-  await page.waitForURL(/localhost:5173/, { timeout: TIMEOUT });
+  await page.waitForURL(/localhost:517[34]/, { timeout: TIMEOUT });
   await expect(page.getByTestId("authenticated")).toBeVisible({ timeout: TIMEOUT });
 }
 
@@ -137,7 +137,7 @@ test.describe("OIDC Login Flow", () => {
     await page.fill('input[name="username"]', TEST_USER);
     await page.fill('input[name="password"]', TEST_PASS);
     await page.click('button[type="submit"]');
-    await page.waitForURL(/localhost:5173/);
+    await page.waitForURL(/localhost:517[34]/);
     await expect(page.getByTestId("authenticated")).toBeVisible();
     await expect(page.getByTestId("user-profile-null")).toHaveText("true");
     await expect(page.getByTestId("user-email")).toHaveText("no profile");
@@ -216,7 +216,7 @@ test.describe("Session Lifecycle", () => {
     await page.fill('input[name="username"]', TEST_USER);
     await page.fill('input[name="password"]', TEST_PASS);
     await page.click('button[type="submit"]');
-    await page.waitForURL(/localhost:5173/, { timeout: TIMEOUT });
+    await page.waitForURL(/localhost:517[34]/, { timeout: TIMEOUT });
     await expect(page.getByTestId("authenticated")).toBeVisible({ timeout: TIMEOUT });
     await expect(page.getByTestId("access-token")).toHaveText("present");
   });
