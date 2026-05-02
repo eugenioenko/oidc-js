@@ -8,4 +8,5 @@ packages:
   - "tests/e2e/angular-app"
   - "tests/e2e/solid-app"
   - "tests/e2e/preact-app"
+  - "tests/e2e/kasper-app"
   - "docs-web"

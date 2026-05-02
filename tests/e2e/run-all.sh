@@ -9,6 +9,7 @@ configs=(
   "playwright.solid.config.ts:solid"
   "playwright.svelte.config.ts:svelte"
   "playwright.vue.config.ts:vue"
+  "playwright.kasper.config.ts:kasper"
 )
 
 for entry in "${configs[@]}"; do

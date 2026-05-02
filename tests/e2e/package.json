@@ -11,6 +11,7 @@
     "test:angular": "playwright test --config=playwright.angular.config.ts",
     "test:solid": "playwright test --config playwright.solid.config.ts",
     "test:preact": "playwright test --config playwright.preact.config.ts",
+    "test:kasper": "playwright test --config playwright.kasper.config.ts",
     "test:ui": "playwright test --ui",
     "test:stress": "bash run-all.sh --repeat-each=10"
   },

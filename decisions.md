@@ -278,7 +278,19 @@ Architectural and design decisions for the oidc-js project. Each entry captures 
 
 **Rationale**: Fetch requests and full-page navigations are fundamentally different — mixing them creates race condition risks since a navigation triggers multiple events (request, response, `framenavigated`). Separate tracking makes assertions clear: `LOGIN_REQUESTS` for protocol calls, `LOGIN_NAVIGATIONS` for redirects. Constants like `DISCOVERY` and `LOGIN_REQUESTS` keep assertions DRY across tests.
 
-### 024 - Defer Ember adapter, ship 7 frameworks (2026-05-01)
+### 024 - Atomic state updates via framework batching, not single-object signal (2026-05-02)
+
+**Context**: All framework adapters store auth state as separate reactive primitives (one signal/store/ref per field: `user`, `isAuthenticated`, `isLoading`, `error`, `tokens`). The Kasper adapter exposed a tearing bug: writing five signals sequentially without `batch()` caused effects to fire between writes, seeing inconsistent intermediate state. This triggered a logout→login race and a double-navigation bug.
+
+**Alternatives considered**:
+1. Single state object signal — one write, one effect flush, no tearing possible
+2. Separate signals with `batch()` to group writes atomically
+
+**Decision**: Option 2 across all adapters. Kasper explicitly uses `batch()` in its subscriber. Other frameworks handle this implicitly (React 18+ auto-batches, Solid batches within effects, Svelte 5 batches rune updates).
+
+**Rationale**: A single object signal eliminates tearing by design but sacrifices granularity — every state change notifies all consumers. For auth state (changes 2-3 times per session), the granularity win is negligible and wasn't worth the added complexity of the fix. However, separate signals map naturally to each framework's idiomatic reactivity primitive and preserve fine-grained updates for frameworks where it matters (Solid, Svelte). The real lesson: when bridging a subscribe-based state source into a signal system, always batch the writes. This is not Kasper-specific — any framework with synchronous or microtask-flushed effects needs atomic grouped updates from external state sources.
+
+### 025 - Defer Ember adapter, ship 7 frameworks (2026-05-01)
 
 **Context**: Built framework adapters for Vue, Svelte, Angular, Solid, Preact, and Lit. An Ember Octane adapter was also built and has a working E2E test app, but the PR adds ~10k lines due to Ember's lockfile and build tooling.
 
