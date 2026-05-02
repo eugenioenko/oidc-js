@@ -1,0 +1,71 @@
+---
+title: oidcPlugin
+description: Vue plugin that provides OIDC authentication to your application.
+---
+
+`oidcPlugin` initializes the OIDC client and provides reactive authentication state to all components via Vue's dependency injection. Install it with `app.use()` during app setup.
+
+## Installation
+
+```bash
+npm install oidc-js-vue
+```
+
+## Usage
+
+```ts
+import { createApp } from "vue";
+import { oidcPlugin } from "oidc-js-vue";
+import App from "./App.vue";
+
+const app = createApp(App);
+
+app.use(oidcPlugin, {
+  config: {
+    issuer: "https://auth.example.com",
+    clientId: "my-app",
+    redirectUri: "http://localhost:5173/callback",
+    scopes: ["openid", "profile", "email", "offline_access"],
+    postLogoutRedirectUri: "http://localhost:5173",
+  },
+});
+
+app.mount("#app");
+```
+
+## Options
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `config` | `OidcConfig` | **required** | OIDC configuration (issuer, clientId, redirectUri, etc.) |
+| `fetchProfile` | `boolean` | `true` | Whether to fetch the UserInfo endpoint after login |
+| `onLogin` | `(returnTo: string) => void` | - | Called after successful login with the URL to restore |
+| `onError` | `(error: Error) => void` | - | Called when an error occurs during initialization |
+
+## onLogin callback
+
+By default, the plugin restores the pre-login URL using `window.history.replaceState`. If you use Vue Router, handle navigation yourself:
+
+```ts
+import { createApp } from "vue";
+import { oidcPlugin } from "oidc-js-vue";
+import router from "./router";
+
+const app = createApp(App);
+app.use(router);
+
+app.use(oidcPlugin, {
+  config: { /* ... */ },
+  onLogin: (returnTo) => router.replace(returnTo),
+});
+
+app.mount("#app");
+```
+
+## Lifecycle
+
+1. On install, the plugin creates an `OidcClient` and calls `client.init()`
+2. `init()` fetches the OIDC discovery document
+3. If the URL contains a `code` and `state` parameter (callback from IdP), it exchanges the code for tokens
+4. If the URL contains an `error` parameter, it calls `onError`
+5. On app unmount, it unsubscribes and destroys the client

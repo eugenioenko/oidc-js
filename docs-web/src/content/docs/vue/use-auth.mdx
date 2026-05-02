@@ -1,0 +1,57 @@
+---
+title: useAuth
+description: Vue composable for accessing authentication state and actions.
+---
+
+`useAuth` is the primary composable for interacting with the OIDC authentication state. It must be called within a component tree where `oidcPlugin` is installed.
+
+## Installation
+
+```bash
+npm install oidc-js-vue
+```
+
+## Usage
+
+```vue
+<script setup lang="ts">
+import { useAuth } from "oidc-js-vue";
+
+const { user, isAuthenticated, isLoading, error, tokens, actions } = useAuth();
+</script>
+
+<template>
+  <div v-if="isLoading">Loading...</div>
+  <div v-else-if="error">Error: {{ error.message }}</div>
+  <div v-else-if="isAuthenticated">
+    <p>Hello, {{ user?.claims.sub }}</p>
+    <button @click="actions.logout()">Log out</button>
+  </div>
+  <div v-else>
+    <button @click="actions.login()">Log in</button>
+  </div>
+</template>
+```
+
+## Return value
+
+All state properties are Vue `ComputedRef` values that update reactively when the auth state changes.
+
+| Property | Type | Description |
+|---|---|---|
+| `user` | `ComputedRef<AuthUser \| null>` | The authenticated user (claims + profile) |
+| `isAuthenticated` | `ComputedRef<boolean>` | Whether the user is logged in |
+| `isLoading` | `ComputedRef<boolean>` | Whether initialization is in progress |
+| `error` | `ComputedRef<Error \| null>` | The most recent auth error |
+| `tokens` | `ComputedRef<AuthTokens>` | Current access, id, and refresh tokens |
+| `actions` | `AuthActions` | Methods for login, logout, refresh, fetchProfile |
+| `config` | `OidcConfig` | The OIDC configuration |
+
+## Actions
+
+| Action | Description |
+|---|---|
+| `login(options?)` | Redirect to IdP login. Options: `returnTo`, `extraParams` |
+| `logout()` | Clear state and redirect to IdP logout endpoint |
+| `refresh()` | Exchange refresh token for new tokens |
+| `fetchProfile()` | Fetch the UserInfo endpoint and update `user.profile` |

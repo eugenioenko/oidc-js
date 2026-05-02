@@ -1,0 +1,70 @@
+---
+title: AuthService
+description: Angular service for accessing authentication state and actions.
+---
+
+`AuthService` is an injectable Angular service that manages OIDC authentication state using Angular signals. It wraps `OidcClient` and provides reactive state and methods for login, logout, token refresh, and profile fetching.
+
+## Installation
+
+```bash
+npm install oidc-js-angular
+```
+
+## Usage
+
+```typescript
+import { Component, inject } from "@angular/core";
+import { AuthService } from "oidc-js-angular";
+
+@Component({
+  selector: "app-profile",
+  template: `
+    @if (auth.isLoading()) {
+      <p>Loading...</p>
+    } @else if (auth.isAuthenticated()) {
+      <p>Hello, {{ auth.user()?.claims.sub }}</p>
+      <button (click)="auth.logout()">Log out</button>
+    } @else {
+      <button (click)="auth.login()">Log in</button>
+    }
+  `,
+})
+export class ProfileComponent {
+  auth = inject(AuthService);
+}
+```
+
+## Signals
+
+All state properties are Angular read-only signals that update reactively.
+
+| Signal | Type | Description |
+|---|---|---|
+| `user()` | `AuthUser \| null` | The authenticated user (claims + profile) |
+| `isAuthenticated()` | `boolean` | Whether the user is logged in |
+| `isLoading()` | `boolean` | Whether initialization is in progress |
+| `error()` | `Error \| null` | The most recent auth error |
+| `tokens()` | `AuthTokens` | Current access, id, and refresh tokens |
+
+## Methods
+
+| Method | Description |
+|---|---|
+| `login(options?)` | Redirect to IdP login. Options: `returnTo`, `extraParams` |
+| `logout()` | Clear state and redirect to IdP logout endpoint |
+| `refresh()` | Exchange refresh token for new tokens |
+| `fetchProfile()` | Fetch the UserInfo endpoint and update `user().profile` |
+
+## Tokens
+
+```typescript
+interface AuthTokens {
+  access: string | null;
+  id: string | null;
+  refresh: string | null;
+  expiresAt: number | null;
+}
+```
+
+Tokens are stored in memory only. They are never persisted to `localStorage` or `sessionStorage`.

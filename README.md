@@ -10,13 +10,15 @@ Existing OIDC libraries are either too complex ([oidc-client-ts](https://github.
 
 | Package | Description | Status |
 |---------|-------------|--------|
-| [`oidc-js-core`](./packages/core) | Pure functions for OIDC protocol operations | Published |
-| [`oidc-js`](./packages/client) | Framework-agnostic client with `fetch` + `sessionStorage` | Published |
-| [`oidc-js-react`](./packages/react) | React provider, hooks, and route guards | Published |
-| [`oidc-js-angular`](./packages/angular) | Angular service, guard, and interceptor | Planned |
-| [`oidc-js-vue`](./packages/vue) | Vue plugin and composables | Planned |
-| [`oidc-js-svelte`](./packages/svelte) | Svelte stores | Planned |
-| [`oidc-js-solid`](./packages/solid) | SolidJS signals | Planned |
+| [`oidc-js-core`](./packages/core) | Pure functions for OIDC protocol operations | Stable |
+| [`oidc-js`](./packages/client) | Framework-agnostic client with `fetch` + `sessionStorage` | Stable |
+| [`oidc-js-react`](./packages/react) | React provider, hooks, and route guards | Stable |
+| [`oidc-js-vue`](./packages/vue) | Vue plugin, composables, and navigation guard | Stable |
+| [`oidc-js-svelte`](./packages/svelte) | Svelte 5 context and components | Stable |
+| [`oidc-js-angular`](./packages/angular) | Angular service, DI, and route guard | Stable |
+| [`oidc-js-solid`](./packages/solid) | SolidJS signals, context, and components | Stable |
+| [`oidc-js-preact`](./packages/preact) | Preact hooks and components | Stable |
+| [`oidc-js-lit`](./packages/lit) | Lit reactive controllers | Stable |
 
 ## Architecture
 
@@ -25,10 +27,12 @@ oidc-js-core              Pure functions. No IO. No state.
     |
     ├── oidc-js            core + fetch + sessionStorage
     ├── oidc-js-react      core + fetch + React context/hooks
-    ├── oidc-js-angular    core + HttpClient + Angular DI
-    ├── oidc-js-vue        core + fetch + Vue composables
-    ├── oidc-js-svelte     core + fetch + Svelte stores
-    └── oidc-js-solid      core + fetch + Solid signals
+    ├── oidc-js-vue        core + fetch + Vue plugin/composables
+    ├── oidc-js-svelte     core + fetch + Svelte 5 runes/context
+    ├── oidc-js-angular    core + fetch + Angular signals/DI
+    ├── oidc-js-solid      core + fetch + Solid signals/context
+    ├── oidc-js-preact     core + fetch + Preact hooks
+    └── oidc-js-lit        core + fetch + Lit reactive controllers
 ```
 
 The core never calls `fetch` or touches browser APIs (except Web Crypto for PKCE). Each framework adapter composes the core functions with its own HTTP layer and state management. This means:

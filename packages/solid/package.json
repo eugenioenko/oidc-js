@@ -1,7 +1,7 @@
 {
   "name": "oidc-js-solid",
-  "version": "0.0.1",
-  "description": "SolidJS bindings for oidc-js",
+  "version": "1.0.2",
+  "description": "Simple OIDC authentication for SolidJS. Signals, context, and auth guards with zero dependencies.",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -18,7 +18,6 @@
   ],
   "scripts": {
     "build": "vite build",
-    "test": "vitest run",
     "lint": "tsc --noEmit"
   },
   "keywords": [

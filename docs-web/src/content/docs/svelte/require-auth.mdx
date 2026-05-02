@@ -1,0 +1,67 @@
+---
+title: RequireAuth
+description: Svelte component for protecting content that requires authentication.
+---
+
+`RequireAuth` is a guard component that ensures its children are only rendered when the user is authenticated. It handles token expiry and automatic refresh.
+
+## Installation
+
+```bash
+npm install oidc-js-svelte
+```
+
+## Usage
+
+```svelte
+<script lang="ts">
+  import { RequireAuth } from "oidc-js-svelte";
+</script>
+
+<RequireAuth>
+  {#snippet children()}
+    <h1>Protected Content</h1>
+  {/snippet}
+  {#snippet fallback()}
+    <p>Loading...</p>
+  {/snippet}
+</RequireAuth>
+```
+
+## Props
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `children` | `Snippet` | **required** | Content to render when authenticated |
+| `fallback` | `Snippet` | - | Shown while loading or redirecting |
+| `autoRefresh` | `boolean` | `true` | Auto-refresh expired tokens before redirecting to login |
+| `loginOptions` | `LoginOptions` | - | Options passed to `actions.login()` when redirecting |
+
+## Behavior
+
+When `RequireAuth` renders:
+
+1. If still loading (discovery, callback), render `fallback`
+2. If authenticated with a valid token, render `children`
+3. If the token is expired and `autoRefresh` is `true`, attempt a silent refresh
+4. If refresh succeeds, render `children` with the new token
+5. If refresh fails (or no refresh token), redirect to the IdP login
+
+## With SvelteKit
+
+```svelte
+<!-- src/routes/dashboard/+page.svelte -->
+<script lang="ts">
+  import { RequireAuth } from "oidc-js-svelte";
+</script>
+
+<RequireAuth>
+  {#snippet children()}
+    <h1>Dashboard</h1>
+    <p>This content is only visible when authenticated.</p>
+  {/snippet}
+  {#snippet fallback()}
+    <p>Checking authentication...</p>
+  {/snippet}
+</RequireAuth>
+```

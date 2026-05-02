@@ -1,0 +1,67 @@
+---
+title: useAuth
+description: Preact hook for accessing authentication state and actions.
+---
+
+`useAuth` is the primary hook for interacting with the OIDC authentication state. It must be called within an `AuthProvider`.
+
+## Installation
+
+```bash
+npm install oidc-js-preact
+```
+
+## Usage
+
+```tsx
+import { useAuth } from "oidc-js-preact";
+
+function Profile() {
+  const { isAuthenticated, isLoading, user, tokens, error, actions } = useAuth();
+
+  if (isLoading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error.message}</div>;
+  if (!isAuthenticated) return <button onClick={() => actions.login()}>Log in</button>;
+
+  return (
+    <div>
+      <p>Hello, {user?.claims.sub}</p>
+      <button onClick={() => actions.logout()}>Log out</button>
+    </div>
+  );
+}
+```
+
+## Return value
+
+| Property | Type | Description |
+|---|---|---|
+| `config` | `OidcConfig` | The OIDC configuration |
+| `user` | `AuthUser \| null` | The authenticated user (claims + profile) |
+| `isAuthenticated` | `boolean` | Whether the user is logged in |
+| `isLoading` | `boolean` | Whether initialization is in progress |
+| `error` | `Error \| null` | The most recent auth error |
+| `tokens` | `AuthTokens` | Current access, id, and refresh tokens |
+| `actions` | `AuthActions` | Methods for login, logout, refresh, fetchProfile |
+
+## Actions
+
+| Action | Description |
+|---|---|
+| `login(options?)` | Redirect to IdP login. Options: `returnTo`, `extraParams` |
+| `logout()` | Clear state and redirect to IdP logout endpoint |
+| `refresh()` | Exchange refresh token for new tokens |
+| `fetchProfile()` | Fetch the UserInfo endpoint and update `user.profile` |
+
+## Tokens
+
+```typescript
+interface AuthTokens {
+  access: string | null;
+  id: string | null;
+  refresh: string | null;
+  expiresAt: number | null;
+}
+```
+
+Tokens are stored in memory only. They are never persisted to `localStorage` or `sessionStorage`.

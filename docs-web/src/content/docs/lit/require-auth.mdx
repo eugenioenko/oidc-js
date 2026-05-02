@@ -1,0 +1,66 @@
+---
+title: RequireAuthController
+description: Lit reactive controller for protecting content behind authentication.
+---
+
+`RequireAuthController` is a Lit `ReactiveController` that guards content behind authentication. It observes an `AuthController` and determines whether the user is authorized to view protected content. Use the `authorized` property in your `render()` method to conditionally display content.
+
+## Installation
+
+```bash
+npm install oidc-js-lit
+```
+
+## Usage
+
+```ts
+import { LitElement, html } from "lit";
+import { AuthController, RequireAuthController } from "oidc-js-lit";
+
+class ProtectedPage extends LitElement {
+  private auth = new AuthController(this, {
+    config: {
+      issuer: "https://auth.example.com",
+      clientId: "my-app",
+      redirectUri: "http://localhost:3000/callback",
+      scopes: ["openid", "profile"],
+    },
+  });
+
+  private guard = new RequireAuthController(this, { auth: this.auth });
+
+  render() {
+    if (!this.guard.authorized) return html`<p>Loading...</p>`;
+    return html`<p>Protected content</p>`;
+  }
+}
+
+customElements.define("protected-page", ProtectedPage);
+```
+
+## Constructor options
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `auth` | `AuthController` | **required** | The `AuthController` instance to observe |
+| `autoRefresh` | `boolean` | `true` | Auto-refresh expired tokens before redirecting to login |
+| `loginOptions` | `LoginOptions` | - | Options passed to `auth.login()` when redirecting |
+
+## Properties
+
+| Property | Type | Description |
+|---|---|---|
+| `authorized` | `boolean` | `true` when authenticated with a valid (non-expired) token |
+
+## Behavior
+
+After each host update, `RequireAuthController` checks the auth state:
+
+1. If authenticated with a valid token, `authorized` is `true`
+2. If the token is expired and `autoRefresh` is `true`, attempts a silent refresh
+3. If refresh succeeds, `authorized` becomes `true` on the next update
+4. If refresh fails (or no refresh token), redirects to the IdP login
+
+## Controller pattern
+
+Unlike component-based frameworks, Lit uses the controller pattern. You can share a single `AuthController` across multiple elements and attach `RequireAuthController` only where you need guard behavior. Both controllers are registered on the same host element.

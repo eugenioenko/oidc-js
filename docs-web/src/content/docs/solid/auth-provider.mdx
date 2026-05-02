@@ -1,0 +1,74 @@
+---
+title: AuthProvider
+description: SolidJS context provider for OIDC authentication.
+---
+
+`AuthProvider` is the top-level component that manages OIDC state. It creates an `OidcClient` instance, handles the authorization callback, and provides reactive authentication state to all child components via SolidJS context.
+
+## Installation
+
+```bash
+npm install oidc-js-solid
+```
+
+## Usage
+
+```tsx
+import { AuthProvider } from "oidc-js-solid";
+
+const config = {
+  issuer: "https://auth.example.com",
+  clientId: "my-app",
+  redirectUri: "http://localhost:3000/callback",
+  scopes: ["openid", "profile", "email", "offline_access"],
+  postLogoutRedirectUri: "http://localhost:3000",
+};
+
+function App() {
+  return (
+    <AuthProvider config={config}>
+      <MyApp />
+    </AuthProvider>
+  );
+}
+```
+
+## Props
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `config` | `OidcConfig` | **required** | OIDC configuration (issuer, clientId, redirectUri, etc.) |
+| `fetchProfile` | `boolean` | `true` | Whether to fetch the UserInfo endpoint after login |
+| `onLogin` | `(returnTo: string) => void` | - | Called after successful login with the URL to restore |
+| `onError` | `(error: Error) => void` | - | Called when an error occurs during initialization |
+| `children` | `JSX.Element` | **required** | Child components |
+
+## onLogin callback
+
+By default, `AuthProvider` restores the pre-login URL using `window.history.replaceState`. If you use a SolidJS router, handle navigation yourself:
+
+```tsx
+import { useNavigate } from "@solidjs/router";
+import { AuthProvider } from "oidc-js-solid";
+
+function Root() {
+  const navigate = useNavigate();
+
+  return (
+    <AuthProvider
+      config={config}
+      onLogin={(returnTo) => navigate(returnTo, { replace: true })}
+    >
+      <App />
+    </AuthProvider>
+  );
+}
+```
+
+## Lifecycle
+
+1. On mount, `AuthProvider` creates an `OidcClient` and calls `client.init()`
+2. `init()` fetches the OIDC discovery document
+3. If the URL contains a `code` and `state` parameter (callback from IdP), it exchanges the code for tokens
+4. If the URL contains an `error` parameter, it calls `onError`
+5. On cleanup, it unsubscribes and destroys the client

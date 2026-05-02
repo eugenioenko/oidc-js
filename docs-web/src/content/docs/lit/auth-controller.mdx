@@ -1,0 +1,78 @@
+---
+title: AuthController
+description: Lit reactive controller for OIDC authentication.
+---
+
+`AuthController` is a Lit `ReactiveController` that manages OIDC authentication state. It wraps `OidcClient` and integrates with Lit's reactive update lifecycle, calling `host.requestUpdate()` when the authentication state changes.
+
+## Installation
+
+```bash
+npm install oidc-js-lit
+```
+
+## Usage
+
+```ts
+import { LitElement, html } from "lit";
+import { AuthController } from "oidc-js-lit";
+
+class MyApp extends LitElement {
+  private auth = new AuthController(this, {
+    config: {
+      issuer: "https://auth.example.com",
+      clientId: "my-app",
+      redirectUri: "http://localhost:3000/callback",
+      scopes: ["openid", "profile", "email"],
+    },
+  });
+
+  render() {
+    if (this.auth.isLoading) return html`<p>Loading...</p>`;
+    if (!this.auth.isAuthenticated)
+      return html`<button @click=${() => this.auth.login()}>Log in</button>`;
+    return html`
+      <p>Hello, ${this.auth.user?.claims.sub}</p>
+      <button @click=${() => this.auth.logout()}>Log out</button>
+    `;
+  }
+}
+
+customElements.define("my-app", MyApp);
+```
+
+## Constructor options
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `config` | `OidcConfig` | **required** | OIDC configuration (issuer, clientId, redirectUri, etc.) |
+| `fetchProfile` | `boolean` | `true` | Whether to fetch the UserInfo endpoint after login |
+| `onLogin` | `(returnTo: string) => void` | - | Called after successful login with the URL to restore |
+| `onError` | `(error: Error) => void` | - | Called when an error occurs during initialization |
+
+## Properties
+
+| Property | Type | Description |
+|---|---|---|
+| `user` | `AuthUser \| null` | The authenticated user (claims + profile) |
+| `isAuthenticated` | `boolean` | Whether the user is logged in |
+| `isLoading` | `boolean` | Whether initialization is in progress |
+| `error` | `Error \| null` | The most recent auth error |
+| `tokens` | `AuthTokens` | Current access, id, and refresh tokens |
+| `config` | `OidcConfig` | The OIDC configuration |
+
+## Methods
+
+| Method | Description |
+|---|---|
+| `login(options?)` | Redirect to IdP login. Options: `returnTo`, `extraParams` |
+| `logout()` | Clear state and redirect to IdP logout endpoint |
+| `refresh()` | Exchange refresh token for new tokens |
+| `fetchProfile()` | Fetch the UserInfo endpoint and update `user.profile` |
+
+## Lifecycle
+
+The controller hooks into Lit's element lifecycle automatically:
+
+- **`hostConnected`** - Creates the `OidcClient`, subscribes to state changes, and calls `init()`
+- **`hostDisconnected`** - Unsubscribes and destroys the client

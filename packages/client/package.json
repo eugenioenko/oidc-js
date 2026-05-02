@@ -1,7 +1,7 @@
 {
   "name": "oidc-js",
-  "version": "0.0.1",
-  "description": "Stateful OIDC client for JavaScript — wraps oidc-js-core with fetch, sessionStorage, and event callbacks",
+  "version": "1.0.2",
+  "description": "Simple OIDC authentication for JavaScript. Drop-in client with login, logout, token refresh, and zero dependencies.",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",

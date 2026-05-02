@@ -1,0 +1,72 @@
+---
+title: RequireAuth
+description: Vue component and route guard for protecting authenticated content.
+---
+
+`RequireAuth` is a renderless component that only renders its default slot when the user is authenticated. The package also provides `createAuthGuard` for protecting Vue Router routes.
+
+## Installation
+
+```bash
+npm install oidc-js-vue
+```
+
+## RequireAuth component
+
+```vue
+<script setup lang="ts">
+import { RequireAuth } from "oidc-js-vue";
+</script>
+
+<template>
+  <RequireAuth>
+    <template #fallback>
+      <p>Loading...</p>
+    </template>
+    <div>Protected content</div>
+  </RequireAuth>
+</template>
+```
+
+### Props
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `autoRefresh` | `boolean` | `true` | Auto-refresh expired tokens before redirecting to login |
+| `loginOptions` | `LoginOptions` | - | Options passed to `actions.login()` when redirecting |
+
+### Slots
+
+| Slot | Description |
+|---|---|
+| `default` | Content rendered when the user is authenticated |
+| `fallback` | Content rendered while loading or when not authenticated |
+
+## createAuthGuard
+
+`createAuthGuard` creates a Vue Router `beforeEach` guard that protects routes requiring authentication. Call it inside `<script setup>`.
+
+```vue
+<script setup lang="ts">
+import { useRouter } from "vue-router";
+import { createAuthGuard } from "oidc-js-vue";
+
+const router = useRouter();
+createAuthGuard(router);
+</script>
+```
+
+### Behavior
+
+1. If auth is still loading, waits for initialization to complete
+2. If authenticated with a valid token, allows navigation
+3. If the token is expired, attempts a silent refresh
+4. If refresh fails or no refresh token exists, redirects to IdP login
+
+The guard preserves the target route path as `returnTo`, so the user returns to the requested page after login.
+
+### Options
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `loginOptions` | `LoginOptions` | - | Options passed to `actions.login()` when redirecting |

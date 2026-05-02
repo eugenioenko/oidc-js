@@ -277,3 +277,16 @@ Architectural and design decisions for the oidc-js project. Each entry captures 
 **Decision**: Option 2. `trackTraffic(page)` returns `{ requests(), navigations() }`. Requests are captured via `page.on("request")` filtered to `resourceType === "fetch" | "xhr"`. Navigations are captured via `page.on("request")` filtered to `resourceType === "document"`. Both filter to OIDC-relevant paths only.
 
 **Rationale**: Fetch requests and full-page navigations are fundamentally different — mixing them creates race condition risks since a navigation triggers multiple events (request, response, `framenavigated`). Separate tracking makes assertions clear: `LOGIN_REQUESTS` for protocol calls, `LOGIN_NAVIGATIONS` for redirects. Constants like `DISCOVERY` and `LOGIN_REQUESTS` keep assertions DRY across tests.
+
+### 024 - Defer Ember adapter, ship 7 frameworks (2026-05-01)
+
+**Context**: Built framework adapters for Vue, Svelte, Angular, Solid, Preact, and Lit. An Ember Octane adapter was also built and has a working E2E test app, but the PR adds ~10k lines due to Ember's lockfile and build tooling.
+
+**Alternatives considered**:
+1. Merge the Ember adapter alongside the others
+2. Keep the Ember PR open but don't merge, ship 7 frameworks without Ember
+3. Drop Ember entirely
+
+**Decision**: Option 2. Ship React, Vue, Svelte, Angular, Solid, Preact, and Lit. The Ember PR stays open for future consideration.
+
+**Rationale**: Ember's ecosystem adds significant weight (lockfile, ember-cli build, @glimmer dependencies) for a framework with declining adoption. The adapter works and the PR is ready, but merging it increases maintenance burden and CI time disproportionately. Keeping it open preserves the work without committing to maintenance.
