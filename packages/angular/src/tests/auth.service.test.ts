@@ -90,7 +90,7 @@ beforeEach(() => {
 
   (inject as unknown as ReturnType<typeof vi.fn>).mockImplementation((token: unknown) => {
     if (token === AUTH_OPTIONS) return mockOptions;
-    if ((token as { name?: string })?.name === "Router" || (token as Function)?.toString?.().includes("Router")) return mockRouter;
+    if ((token as { name?: string })?.name === "Router" || (token as { toString?: () => string })?.toString?.().includes("Router")) return mockRouter;
     return mockDestroyRef;
   });
 });

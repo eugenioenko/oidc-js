@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import type { OidcConfig } from "oidc-js-core";
 
 const mockClientInstance = {
-  subscribe: vi.fn((cb: (state: unknown) => void) => {
+  subscribe: vi.fn((_cb: (state: unknown) => void) => {
     return vi.fn();
   }),
   init: vi.fn().mockResolvedValue({ returnTo: undefined }),
@@ -84,6 +84,7 @@ describe("AuthStateManager", () => {
     const manager = new AuthStateManager(CONFIG, true);
 
     manager.update({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       user: { claims: { sub: "user-1" }, profile: null } as any,
       isAuthenticated: true,
       isLoading: false,

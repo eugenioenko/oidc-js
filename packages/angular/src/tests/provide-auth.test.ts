@@ -17,6 +17,7 @@ vi.mock("@angular/core", () => ({
   DestroyRef: class {},
   APP_INITIALIZER: Symbol("APP_INITIALIZER"),
   signal: (v: unknown) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const fn = (() => v) as any;
     fn.set = () => {};
     fn.asReadonly = () => fn;

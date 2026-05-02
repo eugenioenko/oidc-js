@@ -112,6 +112,7 @@ describe("oidcPlugin", () => {
 
   it("calls onError when init produces an error", async () => {
     const error = new Error("Discovery failed");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockClient.state = { ...mockClient.state, error } as any;
 
     const onError = vi.fn();
@@ -164,6 +165,7 @@ describe("oidcPlugin", () => {
       tokens: { access: "at_123", id: null, refresh: null, expiresAt: null },
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const context = getContext() as any;
     expect(context.isAuthenticated.value).toBe(true);
     expect(context.tokens.value.access).toBe("at_123");

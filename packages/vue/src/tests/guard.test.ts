@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { ref } from "vue";
 import { createAuthGuard } from "../guard.js";
-import { AUTH_CONTEXT_KEY } from "../plugin.js";
 
 const EMPTY_TOKENS = { access: null, id: null, refresh: null, expiresAt: null };
 

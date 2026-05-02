@@ -18,6 +18,7 @@ vi.mock("@angular/core", () => ({
   },
   DestroyRef: class {},
   signal: (v: unknown) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const fn = (() => v) as any;
     fn.set = () => {};
     fn.asReadonly = () => fn;
@@ -55,7 +56,9 @@ describe("authGuard", () => {
       expiresAt: Date.now() + 3600_000,
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const route = {} as any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const state = { url: "/protected" } as any;
     const result = await authGuard(route, state);
 
@@ -66,7 +69,9 @@ describe("authGuard", () => {
   it("redirects to login when not authenticated", async () => {
     mockAuthService.isAuthenticated.mockReturnValue(false);
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const route = {} as any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const state = { url: "/protected" } as any;
     const result = await authGuard(route, state);
 
@@ -84,7 +89,9 @@ describe("authGuard", () => {
     });
     mockAuthService.refresh.mockResolvedValue(undefined);
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const route = {} as any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const state = { url: "/protected" } as any;
     const result = await authGuard(route, state);
 
@@ -102,7 +109,9 @@ describe("authGuard", () => {
     });
     mockAuthService.refresh.mockRejectedValue(new Error("expired"));
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const route = {} as any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const state = { url: "/protected" } as any;
     const result = await authGuard(route, state);
 
@@ -126,7 +135,9 @@ describe("authGuard", () => {
       isLoading = false;
     }, 100);
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const route = {} as any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const state = { url: "/protected" } as any;
     const result = await authGuard(route, state);
 
