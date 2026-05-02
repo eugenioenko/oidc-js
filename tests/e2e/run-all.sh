@@ -20,7 +20,7 @@ for entry in "${configs[@]}"; do
   echo " Config: $config"
   echo "========================================="
   echo ""
-  pnpm exec playwright test --config "$config"
+  pnpm exec playwright test --config "$config" "$@"
 done
 
 echo ""

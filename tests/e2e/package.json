@@ -12,7 +12,7 @@
     "test:solid": "playwright test --config playwright.solid.config.ts",
     "test:preact": "playwright test --config playwright.preact.config.ts",
     "test:ui": "playwright test --ui",
-    "test:stress": "npx playwright test --repeat-each=100"
+    "test:stress": "bash run-all.sh --repeat-each=10"
   },
   "devDependencies": {
     "@playwright/test": "^1.50.0",
