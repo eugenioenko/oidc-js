@@ -3,17 +3,168 @@ title: Quickstart
 description: Get up and running with oidc-js in 5 minutes.
 ---
 
-import { Aside, Steps } from "@astrojs/starlight/components";
+import { Aside, Steps, Tabs, TabItem } from "@astrojs/starlight/components";
 
-This guide walks through adding OIDC authentication to a React app. You'll need an OIDC provider (like [Autentico](https://autentico.top), Auth0, Keycloak, or any spec-compliant IdP).
+This guide walks through adding OIDC authentication to your app. You'll need an OIDC provider (like [Autentico](https://autentico.top), Auth0, Keycloak, or any spec-compliant IdP).
 
 <Steps>
 
 1. **Install the package**
 
-   ```bash
-   npm install oidc-js-react
-   ```
+   <Tabs>
+     <TabItem label="React">
+     <Tabs>
+       <TabItem label="npm">
+       ```bash
+       npm install oidc-js-react
+       ```
+       </TabItem>
+       <TabItem label="pnpm">
+       ```bash
+       pnpm add oidc-js-react
+       ```
+       </TabItem>
+       <TabItem label="yarn">
+       ```bash
+       yarn add oidc-js-react
+       ```
+       </TabItem>
+     </Tabs>
+     </TabItem>
+     <TabItem label="Vue">
+     <Tabs>
+       <TabItem label="npm">
+       ```bash
+       npm install oidc-js-vue
+       ```
+       </TabItem>
+       <TabItem label="pnpm">
+       ```bash
+       pnpm add oidc-js-vue
+       ```
+       </TabItem>
+       <TabItem label="yarn">
+       ```bash
+       yarn add oidc-js-vue
+       ```
+       </TabItem>
+     </Tabs>
+     </TabItem>
+     <TabItem label="Svelte">
+     <Tabs>
+       <TabItem label="npm">
+       ```bash
+       npm install oidc-js-svelte
+       ```
+       </TabItem>
+       <TabItem label="pnpm">
+       ```bash
+       pnpm add oidc-js-svelte
+       ```
+       </TabItem>
+       <TabItem label="yarn">
+       ```bash
+       yarn add oidc-js-svelte
+       ```
+       </TabItem>
+     </Tabs>
+     </TabItem>
+     <TabItem label="Angular">
+     <Tabs>
+       <TabItem label="npm">
+       ```bash
+       npm install oidc-js-angular
+       ```
+       </TabItem>
+       <TabItem label="pnpm">
+       ```bash
+       pnpm add oidc-js-angular
+       ```
+       </TabItem>
+       <TabItem label="yarn">
+       ```bash
+       yarn add oidc-js-angular
+       ```
+       </TabItem>
+     </Tabs>
+     </TabItem>
+     <TabItem label="Solid">
+     <Tabs>
+       <TabItem label="npm">
+       ```bash
+       npm install oidc-js-solid
+       ```
+       </TabItem>
+       <TabItem label="pnpm">
+       ```bash
+       pnpm add oidc-js-solid
+       ```
+       </TabItem>
+       <TabItem label="yarn">
+       ```bash
+       yarn add oidc-js-solid
+       ```
+       </TabItem>
+     </Tabs>
+     </TabItem>
+     <TabItem label="Preact">
+     <Tabs>
+       <TabItem label="npm">
+       ```bash
+       npm install oidc-js-preact
+       ```
+       </TabItem>
+       <TabItem label="pnpm">
+       ```bash
+       pnpm add oidc-js-preact
+       ```
+       </TabItem>
+       <TabItem label="yarn">
+       ```bash
+       yarn add oidc-js-preact
+       ```
+       </TabItem>
+     </Tabs>
+     </TabItem>
+     <TabItem label="Lit">
+     <Tabs>
+       <TabItem label="npm">
+       ```bash
+       npm install oidc-js-lit
+       ```
+       </TabItem>
+       <TabItem label="pnpm">
+       ```bash
+       pnpm add oidc-js-lit
+       ```
+       </TabItem>
+       <TabItem label="yarn">
+       ```bash
+       yarn add oidc-js-lit
+       ```
+       </TabItem>
+     </Tabs>
+     </TabItem>
+     <TabItem label="Kasper">
+     <Tabs>
+       <TabItem label="npm">
+       ```bash
+       npm install oidc-js-kasper
+       ```
+       </TabItem>
+       <TabItem label="pnpm">
+       ```bash
+       pnpm add oidc-js-kasper
+       ```
+       </TabItem>
+       <TabItem label="yarn">
+       ```bash
+       yarn add oidc-js-kasper
+       ```
+       </TabItem>
+     </Tabs>
+     </TabItem>
+   </Tabs>
 
 2. **Configure the provider**
 
@@ -22,69 +173,601 @@ This guide walks through adding OIDC authentication to a React app. You'll need 
    - **Client ID** — registered in your IdP's client/application settings
    - **Redirect URI** — where the IdP sends the user after login (must be registered)
 
-3. **Wrap your app with AuthProvider**
+3. **Wrap your app with the auth provider**
 
-   ```tsx
-   // main.tsx
-   import { StrictMode } from "react";
-   import { createRoot } from "react-dom/client";
-   import { AuthProvider } from "oidc-js-react";
-   import App from "./App";
+   <Tabs>
+     <TabItem label="React">
+     ```tsx
+     // main.tsx
+     import { StrictMode } from "react";
+     import { createRoot } from "react-dom/client";
+     import { BrowserRouter, useNavigate } from "react-router";
+     import { AuthProvider } from "oidc-js-react";
+     import { useCallback } from "react";
+     import App from "./App";
 
-   const config = {
-     issuer: "https://auth.example.com",
-     clientId: "my-app",
-     redirectUri: "http://localhost:5173/callback",
-     scopes: ["openid", "profile", "email", "offline_access"],
-     postLogoutRedirectUri: "http://localhost:5173",
-   };
+     const config = {
+       issuer: "https://auth.example.com",
+       clientId: "my-app",
+       redirectUri: "http://localhost:5173/callback",
+       scopes: ["openid", "profile", "email", "offline_access"],
+       postLogoutRedirectUri: "http://localhost:5173",
+     };
 
-   createRoot(document.getElementById("root")!).render(
-     <StrictMode>
-       <AuthProvider config={config}>
-         <App />
-       </AuthProvider>
-     </StrictMode>
-   );
-   ```
+     function Root() {
+       const navigate = useNavigate();
+       const onLogin = useCallback(
+         (returnTo: string) => navigate(returnTo, { replace: true }),
+         [navigate],
+       );
 
-4. **Use the `useAuth` hook**
-
-   ```tsx
-   // App.tsx
-   import { useAuth } from "oidc-js-react";
-
-   function App() {
-     const { isAuthenticated, isLoading, user, actions } = useAuth();
-
-     if (isLoading) return <div>Loading...</div>;
-
-     if (!isAuthenticated) {
-       return <button onClick={() => actions.login()}>Log in</button>;
+       return (
+         <AuthProvider config={config} onLogin={onLogin}>
+           <App />
+         </AuthProvider>
+       );
      }
 
-     return (
-       <div>
-         <p>Welcome, {user?.profile?.name ?? user?.claims.sub}!</p>
-         <button onClick={() => actions.logout()}>Log out</button>
-       </div>
+     createRoot(document.getElementById("root")!).render(
+       <StrictMode>
+         <BrowserRouter>
+           <Root />
+         </BrowserRouter>
+       </StrictMode>,
      );
-   }
-   ```
+     ```
+     </TabItem>
+     <TabItem label="Vue">
+     ```ts
+     // main.ts
+     import { createApp } from "vue";
+     import { createRouter, createWebHistory } from "vue-router";
+     import { oidcPlugin } from "oidc-js-vue";
+     import App from "./App.vue";
+
+     const router = createRouter({
+       history: createWebHistory(),
+       routes: [/* your routes */],
+     });
+
+     const app = createApp(App);
+
+     app.use(oidcPlugin, {
+       config: {
+         issuer: "https://auth.example.com",
+         clientId: "my-app",
+         redirectUri: "http://localhost:5173/callback",
+         scopes: ["openid", "profile", "email", "offline_access"],
+         postLogoutRedirectUri: "http://localhost:5173",
+       },
+       onLogin(returnTo: string) {
+         router.replace(returnTo);
+       },
+     });
+
+     app.use(router);
+     app.mount("#app");
+     ```
+     </TabItem>
+     <TabItem label="Svelte">
+     ```svelte
+     <!-- App.svelte -->
+     <script lang="ts">
+       import { AuthProvider } from "oidc-js-svelte";
+
+       const config = {
+         issuer: "https://auth.example.com",
+         clientId: "my-app",
+         redirectUri: "http://localhost:5173/callback",
+         scopes: ["openid", "profile", "email", "offline_access"],
+         postLogoutRedirectUri: "http://localhost:5173",
+       };
+
+       function handleLogin(returnTo: string) {
+         window.history.replaceState({}, "", returnTo);
+       }
+     </script>
+
+     <AuthProvider {config} onLogin={handleLogin}>
+       {#snippet children()}
+         <slot />
+       {/snippet}
+     </AuthProvider>
+     ```
+     </TabItem>
+     <TabItem label="Angular">
+     ```ts
+     // main.ts
+     import { bootstrapApplication } from "@angular/platform-browser";
+     import { provideRouter } from "@angular/router";
+     import { provideAuth } from "oidc-js-angular";
+     import { AppComponent } from "./app/app.component";
+     import { routes } from "./app/app.routes";
+
+     bootstrapApplication(AppComponent, {
+       providers: [
+         provideRouter(routes),
+         provideAuth({
+           config: {
+             issuer: "https://auth.example.com",
+             clientId: "my-app",
+             redirectUri: "http://localhost:5173/callback",
+             scopes: ["openid", "profile", "email", "offline_access"],
+             postLogoutRedirectUri: "http://localhost:5173",
+           },
+         }),
+       ],
+     });
+     ```
+     </TabItem>
+     <TabItem label="Solid">
+     ```tsx
+     // App.tsx
+     import { useNavigate } from "@solidjs/router";
+     import { AuthProvider } from "oidc-js-solid";
+     import type { ParentComponent } from "solid-js";
+
+     const config = {
+       issuer: "https://auth.example.com",
+       clientId: "my-app",
+       redirectUri: "http://localhost:5173/callback",
+       scopes: ["openid", "profile", "email", "offline_access"],
+       postLogoutRedirectUri: "http://localhost:5173",
+     };
+
+     export const App: ParentComponent = (props) => {
+       const navigate = useNavigate();
+       const onLogin = (returnTo: string) => {
+         navigate(returnTo, { replace: true });
+       };
+
+       return (
+         <AuthProvider config={config} onLogin={onLogin}>
+           {props.children}
+         </AuthProvider>
+       );
+     };
+     ```
+     </TabItem>
+     <TabItem label="Preact">
+     ```tsx
+     // index.tsx
+     import { render } from "preact";
+     import { AuthProvider } from "oidc-js-preact";
+     import { route } from "preact-router";
+     import { useCallback } from "preact/hooks";
+     import { App } from "./App";
+
+     const config = {
+       issuer: "https://auth.example.com",
+       clientId: "my-app",
+       redirectUri: "http://localhost:5173/callback",
+       scopes: ["openid", "profile", "email", "offline_access"],
+       postLogoutRedirectUri: "http://localhost:5173",
+     };
+
+     function Root() {
+       const onLogin = useCallback((returnTo: string) => {
+         route(returnTo, true);
+       }, []);
+
+       return (
+         <AuthProvider config={config} onLogin={onLogin}>
+           <App />
+         </AuthProvider>
+       );
+     }
+
+     render(<Root />, document.getElementById("root")!);
+     ```
+     </TabItem>
+     <TabItem label="Lit">
+     ```ts
+     // app-root.ts
+     import { LitElement, html } from "lit";
+     import { customElement } from "lit/decorators.js";
+     import { AuthController } from "oidc-js-lit";
+
+     @customElement("app-root")
+     export class AppRoot extends LitElement {
+       auth = new AuthController(this, {
+         config: {
+           issuer: "https://auth.example.com",
+           clientId: "my-app",
+           redirectUri: "http://localhost:5173/callback",
+           scopes: ["openid", "profile", "email", "offline_access"],
+           postLogoutRedirectUri: "http://localhost:5173",
+         },
+         onLogin: (returnTo: string) => {
+           window.history.replaceState({}, "", returnTo);
+         },
+       });
+
+       render() {
+         return html`<home-page .auth=${this.auth}></home-page>`;
+       }
+     }
+     ```
+     </TabItem>
+     <TabItem label="Kasper">
+     ```ts
+     // main.ts
+     import { App } from "kasper-js";
+     import { AppRoot } from "./components/App.kasper";
+     import { AuthProvider, RequireAuth } from "oidc-js-kasper";
+
+     App({
+       root: document.getElementById("root")!,
+       entry: "app-root",
+       registry: {
+         "app-root": { component: AppRoot },
+         "auth-provider": { component: AuthProvider },
+         "require-auth": { component: RequireAuth },
+       },
+     });
+     ```
+
+     ```html
+     <!-- App.kasper -->
+     <template>
+       <auth-provider @:config="config" @:onLogin="handleLogin">
+         <slot />
+       </auth-provider>
+     </template>
+
+     <script>
+     import { Component, navigate } from "kasper-js";
+
+     export class AppRoot extends Component {
+       config = {
+         issuer: "https://auth.example.com",
+         clientId: "my-app",
+         redirectUri: "http://localhost:5173/callback",
+         scopes: ["openid", "profile", "email", "offline_access"],
+         postLogoutRedirectUri: "http://localhost:5173",
+       };
+
+       handleLogin = (returnTo) => {
+         navigate(returnTo);
+       };
+     }
+     </script>
+     ```
+     </TabItem>
+   </Tabs>
+
+4. **Access auth state**
+
+   <Tabs>
+     <TabItem label="React">
+     ```tsx
+     // App.tsx
+     import { useAuth } from "oidc-js-react";
+
+     function App() {
+       const { isAuthenticated, isLoading, user, actions } = useAuth();
+
+       if (isLoading) return <div>Loading...</div>;
+
+       if (!isAuthenticated) {
+         return <button onClick={() => actions.login()}>Log in</button>;
+       }
+
+       return (
+         <div>
+           <p>Welcome, {user?.profile?.name ?? user?.claims.sub}!</p>
+           <button onClick={() => actions.logout()}>Log out</button>
+         </div>
+       );
+     }
+     ```
+     </TabItem>
+     <TabItem label="Vue">
+     ```vue
+     <!-- Home.vue -->
+     <script setup lang="ts">
+     import { useAuth } from "oidc-js-vue";
+
+     const { user, isAuthenticated, isLoading, actions } = useAuth();
+     </script>
+
+     <template>
+       <div v-if="isLoading">Loading...</div>
+       <div v-else-if="!isAuthenticated">
+         <button @click="actions.login()">Log in</button>
+       </div>
+       <div v-else>
+         <p>Welcome, {{ user?.profile?.name ?? user?.claims.sub }}!</p>
+         <button @click="actions.logout()">Log out</button>
+       </div>
+     </template>
+     ```
+     </TabItem>
+     <TabItem label="Svelte">
+     ```svelte
+     <!-- Home.svelte -->
+     <script lang="ts">
+       import { getAuthContext } from "oidc-js-svelte";
+
+       const auth = getAuthContext();
+     </script>
+
+     {#if auth.isLoading}
+       <div>Loading...</div>
+     {:else if !auth.isAuthenticated}
+       <button onclick={() => auth.actions.login()}>Log in</button>
+     {:else}
+       <p>Welcome, {auth.user?.profile?.name ?? auth.user?.claims.sub}!</p>
+       <button onclick={() => auth.actions.logout()}>Log out</button>
+     {/if}
+     ```
+     </TabItem>
+     <TabItem label="Angular">
+     ```ts
+     // home.component.ts
+     import { Component, inject } from "@angular/core";
+     import { AuthService } from "oidc-js-angular";
+
+     @Component({
+       selector: "app-home",
+       standalone: true,
+       template: `
+         @if (auth.isLoading()) {
+           <div>Loading...</div>
+         } @else if (!auth.isAuthenticated()) {
+           <button (click)="auth.login()">Log in</button>
+         } @else {
+           <p>Welcome, {{ auth.user()?.profile?.name ?? auth.user()?.claims?.sub }}!</p>
+           <button (click)="auth.logout()">Log out</button>
+         }
+       `,
+     })
+     export class HomeComponent {
+       readonly auth = inject(AuthService);
+     }
+     ```
+     </TabItem>
+     <TabItem label="Solid">
+     ```tsx
+     // Home.tsx
+     import { Show } from "solid-js";
+     import { useAuth } from "oidc-js-solid";
+
+     export function Home() {
+       const auth = useAuth();
+
+       return (
+         <Show
+           when={!auth.isLoading}
+           fallback={<div>Loading...</div>}
+         >
+           <Show when={!auth.isAuthenticated}>
+             <button onClick={() => auth.actions.login()}>Log in</button>
+           </Show>
+           <Show when={auth.isAuthenticated}>
+             <p>Welcome, {auth.user?.profile?.name ?? auth.user?.claims.sub}!</p>
+             <button onClick={() => auth.actions.logout()}>Log out</button>
+           </Show>
+         </Show>
+       );
+     }
+     ```
+     </TabItem>
+     <TabItem label="Preact">
+     ```tsx
+     // Home.tsx
+     import { useAuth } from "oidc-js-preact";
+
+     export function Home() {
+       const { isAuthenticated, isLoading, user, actions } = useAuth();
+
+       if (isLoading) return <div>Loading...</div>;
+
+       if (!isAuthenticated) {
+         return <button onClick={() => actions.login()}>Log in</button>;
+       }
+
+       return (
+         <div>
+           <p>Welcome, {user?.profile?.name ?? user?.claims.sub}!</p>
+           <button onClick={() => actions.logout()}>Log out</button>
+         </div>
+       );
+     }
+     ```
+     </TabItem>
+     <TabItem label="Lit">
+     ```ts
+     // home-page.ts
+     import { LitElement, html } from "lit";
+     import { customElement, property } from "lit/decorators.js";
+     import type { AuthController } from "oidc-js-lit";
+
+     @customElement("home-page")
+     export class HomePage extends LitElement {
+       @property({ attribute: false })
+       auth!: AuthController;
+
+       render() {
+         const { user, isAuthenticated, isLoading } = this.auth;
+
+         if (isLoading) return html`<div>Loading...</div>`;
+
+         if (!isAuthenticated) {
+           return html`<button @click=${() => this.auth.login()}>Log in</button>`;
+         }
+
+         return html`
+           <p>Welcome, ${user?.profile?.name ?? user?.claims.sub}!</p>
+           <button @click=${() => this.auth.logout()}>Log out</button>
+         `;
+       }
+     }
+     ```
+     </TabItem>
+     <TabItem label="Kasper">
+     ```html
+     <!-- Home.kasper -->
+     <template>
+       <div @if="auth.isLoading.value">Loading...</div>
+       <div @elseif="!auth.isAuthenticated.value">
+         <button @on:click="auth.actions.login()">Log in</button>
+       </div>
+       <div @else>
+         <p>Welcome, {{auth.user.value?.profile?.name ?? auth.user.value?.claims.sub}}!</p>
+         <button @on:click="auth.actions.logout()">Log out</button>
+       </div>
+     </template>
+
+     <script>
+     import { Component } from "kasper-js";
+     import { useAuth } from "oidc-js-kasper";
+
+     export class HomePage extends Component {
+       auth = useAuth();
+     }
+     </script>
+     ```
+     </TabItem>
+   </Tabs>
 
 5. **Protect routes**
 
-   ```tsx
-   import { RequireAuth } from "oidc-js-react";
+   <Tabs>
+     <TabItem label="React">
+     ```tsx
+     import { RequireAuth } from "oidc-js-react";
 
-   function ProtectedPage() {
-     return (
+     function ProtectedPage() {
+       return (
+         <RequireAuth fallback={<div>Loading...</div>}>
+           <p>This content is only visible to authenticated users.</p>
+         </RequireAuth>
+       );
+     }
+     ```
+     </TabItem>
+     <TabItem label="Vue">
+     ```vue
+     <!-- Protected.vue -->
+     <script setup lang="ts">
+     import { RequireAuth } from "oidc-js-vue";
+     </script>
+
+     <template>
        <RequireAuth>
+         <template #fallback>
+           <div>Loading...</div>
+         </template>
          <p>This content is only visible to authenticated users.</p>
        </RequireAuth>
-     );
-   }
-   ```
+     </template>
+     ```
+     </TabItem>
+     <TabItem label="Svelte">
+     ```svelte
+     <!-- Protected.svelte -->
+     <script lang="ts">
+       import { RequireAuth } from "oidc-js-svelte";
+     </script>
+
+     <RequireAuth>
+       {#snippet children()}
+         <p>This content is only visible to authenticated users.</p>
+       {/snippet}
+       {#snippet fallback()}
+         <div>Loading...</div>
+       {/snippet}
+     </RequireAuth>
+     ```
+     </TabItem>
+     <TabItem label="Angular">
+     ```ts
+     // app.routes.ts
+     import type { Routes } from "@angular/router";
+     import { authGuard } from "oidc-js-angular";
+
+     export const routes: Routes = [
+       { path: "", component: HomeComponent },
+       {
+         path: "protected",
+         component: ProtectedComponent,
+         canActivate: [authGuard],
+       },
+     ];
+     ```
+     </TabItem>
+     <TabItem label="Solid">
+     ```tsx
+     import { RequireAuth } from "oidc-js-solid";
+
+     function ProtectedPage() {
+       return (
+         <RequireAuth fallback={<div>Loading...</div>}>
+           <p>This content is only visible to authenticated users.</p>
+         </RequireAuth>
+       );
+     }
+     ```
+     </TabItem>
+     <TabItem label="Preact">
+     ```tsx
+     import { RequireAuth } from "oidc-js-preact";
+
+     function ProtectedPage() {
+       return (
+         <RequireAuth fallback={<div>Loading...</div>}>
+           <p>This content is only visible to authenticated users.</p>
+         </RequireAuth>
+       );
+     }
+     ```
+     </TabItem>
+     <TabItem label="Lit">
+     ```ts
+     import { LitElement, html } from "lit";
+     import { customElement, property } from "lit/decorators.js";
+     import { AuthController, RequireAuthController } from "oidc-js-lit";
+
+     @customElement("protected-page")
+     export class ProtectedPage extends LitElement {
+       @property({ attribute: false })
+       auth!: AuthController;
+
+       private guard!: RequireAuthController;
+
+       connectedCallback() {
+         this.guard = new RequireAuthController(this, { auth: this.auth });
+         super.connectedCallback();
+       }
+
+       render() {
+         if (!this.guard.authorized) {
+           return html`<div>Loading...</div>`;
+         }
+         return html`<p>This content is only visible to authenticated users.</p>`;
+       }
+     }
+     ```
+     </TabItem>
+     <TabItem label="Kasper">
+     ```html
+     <!-- Protected.kasper -->
+     <template>
+       <require-auth>
+         <div @slot="fallback">Loading...</div>
+         <p>This content is only visible to authenticated users.</p>
+       </require-auth>
+     </template>
+
+     <script>
+     import { Component } from "kasper-js";
+
+     export class ProtectedPage extends Component {}
+     </script>
+     ```
+     </TabItem>
+   </Tabs>
 
 </Steps>
 
@@ -94,8 +777,8 @@ Include `offline_access` in your scopes to receive a refresh token. Without it, 
 
 ## What happens under the hood
 
-1. `AuthProvider` fetches the OIDC discovery document from `{issuer}/.well-known/openid-configuration`
-2. When `actions.login()` is called, it generates PKCE parameters, saves auth state to `sessionStorage`, and redirects to the IdP's authorization endpoint
+1. The auth provider fetches the OIDC discovery document from `{issuer}/.well-known/openid-configuration`
+2. When login is triggered, it generates PKCE parameters, saves auth state to `sessionStorage`, and redirects to the IdP's authorization endpoint
 3. After the user authenticates, the IdP redirects back with an authorization code
-4. `AuthProvider` detects the code in the URL, exchanges it for tokens, fetches the user profile, and cleans up the URL
-5. `RequireAuth` checks token expiry on each render and automatically refreshes expired tokens using the refresh token
+4. The provider detects the code in the URL, exchanges it for tokens, fetches the user profile, and cleans up the URL
+5. The auth guard (RequireAuth / authGuard) checks token expiry and automatically refreshes expired tokens using the refresh token
