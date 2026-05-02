@@ -1,17 +1,34 @@
 import { test as base } from "@playwright/test";
 import { execSync, spawn } from "child_process";
-import { createWriteStream, existsSync, rmSync } from "fs";
+import { createWriteStream, existsSync, readFileSync, rmSync } from "fs";
 import { join } from "path";
 
+const IDP_PORT = process.env.E2E_IDP_PORT ?? "9999";
+const APP_PORT = process.env.E2E_APP_PORT ?? "5173";
 const AUTENTICO_DIR = join(import.meta.dirname, "..", ".autentico");
 const AUTENTICO_BIN = join(AUTENTICO_DIR, "autentico");
-const AUTENTICO_URL = "http://localhost:9999";
+const ENV_FILE = join(AUTENTICO_DIR, ".env");
+const AUTENTICO_URL = `http://localhost:${IDP_PORT}`;
+const DB_FILE = `./autentico-${IDP_PORT}.db`;
 const ADMIN_USER = "admin";
 const ADMIN_PASS = "TestAdmin123!";
 const ADMIN_EMAIL = "admin@test.com";
 const TEST_USER = "testuser";
 const TEST_PASS = "TestUser123!";
 const TEST_EMAIL = "testuser@test.com";
+
+function readEnvFile(): Record<string, string> {
+  const env: Record<string, string> = {};
+  if (!existsSync(ENV_FILE)) return env;
+  for (const line of readFileSync(ENV_FILE, "utf-8").split("\n")) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    const eq = trimmed.indexOf("=");
+    if (eq === -1) continue;
+    env[trimmed.slice(0, eq)] = trimmed.slice(eq + 1);
+  }
+  return env;
+}
 
 async function waitForHealthy(url: string, timeoutMs = 15_000) {
   const start = Date.now();
@@ -49,8 +66,8 @@ async function seedTestData(token: string) {
     body: JSON.stringify({
       client_id: "e2e-test-app",
       client_name: "E2E Test App",
-      redirect_uris: ["http://localhost:5173/callback"],
-      post_logout_redirect_uris: ["http://localhost:5173"],
+      redirect_uris: [`http://localhost:${APP_PORT}/callback`],
+      post_logout_redirect_uris: [`http://localhost:${APP_PORT}`],
       grant_types: ["authorization_code", "refresh_token"],
       response_types: ["code"],
       scopes: "openid profile email offline_access",
@@ -76,8 +93,8 @@ async function seedTestData(token: string) {
 }
 
 function cleanDb() {
-  for (const f of ["autentico.db", "autentico.db-shm", "autentico.db-wal"]) {
-    const p = join(AUTENTICO_DIR, f);
+  for (const suffix of ["", "-shm", "-wal"]) {
+    const p = join(AUTENTICO_DIR, `autentico-${IDP_PORT}.db${suffix}`);
     if (existsSync(p)) rmSync(p);
   }
 }
@@ -87,22 +104,30 @@ export const test = base.extend<{ autentico: void }>({
   autentico: [async ({}, use) => {
     cleanDb();
 
+    const envVars = {
+      ...process.env,
+      ...readEnvFile(),
+      AUTENTICO_DB_FILE_PATH: DB_FILE,
+      AUTENTICO_APP_URL: AUTENTICO_URL,
+      AUTENTICO_LISTEN_PORT: IDP_PORT,
+      AUTENTICO_RATE_LIMIT_RPS: "0",
+      AUTENTICO_RATE_LIMIT_RPM: "0",
+      AUTENTICO_ANTI_TIMING_MIN_MS: "0",
+      AUTENTICO_ANTI_TIMING_MAX_MS: "0",
+      AUTENTICO_CSRF_SECURE_COOKIE: "false",
+      AUTENTICO_IDP_SESSION_SECURE: "false",
+    };
+
     execSync(
       `${AUTENTICO_BIN} onboard --username ${ADMIN_USER} --password "${ADMIN_PASS}" --email ${ADMIN_EMAIL} --enable-admin-password-grant`,
-      { cwd: AUTENTICO_DIR, stdio: "pipe" },
+      { cwd: AUTENTICO_DIR, stdio: "pipe", env: envVars },
     );
 
-    const logFile = createWriteStream(join(AUTENTICO_DIR, "autentico.log"));
+    const logFile = createWriteStream(join(AUTENTICO_DIR, `autentico-${IDP_PORT}.log`));
     const proc = spawn(AUTENTICO_BIN, ["start"], {
       cwd: AUTENTICO_DIR,
       stdio: ["ignore", "pipe", "pipe"],
-      env: {
-        ...process.env,
-        AUTENTICO_RATE_LIMIT_RPS: "0",
-        AUTENTICO_RATE_LIMIT_RPM: "0",
-        AUTENTICO_ANTI_TIMING_MIN_MS: "0",
-        AUTENTICO_ANTI_TIMING_MAX_MS: "0",
-      },
+      env: envVars,
     });
     proc.stdout?.pipe(logFile);
     proc.stderr?.pipe(logFile);
