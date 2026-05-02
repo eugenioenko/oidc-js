@@ -18,7 +18,8 @@
   ],
   "scripts": {
     "build": "vite build",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "test": "vitest run"
   },
   "keywords": [
     "oidc",
@@ -43,6 +44,14 @@
     "vite": "^8.0.0",
     "vite-plugin-dts": "^4.0.0",
     "vite-plugin-solid": "^2.11.0",
-    "vitest": "^4.0.0"
-  }
+    "vitest": "^4.0.0",
+    "@solidjs/testing-library": "^0.8.0",
+    "jsdom": "^26.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/eugenioenko/oidc-js.git",
+    "directory": "packages/solid"
+  },
+  "homepage": "https://eugenioenko.github.io/oidc-js/"
 }

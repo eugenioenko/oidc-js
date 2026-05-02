@@ -14,4 +14,7 @@ export default defineConfig({
       external: ["vue", "oidc-js", "oidc-js-core"],
     },
   },
+  test: {
+    environment: "jsdom",
+  },
 });

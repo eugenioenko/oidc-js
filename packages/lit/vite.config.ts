@@ -14,4 +14,7 @@ export default defineConfig({
       external: ["lit", "oidc-js", "oidc-js-core"],
     },
   },
+  test: {
+    environment: "jsdom",
+  },
 });

@@ -18,4 +18,7 @@ export default defineConfig({
       external: ["svelte", "svelte/internal", "svelte/store", "oidc-js", "oidc-js-core"],
     },
   },
+  test: {
+    environment: "jsdom",
+  },
 });

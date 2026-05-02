@@ -46,5 +46,11 @@
     "vite": "^8.0.0",
     "vite-plugin-dts": "^4.0.0",
     "vitest": "^4.0.0"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/eugenioenko/oidc-js.git",
+    "directory": "packages/react"
+  },
+  "homepage": "https://eugenioenko.github.io/oidc-js/"
 }
