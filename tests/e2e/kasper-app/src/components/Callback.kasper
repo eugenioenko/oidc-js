@@ -1,0 +1,9 @@
+<template>
+  <div data-testid="auth-loading">Loading...</div>
+</template>
+
+<script>
+import { Component } from "kasper-js";
+
+export class CallbackPage extends Component {}
+</script>

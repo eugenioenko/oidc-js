@@ -1,0 +1,52 @@
+<template>
+  <div @if="auth.isLoading.value" data-testid="auth-loading">Loading...</div>
+  <div @elseif="auth.error.value" data-testid="auth-error">Error: {{auth.error.value.message}}</div>
+  <div @elseif="!auth.isAuthenticated.value" data-testid="unauthenticated">
+    <h1>Not logged in</h1>
+    <button data-testid="login-button" @on:click="auth.actions.login()">Login</button>
+  </div>
+  <div @else data-testid="authenticated">
+    <h1>Logged in</h1>
+    <div data-testid="user-sub">{{auth.user.value?.claims.sub}}</div>
+    <div data-testid="user-iss">{{auth.user.value?.claims.iss}}</div>
+    <div data-testid="user-aud">{{formatAud()}}</div>
+    <div data-testid="user-exp">{{auth.user.value?.claims.exp}}</div>
+    <div data-testid="user-iat">{{auth.user.value?.claims.iat}}</div>
+    <div data-testid="user-email">{{auth.user.value?.profile?.email ?? "no profile"}}</div>
+    <div data-testid="user-profile-null">{{auth.user.value?.profile === null ? "true" : "false"}}</div>
+    <div data-testid="access-token">{{auth.tokens.value.access ? "present" : "missing"}}</div>
+    <div data-testid="refresh-token">{{auth.tokens.value.refresh ? "present" : "missing"}}</div>
+    <div data-testid="access-token-value" style="display: none">{{auth.tokens.value.access ?? ""}}</div>
+    <div data-testid="refresh-token-value" style="display: none">{{auth.tokens.value.refresh ?? ""}}</div>
+    <div data-testid="id-token">{{auth.tokens.value.id ? "present" : "missing"}}</div>
+    <div data-testid="expires-at">{{auth.tokens.value.expiresAt ?? "none"}}</div>
+    <button data-testid="logout-button" @on:click="auth.actions.logout()">Logout</button>
+    <button data-testid="refresh-button" @on:click="handleRefresh()">Refresh</button>
+    <nav>
+      <a href="/protected-a" data-testid="link-protected-a" @on:click.prevent="goTo('/protected-a')">Protected A</a>
+      <a href="/protected-b" data-testid="link-protected-b" @on:click.prevent="goTo('/protected-b')">Protected B</a>
+    </nav>
+  </div>
+</template>
+
+<script>
+import { Component, navigate } from "kasper-js";
+import { useAuth } from "oidc-js-kasper";
+
+export class HomePage extends Component {
+  auth = useAuth();
+
+  formatAud() {
+    const aud = this.auth.user.value?.claims.aud;
+    return typeof aud === "string" ? aud : JSON.stringify(aud);
+  }
+
+  handleRefresh() {
+    this.auth.actions.refresh().catch(() => {});
+  }
+
+  goTo(path) {
+    navigate(path);
+  }
+}
+</script>

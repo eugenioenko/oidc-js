@@ -113,6 +113,34 @@ importers:
         specifier: ^4.0.0
         version: 4.1.5(@types/node@25.6.0)(jsdom@26.1.0)(vite@8.0.10(@types/node@25.6.0)(esbuild@0.28.0)(sass@1.85.0)(yaml@2.8.3))
 
+  packages/kasper:
+    dependencies:
+      oidc-js:
+        specifier: workspace:*
+        version: link:../client
+      oidc-js-core:
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      jsdom:
+        specifier: ^26.0.0
+        version: 26.1.0
+      kasper-js:
+        specifier: ^0.3.25
+        version: 0.3.25
+      typescript:
+        specifier: ^5.5.0
+        version: 5.6.3
+      vite:
+        specifier: ^8.0.0
+        version: 8.0.10(@types/node@25.6.0)(esbuild@0.28.0)(sass@1.85.0)(yaml@2.8.3)
+      vite-plugin-dts:
+        specifier: ^4.0.0
+        version: 4.5.4(@types/node@25.6.0)(rollup@4.60.2)(typescript@5.6.3)(vite@8.0.10(@types/node@25.6.0)(esbuild@0.28.0)(sass@1.85.0)(yaml@2.8.3))
+      vitest:
+        specifier: ^4.0.0
+        version: 4.1.5(@types/node@25.6.0)(jsdom@26.1.0)(vite@8.0.10(@types/node@25.6.0)(esbuild@0.28.0)(sass@1.85.0)(yaml@2.8.3))
+
   packages/lit:
     dependencies:
       oidc-js:
@@ -359,6 +387,25 @@ importers:
       typescript:
         specifier: ~5.6.0
         version: 5.6.3
+
+  tests/e2e/kasper-app:
+    dependencies:
+      kasper-js:
+        specifier: ^0.3.25
+        version: 0.3.25
+      oidc-js-kasper:
+        specifier: workspace:*
+        version: link:../../../packages/kasper
+    devDependencies:
+      typescript:
+        specifier: ^5.5.0
+        version: 5.6.3
+      vite:
+        specifier: ^6.0.0
+        version: 6.4.2(@types/node@25.6.0)(lightningcss@1.32.0)(sass@1.85.0)(yaml@2.8.3)
+      vite-plugin-kasper:
+        specifier: ^0.1.4
+        version: 0.1.4(vite@6.4.2(@types/node@25.6.0)(lightningcss@1.32.0)(sass@1.85.0)(yaml@2.8.3))
 
   tests/e2e/lit-app:
     dependencies:
@@ -4483,6 +4530,9 @@ packages:
     resolution: {integrity: sha512-POQXvpdL69+CluYsillJ7SUhKvytYjW9vG/GKpnf+xP8UWgYEM/RaMzHHofbALDiKbbP1W8UEYmgGl39WkPZsg==}
     engines: {'0': node >= 0.2.0}
 
+  kasper-js@0.3.25:
+    resolution: {integrity: sha512-u95QC7INdQsGLtuVdsE9AwBlcfZT2POfOo/WPaYi4xR58b3ifwpuBw25YcIatlmOU3GmNh6PB61T7rMqw95wxg==}
+
   katex@0.16.45:
     resolution: {integrity: sha512-pQpZbdBu7wCTmQUh7ufPmLr0pFoObnGUoL/yhtwJDgmmQpbkg/0HSVti25Fu4rmd1oCR6NGWe9vqTWuWv3GcNA==}
     hasBin: true
@@ -6072,6 +6122,11 @@ packages:
     peerDependenciesMeta:
       vite:
         optional: true
+
+  vite-plugin-kasper@0.1.4:
+    resolution: {integrity: sha512-SNnVMvtPbLBQtfltSXTSratdayrwdgVF3vT+ZPJwciY8MKp5GEr+OVDYtjoYpidtygEsWHsQEoCw/Jc8spiBzg==}
+    peerDependencies:
+      vite: '>=5.0.0'
 
   vite-plugin-solid@2.11.12:
     resolution: {integrity: sha512-FgjPcx2OwX9h6f28jli7A4bG7PP3te8uyakE5iqsmpq3Jqi1TWLgSroC9N6cMfGRU2zXsl4Q6ISvTr2VL0QHpA==}
@@ -10655,6 +10710,8 @@ snapshots:
 
   jsonparse@1.3.1: {}
 
+  kasper-js@0.3.25: {}
+
   katex@0.16.45:
     dependencies:
       commander: 8.3.0
@@ -12823,6 +12880,10 @@ snapshots:
       - '@types/node'
       - rollup
       - supports-color
+
+  vite-plugin-kasper@0.1.4(vite@6.4.2(@types/node@25.6.0)(lightningcss@1.32.0)(sass@1.85.0)(yaml@2.8.3)):
+    dependencies:
+      vite: 6.4.2(@types/node@25.6.0)(lightningcss@1.32.0)(sass@1.85.0)(yaml@2.8.3)
 
   vite-plugin-solid@2.11.12(solid-js@1.9.12)(vite@8.0.10(@types/node@25.6.0)(esbuild@0.28.0)(sass@1.85.0)(yaml@2.8.3)):
     dependencies:

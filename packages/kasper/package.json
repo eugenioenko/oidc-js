@@ -1,0 +1,55 @@
+{
+  "name": "oidc-js-kasper",
+  "version": "1.0.0",
+  "description": "Simple OIDC authentication for Kasper.js. Signals, components, and auth guards with zero dependencies.",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "lint": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "oidc-js": "workspace:*",
+    "oidc-js-core": "workspace:*"
+  },
+  "peerDependencies": {
+    "kasper-js": ">=0.3.25"
+  },
+  "devDependencies": {
+    "kasper-js": "^0.3.25",
+    "typescript": "^5.5.0",
+    "vite": "^8.0.0",
+    "vite-plugin-dts": "^4.0.0",
+    "vitest": "^4.0.0",
+    "jsdom": "^26.0.0"
+  },
+  "keywords": [
+    "oidc",
+    "openid-connect",
+    "oauth2",
+    "authentication",
+    "kasper",
+    "kasper-js",
+    "signals"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/eugenioenko/oidc-js.git",
+    "directory": "packages/kasper"
+  },
+  "homepage": "https://eugenioenko.github.io/oidc-js/"
+}

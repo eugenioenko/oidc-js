@@ -1,0 +1,21 @@
+<template>
+  <require-auth>
+    <div @slot="fallback" data-testid="auth-loading">Refreshing...</div>
+    <div data-testid="protected-a">Protected content a</div>
+    <nav>
+      <a href="/" data-testid="link-home" @on:click.prevent="goTo('/')">Home</a>
+      <a href="/protected-a" data-testid="link-protected-a" @on:click.prevent="goTo('/protected-a')">Protected A</a>
+      <a href="/protected-b" data-testid="link-protected-b" @on:click.prevent="goTo('/protected-b')">Protected B</a>
+    </nav>
+  </require-auth>
+</template>
+
+<script>
+import { Component, navigate } from "kasper-js";
+
+export class ProtectedAPage extends Component {
+  goTo(path) {
+    navigate(path);
+  }
+}
+</script>

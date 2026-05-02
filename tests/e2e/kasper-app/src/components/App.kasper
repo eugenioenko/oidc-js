@@ -1,0 +1,34 @@
+<template>
+  <auth-provider @:config="config" @:fetchProfile="fetchProfile" @:onLogin="handleLogin">
+    <router>
+      <route @path="/" @component="HomePage" />
+      <route @path="/callback" @component="CallbackPage" />
+      <route @path="/protected-a" @component="ProtectedAPage" />
+      <route @path="/protected-b" @component="ProtectedBPage" />
+    </router>
+  </auth-provider>
+</template>
+
+<script>
+import { Component, navigate } from "kasper-js";
+import { HomePage } from "./Home.kasper";
+import { CallbackPage } from "./Callback.kasper";
+import { ProtectedAPage } from "./ProtectedA.kasper";
+import { ProtectedBPage } from "./ProtectedB.kasper";
+
+export class AppRoot extends Component {
+  fetchProfile = localStorage.getItem("e2e-fetchProfile") !== "false";
+
+  config = {
+    issuer: "http://localhost:9999/oauth2",
+    clientId: "e2e-test-app",
+    redirectUri: "http://localhost:5173/callback",
+    scopes: ["openid", "profile", "email", "offline_access"],
+    postLogoutRedirectUri: "http://localhost:5173",
+  };
+
+  handleLogin = (returnTo) => {
+    navigate(returnTo);
+  };
+}
+</script>
