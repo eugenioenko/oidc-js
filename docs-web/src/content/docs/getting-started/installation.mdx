@@ -5,31 +5,168 @@ description: How to install oidc-js packages.
 
 import { Tabs, TabItem } from "@astrojs/starlight/components";
 
-## React
+## Framework Adapters
 
 <Tabs>
-  <TabItem label="npm">
-  ```bash
-  npm install oidc-js-react
-  ```
+  <TabItem label="React">
+  <Tabs>
+    <TabItem label="npm">
+    ```bash
+    npm install oidc-js-react
+    ```
+    </TabItem>
+    <TabItem label="pnpm">
+    ```bash
+    pnpm add oidc-js-react
+    ```
+    </TabItem>
+    <TabItem label="yarn">
+    ```bash
+    yarn add oidc-js-react
+    ```
+    </TabItem>
+  </Tabs>
   </TabItem>
-  <TabItem label="pnpm">
-  ```bash
-  pnpm add oidc-js-react
-  ```
+  <TabItem label="Vue">
+  <Tabs>
+    <TabItem label="npm">
+    ```bash
+    npm install oidc-js-vue
+    ```
+    </TabItem>
+    <TabItem label="pnpm">
+    ```bash
+    pnpm add oidc-js-vue
+    ```
+    </TabItem>
+    <TabItem label="yarn">
+    ```bash
+    yarn add oidc-js-vue
+    ```
+    </TabItem>
+  </Tabs>
   </TabItem>
-  <TabItem label="yarn">
-  ```bash
-  yarn add oidc-js-react
-  ```
+  <TabItem label="Svelte">
+  <Tabs>
+    <TabItem label="npm">
+    ```bash
+    npm install oidc-js-svelte
+    ```
+    </TabItem>
+    <TabItem label="pnpm">
+    ```bash
+    pnpm add oidc-js-svelte
+    ```
+    </TabItem>
+    <TabItem label="yarn">
+    ```bash
+    yarn add oidc-js-svelte
+    ```
+    </TabItem>
+  </Tabs>
+  </TabItem>
+  <TabItem label="Angular">
+  <Tabs>
+    <TabItem label="npm">
+    ```bash
+    npm install oidc-js-angular
+    ```
+    </TabItem>
+    <TabItem label="pnpm">
+    ```bash
+    pnpm add oidc-js-angular
+    ```
+    </TabItem>
+    <TabItem label="yarn">
+    ```bash
+    yarn add oidc-js-angular
+    ```
+    </TabItem>
+  </Tabs>
+  </TabItem>
+  <TabItem label="Solid">
+  <Tabs>
+    <TabItem label="npm">
+    ```bash
+    npm install oidc-js-solid
+    ```
+    </TabItem>
+    <TabItem label="pnpm">
+    ```bash
+    pnpm add oidc-js-solid
+    ```
+    </TabItem>
+    <TabItem label="yarn">
+    ```bash
+    yarn add oidc-js-solid
+    ```
+    </TabItem>
+  </Tabs>
+  </TabItem>
+  <TabItem label="Preact">
+  <Tabs>
+    <TabItem label="npm">
+    ```bash
+    npm install oidc-js-preact
+    ```
+    </TabItem>
+    <TabItem label="pnpm">
+    ```bash
+    pnpm add oidc-js-preact
+    ```
+    </TabItem>
+    <TabItem label="yarn">
+    ```bash
+    yarn add oidc-js-preact
+    ```
+    </TabItem>
+  </Tabs>
+  </TabItem>
+  <TabItem label="Lit">
+  <Tabs>
+    <TabItem label="npm">
+    ```bash
+    npm install oidc-js-lit
+    ```
+    </TabItem>
+    <TabItem label="pnpm">
+    ```bash
+    pnpm add oidc-js-lit
+    ```
+    </TabItem>
+    <TabItem label="yarn">
+    ```bash
+    yarn add oidc-js-lit
+    ```
+    </TabItem>
+  </Tabs>
+  </TabItem>
+  <TabItem label="Kasper">
+  <Tabs>
+    <TabItem label="npm">
+    ```bash
+    npm install oidc-js-kasper
+    ```
+    </TabItem>
+    <TabItem label="pnpm">
+    ```bash
+    pnpm add oidc-js-kasper
+    ```
+    </TabItem>
+    <TabItem label="yarn">
+    ```bash
+    yarn add oidc-js-kasper
+    ```
+    </TabItem>
+  </Tabs>
   </TabItem>
 </Tabs>
 
-The React package includes `oidc-js` and `oidc-js-core` as dependencies — you don't need to install them separately.
+Each framework package includes `oidc-js` and `oidc-js-core` as dependencies — you don't need to install them separately.
 
 ## Browser Client (framework-agnostic)
 
-If you're not using React (or building your own adapter), install the browser client directly:
+If you're not using a framework adapter (or building your own), install the browser client directly:
 
 <Tabs>
   <TabItem label="npm">
@@ -80,9 +217,16 @@ For server-side usage or building custom adapters:
 ## Package Architecture
 
 ```
-oidc-js-core          → Pure functions, no IO, no fetch
-  └── oidc-js         → Browser client: core + fetch + sessionStorage
-      └── oidc-js-react  → React context, hooks, and guards
+oidc-js-core              → Pure functions, no IO, no fetch
+  └── oidc-js             → Browser client: core + fetch + sessionStorage
+      ├── oidc-js-react   → React context, hooks, and guards
+      ├── oidc-js-vue     → Vue plugin, composables, and guards
+      ├── oidc-js-svelte  → Svelte 5 components and context
+      ├── oidc-js-angular → Angular service, guards, and DI
+      ├── oidc-js-solid   ��� Solid signals and components
+      ├── oidc-js-preact  → Preact hooks and components
+      ├── oidc-js-lit     → Lit reactive controllers
+      └── oidc-js-kasper  → Kasper signals and components
 ```
 
-Each layer adds only what it needs. The core has zero dependencies. The browser client adds `fetch` and `sessionStorage`. The React adapter adds React context and hooks.
+Each layer adds only what it needs. The core has zero dependencies. The browser client adds `fetch` and `sessionStorage`. Framework adapters add their reactivity layer.
