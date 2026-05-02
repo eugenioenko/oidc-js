@@ -3,7 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "playwright test",
+    "test": "bash run-all.sh",
+    "test:react": "playwright test",
     "test:svelte": "playwright test --config playwright.svelte.config.ts",
     "test:lit": "playwright test --config playwright.lit.config.ts",
     "test:vue": "playwright test --config=playwright.vue.config.ts",
