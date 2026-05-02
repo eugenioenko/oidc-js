@@ -6,7 +6,9 @@
   "scripts": {
     "build": "pnpm -r build",
     "test": "pnpm -r test",
-    "lint": "eslint . && pnpm -r lint"
+    "lint": "eslint . && pnpm -r lint",
+    "test:e2e": "pnpm --filter e2e-tests test",
+    "test:stress": "pnpm --filter e2e-tests test:stress"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
