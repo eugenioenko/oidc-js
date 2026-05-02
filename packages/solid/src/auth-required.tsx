@@ -28,33 +28,33 @@ interface RequireAuthProps {
  * ```
  */
 export const RequireAuth: ParentComponent<RequireAuthProps> = (props) => {
-  const { isAuthenticated, isLoading, tokens, actions } = useAuth();
+  const auth = useAuth();
   let refreshAttempted = false;
 
   createEffect(() => {
-    const isExpired = tokens.expiresAt !== null && tokens.expiresAt <= Date.now();
-    const needsAuth = !isAuthenticated || isExpired;
+    const isExpired = auth.tokens.expiresAt !== null && auth.tokens.expiresAt <= Date.now();
+    const needsAuth = !auth.isAuthenticated || isExpired;
 
     if (!needsAuth) {
       refreshAttempted = false;
       return;
     }
-    if (isLoading) return;
+    if (auth.isLoading) return;
 
     const autoRefresh = props.autoRefresh ?? true;
 
     if (autoRefresh && !refreshAttempted) {
       refreshAttempted = true;
-      actions.refresh().catch(() => actions.login(props.loginOptions));
+      auth.actions.refresh().catch(() => auth.actions.login(props.loginOptions));
       return;
     }
 
-    actions.login(props.loginOptions);
+    auth.actions.login(props.loginOptions);
   });
 
   return (
     <Show
-      when={!isLoading && isAuthenticated && !(tokens.expiresAt !== null && tokens.expiresAt <= Date.now())}
+      when={!auth.isLoading && auth.isAuthenticated && !(auth.tokens.expiresAt !== null && auth.tokens.expiresAt <= Date.now())}
       fallback={props.fallback}
     >
       {props.children}

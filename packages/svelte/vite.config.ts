@@ -15,7 +15,7 @@ export default defineConfig({
     },
     sourcemap: true,
     rollupOptions: {
-      external: ["svelte", "svelte/internal", "svelte/store", "oidc-js", "oidc-js-core"],
+      external: [/^svelte(\/.*)?$/, "oidc-js", "oidc-js-core"],
     },
   },
   test: {
