@@ -270,8 +270,17 @@ pnpm build
 # Build core only
 pnpm --filter oidc-js-core build
 
-# Run tests
-pnpm --filter oidc-js-core test
+# Run unit tests
+pnpm test
+
+# Run E2E tests (sequential, all 8 frameworks)
+pnpm test:e2e
+
+# Run E2E tests in parallel (4 at a time)
+MAX_PARALLEL=4 pnpm test:e2e
+
+# Run E2E stress test (10x repetition per framework)
+pnpm test:stress
 
 # Type check
 pnpm --filter oidc-js-core lint
