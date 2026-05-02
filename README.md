@@ -1,24 +1,42 @@
 # oidc-js
 
+[![CI](https://github.com/eugenioenko/oidc-js/actions/workflows/ci.yml/badge.svg)](https://github.com/eugenioenko/oidc-js/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/oidc-js-core)](https://www.npmjs.com/package/oidc-js-core)
+[![zero dependencies](https://img.shields.io/badge/dependencies-0-brightgreen)](./packages/core/package.json)
+[![license](https://img.shields.io/github/license/eugenioenko/oidc-js)](./LICENSE)
+[![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue)](./tsconfig.base.json)
+
 Drop-in OIDC authentication for every JavaScript framework.
 
-Existing OIDC libraries are either too complex ([oidc-client-ts](https://github.com/authts/oidc-client-ts) with its bloated UserManager, iframe magic, and maintenance issues) or too low-level ([oauth4webapi](https://github.com/panva/oauth4webapi) where you wire everything yourself). The result: every framework re-implements the same OIDC plumbing from scratch, and developers spend days on auth instead of building their app.
+## Why oidc-js
 
-**oidc-js** fixes this. One functional core handles the OIDC protocol. Thin framework adapters give you `<AuthProvider>`, `useAuth()`, guards, and interceptors. Just drop them in and go. No dancing around framework-specific workarounds. No re-implementing token exchange for the fifth time. No dependencies.
+Most OIDC libraries couple protocol logic with a specific HTTP and framework model. This can make it harder to integrate cleanly with frameworks that have their own patterns (e.g., Angular's `HttpClient`), forces tests to mock `window` and network calls, and leads every framework to re-implement the same token exchange.
+
+**oidc-js** separates these concerns:
+
+- **Functional core** — pure functions that build requests and parse responses. No `fetch`, no storage, no side effects. Deterministic and testable with plain input/output.
+- **Thin adapters** — each framework composes the core with its own HTTP layer and reactivity. Angular uses `HttpClient`. React uses hooks. Svelte uses runes. No framework-specific workarounds.
+- **Zero dependencies** — the core uses only the Web Crypto API. Works in any JS runtime: browser, Node, Deno, Bun, Workers.
+
+## When Not to Use oidc-js
+
+- **Server-side applications that require JWT signature verification** — the core decodes but does not cryptographically verify tokens. Use a server-side library with JWK validation instead.
+- **Applications that require persistent sessions across page reloads without refresh tokens** — tokens are stored in memory only and are lost on navigation or refresh.
+- **Environments with strict compliance requirements** (e.g., FIPS, FedRAMP) — this library does not implement the additional validation layers those standards require.
 
 ## Packages
 
-| Package | Description | Status |
-|---------|-------------|--------|
-| [`oidc-js-core`](./packages/core) | Pure functions for OIDC protocol operations | Stable |
-| [`oidc-js`](./packages/client) | Framework-agnostic client with `fetch` + `sessionStorage` | Stable |
-| [`oidc-js-react`](./packages/react) | React provider, hooks, and route guards | Stable |
-| [`oidc-js-vue`](./packages/vue) | Vue plugin, composables, and navigation guard | Stable |
-| [`oidc-js-svelte`](./packages/svelte) | Svelte 5 context and components | Stable |
-| [`oidc-js-angular`](./packages/angular) | Angular service, DI, and route guard | Stable |
-| [`oidc-js-solid`](./packages/solid) | SolidJS signals, context, and components | Stable |
-| [`oidc-js-preact`](./packages/preact) | Preact hooks and components | Stable |
-| [`oidc-js-lit`](./packages/lit) | Lit reactive controllers | Stable |
+| Package | Description | Docs |
+|---------|-------------|------|
+| [`oidc-js-core`](./packages/core) | Pure functions for OIDC protocol operations | [API](./packages/core/README.md) |
+| [`oidc-js`](./packages/client) | Framework-agnostic client with `fetch` + `sessionStorage` | [API](./packages/client/README.md) |
+| [`oidc-js-react`](./packages/react) | React provider, hooks, and route guards | [API](./packages/react/README.md) |
+| [`oidc-js-vue`](./packages/vue) | Vue plugin, composables, and navigation guard | [API](./packages/vue/README.md) |
+| [`oidc-js-svelte`](./packages/svelte) | Svelte 5 context and components | [API](./packages/svelte/README.md) |
+| [`oidc-js-angular`](./packages/angular) | Angular service, DI, and route guard | [API](./packages/angular/README.md) |
+| [`oidc-js-solid`](./packages/solid) | SolidJS signals, context, and components | [API](./packages/solid/README.md) |
+| [`oidc-js-preact`](./packages/preact) | Preact hooks and components | [API](./packages/preact/README.md) |
+| [`oidc-js-lit`](./packages/lit) | Lit reactive controllers | [API](./packages/lit/README.md) |
 
 ## Architecture
 
@@ -29,256 +47,155 @@ oidc-js-core              Pure functions. No IO. No state.
     ├── oidc-js-react      core + fetch + React context/hooks
     ├── oidc-js-vue        core + fetch + Vue plugin/composables
     ├── oidc-js-svelte     core + fetch + Svelte 5 runes/context
-    ├── oidc-js-angular    core + fetch + Angular signals/DI
+    ├── oidc-js-angular    core + HttpClient + Angular signals/DI
     ├── oidc-js-solid      core + fetch + Solid signals/context
     ├── oidc-js-preact     core + fetch + Preact hooks
     └── oidc-js-lit        core + fetch + Lit reactive controllers
 ```
 
-The core never calls `fetch` or touches browser APIs (except Web Crypto for PKCE). Each framework adapter composes the core functions with its own HTTP layer and state management. This means:
+The core never calls `fetch` or touches browser APIs (except Web Crypto for PKCE). Each framework adapter composes the core functions with its own HTTP layer and state management:
 
 - **Angular** uses `HttpClient` with its interceptor chain, not a `fetch` workaround
-- **React/Vue/Svelte/Solid** use `fetch` directly, lightweight with no wrapper overhead
-- **Node.js/Deno/Bun** work out of the box, no browser polyfills required
+- **React/Vue/Svelte/Solid/Preact/Lit** use `fetch` directly, lightweight with no wrapper overhead
+- **Node.js/Deno/Bun** work out of the box via `oidc-js-core`, no browser polyfills required
 - **Tests are trivial**: pure input/output, no mocking `fetch` or `window`
 
-## Core API
+## Quick Start
 
-### Install
+Install the adapter for your framework:
 
 ```bash
-npm install oidc-js-core
+npm install oidc-js-react    # or oidc-js-vue, oidc-js-svelte, etc.
 ```
 
-### Configuration
+Wrap your app with the provider:
 
-```typescript
-import type { OidcConfig } from "oidc-js-core";
+```tsx
+import { AuthProvider } from "oidc-js-react";
 
-// Public client (SPA)
-const config: OidcConfig = {
-  issuer: "https://auth.example.com",
-  clientId: "my-app",
-  redirectUri: "http://localhost:3000/callback",
-  scopes: ["openid", "profile", "email"],
-};
-
-// Confidential client (Node.js API server)
-const apiConfig: OidcConfig = {
-  issuer: "https://auth.example.com",
-  clientId: "my-api",
-  clientSecret: "secret",
-};
-```
-
-### Authorization Code + PKCE Flow
-
-```typescript
-import {
-  buildDiscoveryUrl,
-  parseDiscoveryResponse,
-  generatePkce,
-  generateState,
-  generateNonce,
-  buildAuthUrl,
-  parseCallbackUrl,
-  buildTokenRequest,
-  parseTokenResponse,
-} from "oidc-js-core";
-
-// 1. Fetch discovery document
-const discoveryUrl = buildDiscoveryUrl(config.issuer);
-const response = await fetch(discoveryUrl);
-const discovery = parseDiscoveryResponse(await response.json(), config.issuer);
-
-// 2. Build authorization URL
-const pkce = await generatePkce();
-const state = generateState();
-const nonce = generateNonce();
-const authUrl = buildAuthUrl(discovery, config, pkce, state, nonce);
-
-// Store pkce.verifier, state, and nonce (e.g. in sessionStorage)
-// Then redirect: window.location.href = authUrl;
-
-// 3. Handle callback
-const { code } = parseCallbackUrl(window.location.href, state);
-
-// 4. Exchange code for tokens
-const tokenReq = buildTokenRequest(discovery, config, code, pkce.verifier);
-const tokenRes = await fetch(tokenReq.url, {
-  method: tokenReq.method,
-  headers: tokenReq.headers,
-  body: tokenReq.body,
-});
-const tokens = parseTokenResponse(await tokenRes.json(), nonce);
-// tokens.access_token, tokens.id_token, tokens.refresh_token, tokens.expires_at
-```
-
-### Token Refresh
-
-```typescript
-import { buildRefreshRequest, parseTokenResponse } from "oidc-js-core";
-
-const refreshReq = buildRefreshRequest(discovery, config, tokens.refresh_token);
-const res = await fetch(refreshReq.url, {
-  method: refreshReq.method,
-  headers: refreshReq.headers,
-  body: refreshReq.body,
-});
-const newTokens = parseTokenResponse(await res.json());
-```
-
-### UserInfo
-
-```typescript
-import { buildUserinfoRequest, parseUserinfoResponse } from "oidc-js-core";
-
-const userinfoReq = buildUserinfoRequest(discovery, tokens.access_token);
-const res = await fetch(userinfoReq.url, { headers: userinfoReq.headers });
-const user = parseUserinfoResponse(await res.json());
-// user.sub, user.email, user.name, user.preferred_username
-```
-
-### Token Introspection (Confidential Clients)
-
-```typescript
-import { buildIntrospectRequest, parseIntrospectResponse } from "oidc-js-core";
-
-const introspectReq = buildIntrospectRequest(discovery, apiConfig, accessToken);
-const res = await fetch(introspectReq.url, {
-  method: introspectReq.method,
-  headers: introspectReq.headers,
-  body: introspectReq.body,
-});
-const result = parseIntrospectResponse(await res.json());
-// result.active, result.sub, result.scope, result.exp
-```
-
-### Token Revocation
-
-```typescript
-import { buildRevocationRequest } from "oidc-js-core";
-
-const revokeReq = buildRevocationRequest(discovery, config, tokens.refresh_token, "refresh_token");
-if (revokeReq) {
-  await fetch(revokeReq.url, {
-    method: revokeReq.method,
-    headers: revokeReq.headers,
-    body: revokeReq.body,
-  });
+function App() {
+  return (
+    <AuthProvider
+      issuer="https://auth.example.com"
+      clientId="my-app"
+      redirectUri="http://localhost:3000/callback"
+      scopes={["openid", "profile", "email"]}
+    >
+      <MyApp />
+    </AuthProvider>
+  );
 }
 ```
 
-### Logout
+Use the hook anywhere:
 
-```typescript
-import { buildLogoutUrl } from "oidc-js-core";
+```tsx
+import { useAuth } from "oidc-js-react";
 
-const logoutUrl = buildLogoutUrl(discovery, tokens.id_token, "http://localhost:3000");
-if (logoutUrl) {
-  window.location.href = logoutUrl;
+function Profile() {
+  const { isAuthenticated, user, actions } = useAuth();
+
+  if (!isAuthenticated) {
+    return <button onClick={() => actions.login()}>Log in</button>;
+  }
+
+  return <p>Hello, {user?.claims?.name}</p>;
 }
 ```
 
-### Token Expiry Utilities
+See each package's README for framework-specific setup, full API reference, and configuration options.
 
-```typescript
-import { isTokenExpired, timeUntilExpiry } from "oidc-js-core";
+## Security Model
 
-if (isTokenExpired(tokens)) {
-  // refresh the token
-}
+### What is validated
 
-const secondsLeft = timeUntilExpiry(tokens);
-// schedule a refresh before expiry
-```
+- **State parameter** — generated per login, validated on callback. Prevents CSRF attacks on the authorization flow.
+- **Nonce** — bound to the ID token. If the ID token's `nonce` claim doesn't match the value sent during authorization, token parsing throws `NONCE_MISMATCH`. Prevents token replay.
+- **PKCE (S256)** — every authorization request uses a code verifier + SHA-256 challenge. Prevents authorization code interception.
+- **Discovery issuer** — `parseDiscoveryResponse` validates that the `issuer` field in the discovery document matches the expected issuer exactly. Prevents mix-up attacks.
+- **Token response structure** — `parseTokenResponse` validates required fields and computes `expires_at` from the response. Malformed or error responses throw typed errors.
 
-### JWT Decoding
+### What is NOT validated
 
-```typescript
-import { decodeJwtPayload, parseIdTokenClaims } from "oidc-js-core";
+- **JWT signatures** — `decodeJwtPayload` and `parseIdTokenClaims` decode the JWT payload without verifying the signature. In browser-based applications, tokens are obtained directly from the token endpoint over TLS, and the client relies on the HTTPS channel and the authorization server for integrity. However, this library does not perform cryptographic signature verification. If your application requires token verification (e.g., server-side validation, zero-trust environments), you must validate tokens independently using the provider's JWKs.
+- **Access token contents** — access tokens are treated as opaque strings. The library does not parse or validate their structure. Server-side validation (introspection or signature verification) is the responsibility of your resource server.
+- **`at_hash` / `c_hash` claims** — the library does not validate access token or code hash claims in the ID token.
 
-// Decode any JWT payload (no signature verification)
-const claims = decodeJwtPayload(tokens.access_token);
+### Threat Model
 
-// Parse ID token into typed OidcUser
-const user = parseIdTokenClaims(tokens.id_token);
-```
+| Threat | Mitigation |
+|--------|------------|
+| CSRF on authorization flow | `state` parameter, validated on callback |
+| Token replay | `nonce` bound to ID token, validated on exchange |
+| Authorization code interception | PKCE with S256 challenge |
+| Token leakage via storage | Tokens stored in memory only (not localStorage/sessionStorage). PKCE state uses sessionStorage during the redirect round-trip and is cleared immediately after callback processing. |
+| XSS | Memory-only storage limits exfiltration surface. However, if your application is compromised by XSS, in-memory tokens are accessible to attacker scripts. XSS protection is your application's responsibility (CSP, input sanitization, framework protections). |
+| IdP mix-up | Discovery issuer validation rejects mismatched issuers |
 
-## Complete API Reference
+## Testing
 
-### Discovery
+Every framework adapter runs against a real OIDC identity provider — no mocked endpoints, no simulated responses. The E2E suite spins up a live [Autentico](https://github.com/eugenioenko/autentico) instance, performs actual OAuth 2.0 flows through a browser, and asserts on both the UI state and the exact OIDC network traffic.
 
-| Function | Signature | Description |
-|----------|-----------|-------------|
-| `buildDiscoveryUrl` | `(issuer: string) => string` | Build `.well-known/openid-configuration` URL |
-| `parseDiscoveryResponse` | `(data: unknown, expectedIssuer: string) => OidcDiscovery` | Validate and parse discovery document |
+### Why a dedicated test IdP
 
-### PKCE & Randomness
+We use [Autentico](https://github.com/eugenioenko/autentico), a lightweight Go-based IdP built by the same team:
 
-| Function | Signature | Description |
-|----------|-----------|-------------|
-| `generatePkce` | `() => Promise<{ verifier, challenge }>` | Generate PKCE code verifier + S256 challenge |
-| `computeCodeChallenge` | `(verifier: string) => Promise<string>` | Compute S256 challenge from verifier |
-| `generateState` | `() => string` | Generate random state parameter |
-| `generateNonce` | `() => string` | Generate random nonce |
-| `generateRandom` | `(length?: number) => string` | Generate random string of unreserved characters |
+- **Fast startup (~500ms)** — enables per-run isolation with no shared state between test runs
+- **Admin API** — test users, clients, and token lifetimes are configured programmatically, not through a UI
+- **Deterministic** — no rate limits, no external dependencies, no flaky third-party auth servers
+- **Repeated execution** — the suite runs 10x per CI execution to detect race conditions and timing-dependent failures
 
-### Authorization
+This testing strategy prioritizes determinism and reproducibility over provider diversity in CI. Provider compatibility is validated separately (see below).
 
-| Function | Signature | Description |
-|----------|-----------|-------------|
-| `buildAuthUrl` | `(discovery, config, pkce, state, nonce, extraParams?) => string` | Build authorization endpoint URL |
-| `parseCallbackUrl` | `(url: string, expectedState: string) => { code, state }` | Parse and validate callback URL |
+### Test coverage
 
-### Token Exchange
+**16 tests** cover the full OIDC lifecycle across all 8 framework adapters:
 
-| Function | Signature | Description |
-|----------|-----------|-------------|
-| `buildTokenRequest` | `(discovery, config, code, codeVerifier) => HttpRequest` | Build authorization code exchange request |
-| `buildRefreshRequest` | `(discovery, config, refreshToken) => HttpRequest` | Build refresh token request |
-| `parseTokenResponse` | `(data: unknown, expectedNonce?) => TokenSet` | Parse and validate token response |
+| Category | Tests |
+|----------|-------|
+| Login flow | Unauthenticated state, full login with tokens, ID token claims, userinfo profile, fetchProfile toggle, logout, manual refresh |
+| Security | Tokens not in storage, back-button after logout |
+| Error handling | IdP error callback, CSRF state mismatch |
+| Deep linking | Login from protected page preserves returnTo |
+| RequireAuth | Protected content, multi-page navigation without re-auth, auto-refresh on expired token, login redirect on revoked refresh token |
 
-### UserInfo
+Every test also asserts the exact sequence of OIDC fetch requests (`discovery → token → userinfo`) and page navigations (`/oauth2/authorize`, `/oauth2/logout`) to verify no unexpected network calls are made. This catches regressions that UI-only assertions would miss — like a silent double-refresh or a missing discovery call.
 
-| Function | Signature | Description |
-|----------|-----------|-------------|
-| `buildUserinfoRequest` | `(discovery, accessToken) => HttpRequest` | Build userinfo endpoint request |
-| `parseUserinfoResponse` | `(data: unknown) => OidcUser` | Parse userinfo response |
+The test harness is framework-agnostic: each adapter implements the same `data-testid` contract and runs the same Playwright spec. See [`tests/e2e/harness.md`](./tests/e2e/harness.md) for the full contract.
 
-### Introspection
+### Provider Compatibility
 
-| Function | Signature | Description |
-|----------|-----------|-------------|
-| `buildIntrospectRequest` | `(discovery, config, token) => HttpRequest` | Build token introspection request (requires `clientSecret`) |
-| `parseIntrospectResponse` | `(data: unknown) => IntrospectionResponse` | Parse introspection response |
+| Provider | Status | Notes |
+|----------|--------|-------|
+| [Autentico](https://github.com/eugenioenko/autentico) | Full E2E | All 16 tests, 10x repetition, all 8 adapters |
+| Auth0 | Not tested | Planned |
+| Keycloak | Not tested | Planned |
+| AWS Cognito | Not tested | Planned |
+| Azure AD / Entra ID | Not tested | Planned |
+| Google | Not tested | Planned |
+| Okta | Not tested | Planned |
 
-### Revocation
+The library follows the OIDC and OAuth 2.0 specifications closely (see [RFC Compliance](#rfc-compliance)). However, real-world providers may have non-standard behaviors or quirks. Testing against your specific provider before deploying to production is strongly recommended. If you've tested with a provider not listed here, contributions are welcome.
 
-| Function | Signature | Description |
-|----------|-----------|-------------|
-| `buildRevocationRequest` | `(discovery, config, token, hint?) => HttpRequest \| null` | Build revocation request (null if no endpoint) |
+## Design Tradeoffs
 
-### Logout
+These are deliberate constraints, not missing features:
 
-| Function | Signature | Description |
-|----------|-----------|-------------|
-| `buildLogoutUrl` | `(discovery, idToken?, postLogoutRedirectUri?) => string \| null` | Build RP-initiated logout URL (null if no endpoint) |
+| Choice | Tradeoff |
+|--------|----------|
+| **Single test IdP for CI** | Optimizes for determinism and speed over multi-provider coverage. Compatibility relies on strict RFC adherence. |
+| **No iframe-based silent auth** | Uses explicit refresh token flow instead. Avoids third-party cookie issues and the complexity of iframe state management. |
+| **Memory-only token storage** | Most secure for SPAs, but tokens are lost on page refresh. Apps must handle re-authentication or use refresh tokens. |
+| **No JWT signature verification** | SPA tokens arrive over TLS from the token endpoint. Server-side verification belongs in the resource server, not the client library. |
+| **Core has no `fetch`** | Framework adapters control HTTP entirely. This means the core can't auto-discover or auto-refresh — adapters handle that orchestration. |
+| **No silent login on load** | AuthProvider does not attempt background login on mount. If the user's session is valid at the IdP but tokens were lost (page refresh), the user must click login again. This avoids invisible network requests and iframe hacks. |
 
-### JWT
+## Architectural Guarantees
 
-| Function | Signature | Description |
-|----------|-----------|-------------|
-| `decodeJwtPayload` | `(token: string) => Record<string, unknown>` | Decode JWT payload (no signature verification) |
-| `parseIdTokenClaims` | `(idToken: string) => OidcUser` | Parse ID token into typed user claims |
-
-### Token Utilities
-
-| Function | Signature | Description |
-|----------|-----------|-------------|
-| `computeExpiresAt` | `(expiresIn: number) => number` | Compute absolute expiry timestamp |
-| `isTokenExpired` | `(tokenSet, clockSkewSeconds?) => boolean` | Check if token is expired |
-| `timeUntilExpiry` | `(tokenSet) => number` | Seconds until token expires (0 if expired, Infinity if no expiry) |
+- Core is side-effect free — no IO, no global state, no implicit network calls
+- All protocol operations are explicit — no hidden fetches, no background iframes, no silent token acquisition
+- Framework adapters are thin and replaceable — swapping frameworks means changing the adapter, not the auth logic
+- No tokens are persisted beyond memory — the most secure default for browser-based applications
 
 ## Error Handling
 
@@ -296,7 +213,7 @@ try {
         // CSRF protection triggered
         break;
       case "AUTHORIZATION_ERROR":
-        // Server returned an error (e.g. access_denied)
+        // Server returned an error
         break;
     }
   }
@@ -320,31 +237,26 @@ try {
 
 Every validation and return path in the source code is annotated with the specific RFC section it implements. The library conforms to:
 
-- [RFC 6749](https://tools.ietf.org/html/rfc6749): OAuth 2.0 Authorization Framework
-- [RFC 7636](https://tools.ietf.org/html/rfc7636): Proof Key for Code Exchange (PKCE)
-- [RFC 7009](https://tools.ietf.org/html/rfc7009): OAuth 2.0 Token Revocation
-- [RFC 7662](https://tools.ietf.org/html/rfc7662): OAuth 2.0 Token Introspection
+- [RFC 6749](https://tools.ietf.org/html/rfc6749) — OAuth 2.0 Authorization Framework
+- [RFC 7636](https://tools.ietf.org/html/rfc7636) — Proof Key for Code Exchange (PKCE)
+- [RFC 7009](https://tools.ietf.org/html/rfc7009) — OAuth 2.0 Token Revocation
+- [RFC 7662](https://tools.ietf.org/html/rfc7662) — OAuth 2.0 Token Introspection
 - [OpenID Connect Core 1.0](https://openid.net/specs/openid-connect-core-1_0.html)
 - [OpenID Connect Discovery 1.0](https://openid.net/specs/openid-connect-discovery-1_0.html)
 - [OpenID Connect RP-Initiated Logout 1.0](https://openid.net/specs/openid-connect-rpinitiated-1_0.html)
 
-## Testing
+## Production Readiness Checklist
 
-Every framework adapter runs against a real OIDC identity provider — no mocked endpoints, no simulated responses. The E2E suite spins up a live [Autentico](https://github.com/eugenioenko/autentico) instance, performs actual OAuth 2.0 flows through a browser, and asserts on both the UI state and the exact OIDC network traffic.
+Before deploying to production, verify:
 
-**16 tests** cover the full OIDC lifecycle:
-
-| Category | Tests |
-|----------|-------|
-| Login flow | Unauthenticated state, full login with tokens, ID token claims, userinfo profile, fetchProfile toggle, logout, manual refresh |
-| Security | Tokens not in storage, back-button after logout |
-| Error handling | IdP error callback, CSRF state mismatch |
-| Deep linking | Login from protected page preserves returnTo |
-| RequireAuth | Protected content, multi-page navigation without re-auth, auto-refresh on expired token, login redirect on revoked refresh token |
-
-Every test also asserts the exact sequence of OIDC fetch requests (`discovery → token → userinfo`) and page navigations (`/oauth2/authorize`, `/oauth2/logout`) to verify no unexpected network calls are made. This catches regressions that UI-only assertions would miss — like a silent double-refresh or a missing discovery call.
-
-The test harness is framework-agnostic: each adapter implements the same `data-testid` contract and runs the same Playwright spec. See [`tests/e2e/harness.md`](./tests/e2e/harness.md) for the full contract.
+- [ ] Tested against your specific OIDC provider (discovery, login, token exchange, refresh, logout)
+- [ ] HTTPS enforced in all environments (tokens travel over TLS)
+- [ ] Refresh token rotation enabled at your IdP (prevents stolen refresh token reuse)
+- [ ] `tokenExpirationBuffer` configured appropriately (default: 30 seconds)
+- [ ] CSP headers configured (mitigates XSS, the primary threat to SPA token storage)
+- [ ] `postLogoutRedirectUri` set correctly for your IdP
+- [ ] Error handling implemented for `OidcError` codes your app may encounter
+- [ ] Verified that `decodeJwtPayload` is not used for server-side trust decisions
 
 ## Development
 
@@ -371,6 +283,7 @@ pnpm --filter oidc-js-core lint
 - **TypeScript** in strict mode
 - **Vite 8** library mode builds (dual ESM/CJS)
 - **Vitest 4** test runner
+- **Playwright** for E2E tests
 
 ## License
 
