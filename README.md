@@ -140,42 +140,24 @@ The project has two layers of testing: unit tests for the functional core and ea
 
 The functional core and every framework adapter have unit tests that validate protocol logic, state management, and component behavior with plain input/output — no mocked `fetch` or `window`.
 
-| Package | Tests |
-|---------|-------|
-| `oidc-js-core` | 95 |
-| `oidc-js-kasper` | 28 |
-| `oidc-js-lit` | 23 |
-| `oidc-js` (client) | 22 |
-| `oidc-js-angular` | 20 |
-| `oidc-js-vue` | 19 |
-| `oidc-js-react` | 18 |
-| `oidc-js-preact` | 12 |
-| `oidc-js-solid` | 10 |
-| `oidc-js-svelte` | 7 |
-| **Total** | **254** |
-
 ```bash
 pnpm -r test    # Run all unit tests
 ```
 
 ### E2E tests
 
-**26 end-to-end tests** cover the full OIDC lifecycle — real discovery, real authorization redirects, real token exchanges, real refresh and revocation. No mocked endpoints, no simulated responses. The suite spins up a live [Autentico](https://github.com/eugenioenko/autentico) instance and tests both normal operation and edge cases like concurrent refreshes, nonce tampering, tab isolation, and token revocation recovery. Every test runs on all 8 framework adapters:
+**26 end-to-end tests** run real OIDC flows against a live [Autentico](https://github.com/eugenioenko/autentico) instance — no mocked endpoints, no simulated responses. Every test runs on all 8 framework adapters.
 
-| Category | Tests |
-|----------|-------|
-| Login flow | Unauthenticated state, full login with tokens, ID token claims, userinfo profile, fetchProfile toggle, logout, manual refresh, clean callback URL, session loss on reload, multiple login/logout cycles, error recovery |
-| Security | Tokens not in storage, back-button after logout, nonce tampering (replay protection), unique state/nonce/code_challenge per login, concurrent tab isolation |
-| Error handling | IdP error callback, CSRF state mismatch |
-| Deep linking | Login from protected page preserves returnTo |
-| RequireAuth | Protected content, multi-page navigation without re-auth, auto-refresh on expired token, login redirect on revoked refresh token |
-| Concurrency | Concurrent refresh deduplication, revoked access token handling, manual refresh after expiry |
+| Category | What's tested |
+|----------|---------------|
+| Login flow | Full lifecycle from unauthenticated state through login, token exchange, userinfo, refresh, and logout |
+| Security | Nonce tampering, CSRF state mismatch, unique PKCE per login, tokens not in storage, concurrent tab isolation |
+| RequireAuth | Route protection, auto-refresh on expired tokens, redirect on revoked refresh tokens |
+| Edge cases | Concurrent refresh deduplication, revoked access token recovery, session loss on reload, multiple login/logout cycles |
 
-Every test also asserts the exact sequence of OIDC fetch requests (`discovery → token → userinfo`) and page navigations (`/oauth2/authorize`, `/oauth2/logout`) to verify no unexpected network calls are made. This catches regressions that UI-only assertions would miss — like a silent double-refresh or a missing discovery call.
+Every test also asserts the exact sequence of OIDC network requests (`discovery → token → userinfo`) to catch regressions that UI-only assertions would miss — like a silent double-refresh or a missing discovery call.
 
-The test harness is framework-agnostic: each adapter implements the same `data-testid` contract and runs the same Playwright spec. See [`tests/e2e/harness.md`](./tests/e2e/harness.md) for the full contract.
-
-The E2E suite is run multiple times per CI execution to surface race conditions, timing-dependent failures, and flaky tests that a single pass would miss.
+The test harness is framework-agnostic: each adapter implements the same `data-testid` contract and runs the same Playwright spec. See [`tests/e2e/harness.md`](./tests/e2e/harness.md) for the full contract. A separate [stress workflow](./.github/workflows/e2e-stress.yml) runs the full suite repeatedly to surface race conditions and flaky tests.
 
 ### Why a dedicated test IdP
 
