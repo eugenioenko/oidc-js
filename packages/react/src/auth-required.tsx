@@ -1,12 +1,14 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import { useAuth } from "./context.js";
 import type { LoginOptions } from "oidc-js";
+import { isExpiredAt } from "oidc-js-core";
 
 interface RequireAuthProps {
   children: ReactNode;
   fallback?: ReactNode;
   autoRefresh?: boolean;
   loginOptions?: LoginOptions;
+  tokenExpirationBuffer?: number;
 }
 
 export function RequireAuth({
@@ -14,11 +16,12 @@ export function RequireAuth({
   fallback = null,
   autoRefresh = true,
   loginOptions,
+  tokenExpirationBuffer,
 }: RequireAuthProps) {
   const { isAuthenticated, isLoading, tokens, actions } = useAuth();
   const refreshAttempted = useRef(false);
 
-  const isExpired = tokens.expiresAt !== null && tokens.expiresAt <= Date.now();
+  const isExpired = isExpiredAt(tokens.expiresAt, tokenExpirationBuffer);
   const needsAuth = !isAuthenticated || isExpired;
 
   useEffect(() => {

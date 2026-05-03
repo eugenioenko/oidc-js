@@ -2,6 +2,7 @@ import type { OidcConfig, OidcDiscovery, HttpRequest, TokenSet } from "./types.j
 import { OidcError } from "./errors.js";
 import { decodeJwtPayload } from "./jwt.js";
 import { buildClientAuthHeaders } from "./auth.js";
+import { computeExpiresAt } from "./token-utils.js";
 
 /**
  * Builds an HTTP request to exchange an authorization code for tokens (RFC 6749 §4.1.3).
@@ -117,7 +118,7 @@ export function parseTokenResponse(data: unknown, expectedNonce?: string): Token
 
   // Compute absolute expiry timestamp
   if (tokenSet.expires_in !== undefined) {
-    tokenSet.expires_at = Math.floor(Date.now() / 1000) + tokenSet.expires_in;
+    tokenSet.expires_at = computeExpiresAt(tokenSet.expires_in);
   }
 
   return tokenSet;

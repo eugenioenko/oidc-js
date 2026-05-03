@@ -1,5 +1,6 @@
 // @ts-nocheck - Preact's h() types require children in props but we pass them as 3rd arg
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { nowSeconds } from "oidc-js-core";
 import { render, screen, cleanup, waitFor } from "@testing-library/preact";
 import { h } from "preact";
 import { RequireAuth } from "../auth-required.js";
@@ -50,7 +51,7 @@ describe("RequireAuth", () => {
     mockUseAuth.mockReturnValue(
       makeAuth({
         isAuthenticated: true,
-        tokens: { access: "token", id: null, refresh: null, expiresAt: Date.now() + 3600_000 },
+        tokens: { access: "token", id: null, refresh: null, expiresAt: nowSeconds() + 3600 },
       }),
     );
 
@@ -113,7 +114,7 @@ describe("RequireAuth", () => {
     mockUseAuth.mockReturnValue(
       makeAuth({
         isAuthenticated: true,
-        tokens: { access: "expired", id: null, refresh: "valid-refresh", expiresAt: Date.now() - 60_000 },
+        tokens: { access: "expired", id: null, refresh: "valid-refresh", expiresAt: nowSeconds() - 60 },
         actions,
       }),
     );
@@ -131,7 +132,7 @@ describe("RequireAuth", () => {
     mockUseAuth.mockReturnValue(
       makeAuth({
         isAuthenticated: true,
-        tokens: { access: "token", id: null, refresh: null, expiresAt: Date.now() + 3600_000 },
+        tokens: { access: "token", id: null, refresh: null, expiresAt: nowSeconds() + 3600 },
       }),
     );
 

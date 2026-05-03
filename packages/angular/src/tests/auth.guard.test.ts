@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { nowSeconds } from "oidc-js-core";
 
 const { mockAuthService } = vi.hoisted(() => {
   const mockAuthService = {
@@ -53,7 +54,7 @@ describe("authGuard", () => {
       access: "token",
       id: null,
       refresh: null,
-      expiresAt: Date.now() + 3600_000,
+      expiresAt: nowSeconds() + 3600,
     });
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -85,7 +86,7 @@ describe("authGuard", () => {
       access: "expired",
       id: null,
       refresh: "rt",
-      expiresAt: Date.now() - 60_000,
+      expiresAt: nowSeconds() - 60,
     });
     mockAuthService.refresh.mockResolvedValue(undefined);
 
@@ -105,7 +106,7 @@ describe("authGuard", () => {
       access: "expired",
       id: null,
       refresh: "rt",
-      expiresAt: Date.now() - 60_000,
+      expiresAt: nowSeconds() - 60,
     });
     mockAuthService.refresh.mockRejectedValue(new Error("expired"));
 
@@ -128,7 +129,7 @@ describe("authGuard", () => {
       access: "token",
       id: null,
       refresh: null,
-      expiresAt: Date.now() + 3600_000,
+      expiresAt: nowSeconds() + 3600,
     });
 
     setTimeout(() => {

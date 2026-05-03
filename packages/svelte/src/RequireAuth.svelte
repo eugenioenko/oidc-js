@@ -21,6 +21,7 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
   import type { LoginOptions } from "oidc-js";
+  import { isExpiredAt } from "oidc-js-core";
   import { getAuthContext } from "./context.svelte.js";
 
   interface Props {
@@ -32,15 +33,17 @@
     autoRefresh?: boolean;
     /** Options to pass to the login redirect if authentication is required. */
     loginOptions?: LoginOptions;
+    /** Buffer in milliseconds before token expiry to consider it expired. Defaults to 30000. */
+    tokenExpirationBuffer?: number;
   }
 
-  let { children, fallback, autoRefresh = true, loginOptions }: Props = $props();
+  let { children, fallback, autoRefresh = true, loginOptions, tokenExpirationBuffer }: Props = $props();
 
   const auth = getAuthContext();
   let refreshAttempted = false;
 
   $effect(() => {
-    const isExpired = auth.tokens.expiresAt !== null && auth.tokens.expiresAt <= Date.now();
+    const isExpired = isExpiredAt(auth.tokens.expiresAt, tokenExpirationBuffer);
     const needsAuth = !auth.isAuthenticated || isExpired;
 
     if (!needsAuth) {
@@ -59,7 +62,7 @@
   });
 </script>
 
-{#if auth.isLoading || !auth.isAuthenticated || (auth.tokens.expiresAt !== null && auth.tokens.expiresAt <= Date.now())}
+{#if auth.isLoading || !auth.isAuthenticated || isExpiredAt(auth.tokens.expiresAt, tokenExpirationBuffer)}
   {#if fallback}
     {@render fallback()}
   {/if}

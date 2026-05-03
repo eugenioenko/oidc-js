@@ -1,5 +1,6 @@
 // @ts-nocheck - Preact's h() types require children in props but we pass them as 3rd arg
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { nowSeconds } from "oidc-js-core";
 import { render, screen, waitFor, cleanup, act } from "@testing-library/preact";
 import { h } from "preact";
 import { AuthProvider, useAuth } from "../context.js";
@@ -36,8 +37,8 @@ const TOKEN_RESPONSE = {
     sub: "user-1",
     iss: "https://auth.example.com",
     aud: "my-app",
-    exp: Math.floor(Date.now() / 1000) + 3600,
-    iat: Math.floor(Date.now() / 1000),
+    exp: nowSeconds() + 3600,
+    iat: nowSeconds(),
     nonce: "test-nonce",
   }),
   refresh_token: "rt_123",

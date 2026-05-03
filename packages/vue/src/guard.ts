@@ -1,6 +1,7 @@
 import { inject } from "vue";
 import { AUTH_CONTEXT_KEY } from "./plugin.js";
 import type { LoginOptions } from "oidc-js";
+import { isExpiredAt } from "oidc-js-core";
 
 /**
  * Options for the {@link createAuthGuard} navigation guard.
@@ -8,6 +9,8 @@ import type { LoginOptions } from "oidc-js";
 export interface AuthGuardOptions {
   /** Options to pass to the login method when redirecting unauthenticated users. */
   loginOptions?: LoginOptions;
+  /** Buffer in milliseconds before token expiry to consider it expired. Defaults to 30000. */
+  tokenExpirationBuffer?: number;
 }
 
 /**
@@ -59,9 +62,7 @@ export function createAuthGuard(
       });
     }
 
-    const isExpired =
-      context.tokens.value.expiresAt !== null &&
-      context.tokens.value.expiresAt <= Date.now();
+    const isExpired = isExpiredAt(context.tokens.value.expiresAt, options?.tokenExpirationBuffer);
 
     if (context.isAuthenticated.value && !isExpired) {
       next();

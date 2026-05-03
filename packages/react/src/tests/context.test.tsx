@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { nowSeconds } from "oidc-js-core";
 import { renderHook, act, waitFor } from "@testing-library/react";
 import { type ReactNode } from "react";
 import { AuthProvider, useAuth } from "../context.js";
@@ -35,8 +36,8 @@ const TOKEN_RESPONSE = {
     sub: "user-1",
     iss: "https://auth.example.com",
     aud: "my-app",
-    exp: Math.floor(Date.now() / 1000) + 3600,
-    iat: Math.floor(Date.now() / 1000),
+    exp: nowSeconds() + 3600,
+    iat: nowSeconds(),
     nonce: "test-nonce",
   }),
   refresh_token: "rt_123",

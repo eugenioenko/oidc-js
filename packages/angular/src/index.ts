@@ -1,6 +1,6 @@
 export { AuthService, AUTH_OPTIONS } from "./auth.service.js";
 export { provideAuth } from "./provide-auth.js";
-export { authGuard } from "./auth.guard.js";
+export { authGuard, createAuthGuard, type AuthGuardOptions } from "./auth.guard.js";
 
 export type {
   AuthProviderOptions,

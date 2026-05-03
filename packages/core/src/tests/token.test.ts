@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { buildTokenRequest, buildRefreshRequest, parseTokenResponse } from "../token.js";
+import { nowSeconds } from "../token-utils.js";
 import { OidcError } from "../errors.js";
 import type { OidcDiscovery, OidcConfig } from "../types.js";
 
@@ -125,7 +126,7 @@ describe("parseTokenResponse", () => {
     expect(result.token_type).toBe("Bearer");
     expect(result.expires_in).toBe(3600);
     expect(result.refresh_token).toBe("rt_123");
-    expect(result.expires_at).toBe(Math.floor(Date.now() / 1000) + 3600);
+    expect(result.expires_at).toBe(nowSeconds() + 3600);
   });
 
   it("defaults token_type to Bearer when missing", () => {

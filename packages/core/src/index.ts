@@ -18,7 +18,7 @@ export { buildIntrospectRequest, parseIntrospectResponse } from "./introspect.js
 export { buildRevocationRequest } from "./revocation.js";
 export { buildLogoutUrl } from "./logout.js";
 export { decodeJwtPayload, parseIdTokenClaims } from "./jwt.js";
-export { computeExpiresAt, isTokenExpired, timeUntilExpiry } from "./token-utils.js";
+export { nowSeconds, computeExpiresAt, timeUntilExpiry, isExpiredAt, DEFAULT_TOKEN_EXPIRATION_BUFFER } from "./token-utils.js";
 export { buildClientAuthHeaders } from "./auth.js";
 
 export type {

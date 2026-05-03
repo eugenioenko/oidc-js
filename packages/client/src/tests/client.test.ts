@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { nowSeconds } from "oidc-js-core";
 import { OidcClient } from "../client.js";
 import type { OidcClientConfig } from "../types.js";
 
@@ -27,14 +28,14 @@ function makeJwt(payload: Record<string, unknown>): string {
 }
 
 const TOKEN_RESPONSE = {
-  access_token: makeJwt({ sub: "user-1", exp: Math.floor(Date.now() / 1000) + 3600 }),
+  access_token: makeJwt({ sub: "user-1", exp: nowSeconds() + 3600 }),
   token_type: "Bearer",
   id_token: makeJwt({
     sub: "user-1",
     iss: "https://auth.example.com",
     aud: "my-app",
-    exp: Math.floor(Date.now() / 1000) + 3600,
-    iat: Math.floor(Date.now() / 1000),
+    exp: nowSeconds() + 3600,
+    iat: nowSeconds(),
     nonce: "test-nonce",
   }),
   refresh_token: "rt_123",

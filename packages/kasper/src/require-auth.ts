@@ -1,10 +1,12 @@
 import { Component } from "kasper-js";
 import type { LoginOptions } from "oidc-js";
+import { isExpiredAt } from "oidc-js-core";
 import { useAuth } from "./context.js";
 
 interface RequireAuthArgs {
   autoRefresh?: boolean;
   loginOptions?: LoginOptions;
+  tokenExpirationBuffer?: number;
 }
 
 /**
@@ -28,9 +30,7 @@ export class RequireAuth extends Component<RequireAuthArgs> {
 
   _ready(): boolean {
     const auth = useAuth();
-    const isExpired =
-      auth.tokens.value.expiresAt !== null &&
-      auth.tokens.value.expiresAt <= Date.now();
+    const isExpired = isExpiredAt(auth.tokens.value.expiresAt, this.args.tokenExpirationBuffer);
     return (
       !auth.isLoading.value && auth.isAuthenticated.value && !isExpired
     );
@@ -41,9 +41,7 @@ export class RequireAuth extends Component<RequireAuthArgs> {
     const autoRefresh = this.args.autoRefresh ?? true;
 
     this.effect(() => {
-      const isExpired =
-        auth.tokens.value.expiresAt !== null &&
-        auth.tokens.value.expiresAt <= Date.now();
+      const isExpired = isExpiredAt(auth.tokens.value.expiresAt, this.args.tokenExpirationBuffer);
       const needsAuth = !auth.isAuthenticated.value || isExpired;
 
       if (!needsAuth) {

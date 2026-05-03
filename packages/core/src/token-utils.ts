@@ -1,4 +1,10 @@
-import type { TokenSet } from "./types.js";
+/** Default token expiration buffer in seconds (30 seconds). */
+export const DEFAULT_TOKEN_EXPIRATION_BUFFER = 30;
+
+/** Returns the current time as a Unix timestamp in seconds. */
+export function nowSeconds(): number {
+  return Math.floor(Date.now() / 1000);
+}
 
 /**
  * Converts a relative `expires_in` value (seconds from now) to an absolute Unix timestamp.
@@ -7,35 +13,30 @@ import type { TokenSet } from "./types.js";
  * @returns Absolute expiry time as a Unix timestamp in seconds.
  */
 export function computeExpiresAt(expiresIn: number): number {
-  return Math.floor(Date.now() / 1000) + expiresIn;
+  return nowSeconds() + expiresIn;
 }
 
 /**
- * Checks whether the access token in a {@link TokenSet} has expired.
- * Returns `false` if no `expires_at` is set (the token is treated as non-expiring).
+ * Checks whether a token has expired given an absolute expiration timestamp in seconds.
+ * Returns `false` if `expiresAt` is null (the token is treated as non-expiring).
  *
- * @param tokenSet - The token set to check.
- * @param clockSkewSeconds - Optional allowance for clock drift between client and server (defaults to 0).
- * @returns `true` if the current time is at or past the adjusted expiry time.
+ * @param expiresAt - Expiration time as a Unix timestamp in seconds, or null.
+ * @param bufferSeconds - Buffer in seconds subtracted from expiry to account for clock skew and network latency.
+ * @returns `true` if the current time is at or past the buffered expiry time.
  */
-export function isTokenExpired(tokenSet: TokenSet, clockSkewSeconds: number = 0): boolean {
-  if (tokenSet.expires_at === undefined) {
-    return false;
-  }
-  return Math.floor(Date.now() / 1000) >= tokenSet.expires_at - clockSkewSeconds;
+export function isExpiredAt(expiresAt: number | null, bufferSeconds: number = DEFAULT_TOKEN_EXPIRATION_BUFFER): boolean {
+  if (expiresAt === null) return false;
+  return nowSeconds() >= expiresAt - bufferSeconds;
 }
 
 /**
  * Returns the number of seconds remaining until the token expires.
- * Returns `Infinity` if no `expires_at` is set, or `0` if the token is already expired.
+ * Returns `Infinity` if `expiresAt` is null, or `0` if the token is already expired.
  *
- * @param tokenSet - The token set to inspect.
+ * @param expiresAt - Expiration time as a Unix timestamp in seconds, or null.
  * @returns Seconds remaining until expiry (never negative).
  */
-export function timeUntilExpiry(tokenSet: TokenSet): number {
-  if (tokenSet.expires_at === undefined) {
-    return Infinity;
-  }
-  const remaining = tokenSet.expires_at - Math.floor(Date.now() / 1000);
-  return Math.max(0, remaining);
+export function timeUntilExpiry(expiresAt: number | null): number {
+  if (expiresAt === null) return Infinity;
+  return Math.max(0, expiresAt - nowSeconds());
 }

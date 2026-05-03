@@ -1,6 +1,7 @@
 import { defineComponent, ref, watch, type PropType, type VNode } from "vue";
 import { useAuth } from "./composable.js";
 import type { LoginOptions } from "oidc-js";
+import { isExpiredAt } from "oidc-js-core";
 
 /**
  * Renderless component that guards its slot content behind authentication.
@@ -36,6 +37,11 @@ export const RequireAuth = defineComponent({
       type: Object as PropType<LoginOptions>,
       default: undefined,
     },
+    /** Buffer in milliseconds before token expiry to consider it expired. Defaults to 30000. */
+    tokenExpirationBuffer: {
+      type: Number,
+      default: undefined,
+    },
   },
   setup(props, { slots }) {
     const { isAuthenticated, isLoading, tokens, actions } = useAuth();
@@ -44,9 +50,7 @@ export const RequireAuth = defineComponent({
     watch(
       [isAuthenticated, isLoading, tokens],
       () => {
-        const isExpired =
-          tokens.value.expiresAt !== null &&
-          tokens.value.expiresAt <= Date.now();
+        const isExpired = isExpiredAt(tokens.value.expiresAt, props.tokenExpirationBuffer);
         const needsAuth = !isAuthenticated.value || isExpired;
 
         if (!needsAuth) {
@@ -68,9 +72,7 @@ export const RequireAuth = defineComponent({
     );
 
     return (): VNode | VNode[] | null => {
-      const isExpired =
-        tokens.value.expiresAt !== null &&
-        tokens.value.expiresAt <= Date.now();
+      const isExpired = isExpiredAt(tokens.value.expiresAt, props.tokenExpirationBuffer);
       const needsAuth = !isAuthenticated.value || isExpired;
 
       if (isLoading.value || needsAuth) {

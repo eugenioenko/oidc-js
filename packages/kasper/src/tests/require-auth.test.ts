@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { nowSeconds } from "oidc-js-core";
 import type { AuthContextValue } from "../types.js";
 
 type MutableAuth = { -readonly [K in keyof AuthContextValue]: AuthContextValue[K] };
@@ -91,7 +92,7 @@ describe("RequireAuth", () => {
             access: "token",
             id: null,
             refresh: null,
-            expiresAt: Date.now() + 3600_000,
+            expiresAt: nowSeconds() + 3600,
           },
         } as AuthContextValue["tokens"],
       });
@@ -129,7 +130,7 @@ describe("RequireAuth", () => {
             access: "expired",
             id: null,
             refresh: null,
-            expiresAt: Date.now() - 60_000,
+            expiresAt: nowSeconds() - 60,
           },
         } as AuthContextValue["tokens"],
       });
@@ -188,7 +189,7 @@ describe("RequireAuth", () => {
             access: "token",
             id: null,
             refresh: null,
-            expiresAt: Date.now() + 3600_000,
+            expiresAt: nowSeconds() + 3600,
           },
         } as AuthContextValue["tokens"],
         actions,
@@ -234,7 +235,7 @@ describe("RequireAuth", () => {
             access: "expired",
             id: null,
             refresh: "rt",
-            expiresAt: Date.now() - 60_000,
+            expiresAt: nowSeconds() - 60,
           },
         } as AuthContextValue["tokens"],
         actions,

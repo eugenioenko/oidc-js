@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { nowSeconds } from "oidc-js-core";
 import { render, screen, cleanup, waitFor } from "@solidjs/testing-library";
 import { RequireAuth } from "../auth-required.js";
 import type { AuthContextValue } from "../types.js";
@@ -53,7 +54,7 @@ describe("RequireAuth", () => {
   it("renders children when authenticated", () => {
     resetAuth({
       isAuthenticated: true,
-      tokens: { access: "token", id: null, refresh: null, expiresAt: Date.now() + 3600_000 },
+      tokens: { access: "token", id: null, refresh: null, expiresAt: nowSeconds() + 3600 },
     });
 
     render(() => (
@@ -131,7 +132,7 @@ describe("RequireAuth", () => {
     };
     resetAuth({
       isAuthenticated: true,
-      tokens: { access: "expired", id: null, refresh: "valid-refresh", expiresAt: Date.now() - 60_000 },
+      tokens: { access: "expired", id: null, refresh: "valid-refresh", expiresAt: nowSeconds() - 60 },
       actions,
     });
 

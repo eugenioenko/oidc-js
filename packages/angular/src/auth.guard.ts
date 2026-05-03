@@ -1,9 +1,15 @@
 import { inject } from "@angular/core";
 import type { CanActivateFn } from "@angular/router";
+import { isExpiredAt } from "oidc-js-core";
 import { AuthService } from "./auth.service.js";
 
+export interface AuthGuardOptions {
+  /** Buffer in milliseconds before token expiry to consider it expired. Defaults to 30000. */
+  tokenExpirationBuffer?: number;
+}
+
 /**
- * Functional route guard that protects routes behind authentication.
+ * Creates a functional route guard that protects routes behind authentication.
  *
  * Behavior:
  * - If the auth service is still loading, waits until initialization completes.
@@ -15,40 +21,41 @@ import { AuthService } from "./auth.service.js";
  * @example
  * ```typescript
  * const routes: Routes = [
- *   { path: 'protected', component: ProtectedComponent, canActivate: [authGuard] },
+ *   { path: 'protected', component: ProtectedComponent, canActivate: [createAuthGuard()] },
  * ];
  * ```
  */
-export const authGuard: CanActivateFn = async (route, state) => {
-  const auth = inject(AuthService);
+export function createAuthGuard(options?: AuthGuardOptions): CanActivateFn {
+  return async (route, state) => {
+    const auth = inject(AuthService);
 
-  // Wait for initialization to complete
-  if (auth.isLoading()) {
-    await waitForLoading(auth);
-  }
-
-  const tokens = auth.tokens();
-  const isExpired = tokens.expiresAt !== null && tokens.expiresAt <= Date.now();
-
-  // Authenticated and not expired — allow
-  if (auth.isAuthenticated() && !isExpired) {
-    return true;
-  }
-
-  // Expired but has refresh token — attempt refresh
-  if (auth.isAuthenticated() && isExpired && tokens.refresh) {
-    try {
-      await auth.refresh();
-      return true;
-    } catch {
-      // Refresh failed — fall through to login redirect
+    if (auth.isLoading()) {
+      await waitForLoading(auth);
     }
-  }
 
-  // Not authenticated or refresh failed — redirect to login
-  await auth.login({ returnTo: state.url });
-  return false;
-};
+    const tokens = auth.tokens();
+    const isExpired = isExpiredAt(tokens.expiresAt, options?.tokenExpirationBuffer);
+
+    if (auth.isAuthenticated() && !isExpired) {
+      return true;
+    }
+
+    if (auth.isAuthenticated() && isExpired && tokens.refresh) {
+      try {
+        await auth.refresh();
+        return true;
+      } catch {
+        // Refresh failed — fall through to login redirect
+      }
+    }
+
+    await auth.login({ returnTo: state.url });
+    return false;
+  };
+}
+
+/** Pre-built auth guard using default options. Use {@link createAuthGuard} for custom configuration. */
+export const authGuard: CanActivateFn = createAuthGuard();
 
 /**
  * Returns a promise that resolves when the auth service finishes loading.
