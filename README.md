@@ -37,6 +37,7 @@ Most OIDC libraries couple protocol logic with a specific HTTP and framework mod
 | [`oidc-js-solid`](./packages/solid) | SolidJS signals, context, and components | [API](./packages/solid/README.md) |
 | [`oidc-js-preact`](./packages/preact) | Preact hooks and components | [API](./packages/preact/README.md) |
 | [`oidc-js-lit`](./packages/lit) | Lit reactive controllers | [API](./packages/lit/README.md) |
+| [`oidc-js-kasper`](./packages/kasper) | Kasper integration | [API](./packages/kasper/README.md) |
 
 ## Architecture
 
@@ -50,7 +51,8 @@ oidc-js-core              Pure functions. No IO. No state.
     ├── oidc-js-angular    core + HttpClient + Angular signals/DI
     ├── oidc-js-solid      core + fetch + Solid signals/context
     ├── oidc-js-preact     core + fetch + Preact hooks
-    └── oidc-js-lit        core + fetch + Lit reactive controllers
+    ├── oidc-js-lit        core + fetch + Lit reactive controllers
+    └── oidc-js-kasper     core + fetch + Kasper integration
 ```
 
 The core never calls `fetch` or touches browser APIs (except Web Crypto for PKCE). Each framework adapter composes the core functions with its own HTTP layer and state management:
@@ -173,7 +175,7 @@ This testing strategy prioritizes determinism and reproducibility over provider 
 
 | Provider | Status | Notes |
 |----------|--------|-------|
-| [Autentico](https://github.com/eugenioenko/autentico) | Full E2E | All 16 tests, 10x repetition, all 8 adapters |
+| [Autentico](https://github.com/eugenioenko/autentico) | Full E2E | All 26 tests, all 8 adapters |
 | Auth0 | Not tested | Planned |
 | Keycloak | Not tested | Planned |
 | AWS Cognito | Not tested | Planned |
