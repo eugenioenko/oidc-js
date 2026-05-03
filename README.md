@@ -160,9 +160,7 @@ pnpm -r test    # Run all unit tests
 
 ### E2E tests
 
-Every framework adapter runs full OIDC flows against a real identity provider — real discovery, real authorization redirects, real token exchanges, real refresh and revocation. No mocked endpoints, no simulated responses. The E2E suite spins up a live [Autentico](https://github.com/eugenioenko/autentico) instance and tests the complete lifecycle including edge cases like concurrent refreshes, nonce tampering, tab isolation, and token revocation recovery.
-
-**26 tests × 8 framework adapters = 208 E2E tests**:
+**26 end-to-end tests** cover the full OIDC lifecycle — real discovery, real authorization redirects, real token exchanges, real refresh and revocation. No mocked endpoints, no simulated responses. The suite spins up a live [Autentico](https://github.com/eugenioenko/autentico) instance and tests both normal operation and edge cases like concurrent refreshes, nonce tampering, tab isolation, and token revocation recovery. Every test runs on all 8 framework adapters:
 
 | Category | Tests |
 |----------|-------|
