@@ -64,6 +64,12 @@ export function HomePage() {
           >
             Refresh
           </button>
+          <button
+            data-testid="fetch-profile-button"
+            onClick={() => auth.actions.fetchProfile().catch(() => {})}
+          >
+            Fetch Profile
+          </button>
           <nav>
             <A data-testid="link-protected-a" href="/protected-a">
               Protected A

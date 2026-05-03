@@ -54,6 +54,9 @@ export class AppRoot extends LitElement {
   render() {
     switch (this._path) {
       case "/callback":
+        if (this.auth.error) {
+          return html`<div data-testid="auth-error">Error: ${this.auth.error.message}</div>`;
+        }
         return html`<callback-page></callback-page>`;
       case "/protected-a":
         return html`<protected-a-page .auth=${this.auth} .navigate=${(p: string) => this.navigate(p)}></protected-a-page>`;

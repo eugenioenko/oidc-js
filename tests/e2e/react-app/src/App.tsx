@@ -45,6 +45,9 @@ function HomePage() {
       <button data-testid="refresh-button" onClick={() => actions.refresh().catch(() => {})}>
         Refresh
       </button>
+      <button data-testid="fetch-profile-button" onClick={() => actions.fetchProfile().catch(() => {})}>
+        Fetch Profile
+      </button>
       <nav>
         <Link data-testid="link-protected-a" to="/protected-a">Protected A</Link>
         <Link data-testid="link-protected-b" to="/protected-b">Protected B</Link>
@@ -54,6 +57,10 @@ function HomePage() {
 }
 
 function CallbackPage() {
+  const { error } = useAuth();
+  if (error) {
+    return <div data-testid="auth-error">Error: {error.message}</div>;
+  }
   return <div data-testid="auth-loading">Processing login...</div>;
 }
 

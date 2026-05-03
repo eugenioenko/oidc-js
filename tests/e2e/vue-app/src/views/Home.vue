@@ -28,6 +28,7 @@ const { user, isAuthenticated, isLoading, error, tokens, actions } = useAuth();
     <div data-testid="expires-at">{{ tokens.expiresAt ?? "none" }}</div>
     <button data-testid="logout-button" @click="actions.logout()">Logout</button>
     <button data-testid="refresh-button" @click="actions.refresh().catch(() => {})">Refresh</button>
+    <button data-testid="fetch-profile-button" @click="actions.fetchProfile().catch(() => {})">Fetch Profile</button>
     <nav>
       <router-link data-testid="link-protected-a" to="/protected-a">Protected A</router-link>
       <router-link data-testid="link-protected-b" to="/protected-b">Protected B</router-link>

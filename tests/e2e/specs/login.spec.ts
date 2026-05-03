@@ -158,7 +158,7 @@ test.describe(`[${FRAMEWORK}] OIDC Login Flow`, () => {
 
   test("user.profile is null when fetchProfile is false", async ({ page }) => {
     const traffic = trackTraffic(page);
-    await page.goto("/");
+    await page.goto("/", { waitUntil: "networkidle" });
     await page.evaluate(() => localStorage.setItem("e2e-fetchProfile", "false"));
     await page.reload();
     await page.getByTestId("login-button").click();
@@ -490,5 +490,160 @@ test.describe(`[${FRAMEWORK}] RequireAuth`, () => {
       POST_TOKEN,
       NAV_AUTHORIZE,
     ]);
+  });
+});
+
+test.describe(`[${FRAMEWORK}] Nonce Validation`, () => {
+  test("rejects token when nonce is tampered (replay protection)", async ({ page }) => {
+    const traffic = trackTraffic(page);
+
+    await page.addInitScript(() => {
+      const stored = sessionStorage.getItem("oidc-js:auth-state");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        parsed.nonce = "tampered-nonce";
+        sessionStorage.setItem("oidc-js:auth-state", JSON.stringify(parsed));
+      }
+    });
+
+    await page.goto("/");
+    await page.getByTestId("login-button").click();
+    await page.waitForURL(idpPattern);
+    await page.fill('input[name="username"]', TEST_USER);
+    await page.fill('input[name="password"]', TEST_PASS);
+    await page.click('button[type="submit"]');
+    await page.waitForURL(appPattern, { timeout: TIMEOUT });
+
+    await expect(page.getByTestId("auth-error")).toBeVisible({ timeout: TIMEOUT });
+    await expect(page.getByTestId("auth-error")).toContainText("nonce", { ignoreCase: true });
+
+    expect(traffic.sequence()).toEqual([
+      GET_WELLKNOWN,
+      NAV_AUTHORIZE,
+      GET_WELLKNOWN,
+      POST_TOKEN,
+    ]);
+  });
+});
+
+test.describe(`[${FRAMEWORK}] PKCE Security`, () => {
+  test("generates unique state, nonce, and code_challenge for each login", async ({ page }) => {
+    const authParams: URLSearchParams[] = [];
+    page.on("request", (req) => {
+      if (req.resourceType() !== "document") return;
+      const url = new URL(req.url());
+      if (url.origin === AUTENTICO_URL && url.pathname === "/oauth2/authorize") {
+        authParams.push(new URLSearchParams(url.search));
+      }
+    });
+
+    await login(page);
+    await page.getByTestId("logout-button").click();
+    await expect(page.getByTestId("unauthenticated")).toBeVisible({ timeout: TIMEOUT });
+
+    await login(page);
+
+    expect(authParams).toHaveLength(2);
+    expect(authParams[0].get("state")).toBeTruthy();
+    expect(authParams[1].get("state")).toBeTruthy();
+    expect(authParams[0].get("state")).not.toBe(authParams[1].get("state"));
+
+    expect(authParams[0].get("code_challenge")).toBeTruthy();
+    expect(authParams[1].get("code_challenge")).toBeTruthy();
+    expect(authParams[0].get("code_challenge")).not.toBe(authParams[1].get("code_challenge"));
+
+    expect(authParams[0].get("nonce")).toBeTruthy();
+    expect(authParams[1].get("nonce")).toBeTruthy();
+    expect(authParams[0].get("nonce")).not.toBe(authParams[1].get("nonce"));
+  });
+});
+
+test.describe(`[${FRAMEWORK}] Refresh Deduplication`, () => {
+  test("concurrent refresh calls produce only one token request", async ({ page }) => {
+    const traffic = trackTraffic(page);
+    await login(page);
+    const oldToken = await page.getByTestId("access-token-value").textContent();
+
+    await page.evaluate(() => {
+      const btn = document.querySelector('[data-testid="refresh-button"]')!;
+      btn.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      btn.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    await expect(page.getByTestId("access-token-value")).not.toHaveText(oldToken!, { timeout: TIMEOUT });
+
+    const postLoginTokenRequests = traffic.requests()
+      .slice(LOGIN_REQUESTS.length)
+      .filter((r) => r === POST_TOKEN);
+    expect(postLoginTokenRequests).toHaveLength(1);
+  });
+});
+
+test.describe(`[${FRAMEWORK}] Token Revocation`, () => {
+  test("handles revoked access token gracefully on userinfo fetch", async ({ page }) => {
+    const traffic = trackTraffic(page);
+    await login(page);
+
+    const accessToken = await page.getByTestId("access-token-value").textContent();
+    await revokeToken(accessToken!, "access_token");
+
+    await page.getByTestId("fetch-profile-button").click();
+    await page.waitForTimeout(1000);
+
+    await expect(page.getByTestId("authenticated")).toBeVisible();
+
+    const postLoginRequests = traffic.requests().slice(LOGIN_REQUESTS.length);
+    expect(postLoginRequests).toContain(GET_USERINFO);
+  });
+
+  test("manual refresh obtains new tokens after normal expiry", async ({ page }) => {
+    const traffic = trackTraffic(page);
+    await login(page);
+
+    const oldToken = await page.getByTestId("access-token-value").textContent();
+    await page.getByTestId("refresh-button").click();
+    await expect(page.getByTestId("access-token-value")).not.toHaveText(oldToken!, { timeout: TIMEOUT });
+
+    await page.getByTestId("fetch-profile-button").click();
+    await page.waitForTimeout(1000);
+    await expect(page.getByTestId("authenticated")).toBeVisible();
+
+    const postLoginSequence = traffic.sequence().slice(LOGIN_SEQUENCE.length);
+    expect(postLoginSequence).toEqual([
+      POST_TOKEN,
+      GET_USERINFO,
+      GET_USERINFO,
+    ]);
+  });
+});
+
+test.describe(`[${FRAMEWORK}] Concurrent Tabs`, () => {
+  test("concurrent logins in separate tabs do not interfere", async ({ page, context }) => {
+    const page2 = await context.newPage();
+
+    await page.goto("/");
+    await page.getByTestId("login-button").click();
+    await page.waitForURL(idpPattern);
+
+    await page2.goto(`http://localhost:${APP_PORT}/`);
+    await page2.getByTestId("login-button").click();
+    await page2.waitForURL(idpPattern);
+
+    await page.fill('input[name="username"]', TEST_USER);
+    await page.fill('input[name="password"]', TEST_PASS);
+    await page.click('button[type="submit"]');
+    await page.waitForURL(appPattern, { timeout: TIMEOUT });
+    await expect(page.getByTestId("authenticated")).toBeVisible({ timeout: TIMEOUT });
+
+    await page2.fill('input[name="username"]', TEST_USER);
+    await page2.fill('input[name="password"]', TEST_PASS);
+    await page2.click('button[type="submit"]');
+    await page2.waitForURL(appPattern, { timeout: TIMEOUT });
+    await expect(page2.getByTestId("authenticated")).toBeVisible({ timeout: TIMEOUT });
+
+    await expect(page.getByTestId("access-token")).toHaveText("present");
+    await expect(page2.getByTestId("access-token")).toHaveText("present");
+
+    await page2.close();
   });
 });

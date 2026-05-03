@@ -1,6 +1,11 @@
 <script lang="ts">
-  // The callback page simply shows a loading indicator while
-  // the AuthProvider processes the authorization code exchange.
+  import { getAuthContext } from "oidc-js-svelte";
+
+  const auth = getAuthContext();
 </script>
 
-<div data-testid="auth-loading">Processing login...</div>
+{#if auth.error}
+  <div data-testid="auth-error">Error: {auth.error.message}</div>
+{:else}
+  <div data-testid="auth-loading">Processing login...</div>
+{/if}

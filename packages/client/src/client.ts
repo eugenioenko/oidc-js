@@ -51,6 +51,7 @@ export class OidcClient {
   private discovery: OidcDiscovery | null = null;
   private subscribers = new Set<Subscriber>();
   private abortController: AbortController | null = null;
+  private refreshPromise: Promise<void> | null = null;
 
   private _state: AuthState = {
     user: null,
@@ -243,6 +244,18 @@ export class OidcClient {
    * @throws Error if no refresh token is available or discovery has not been fetched.
    */
   async refresh(): Promise<void> {
+    if (this.refreshPromise) {
+      return this.refreshPromise;
+    }
+
+    this.refreshPromise = this.refreshInternal().finally(() => {
+      this.refreshPromise = null;
+    });
+
+    return this.refreshPromise;
+  }
+
+  private async refreshInternal(): Promise<void> {
     const refreshToken = this._state.tokens.refresh;
 
     if (!this.discovery || !refreshToken) {
