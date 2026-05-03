@@ -1,6 +1,6 @@
 {
   "name": "oidc-js-core",
-  "version": "1.0.2",
+  "version": "1.0.4",
   "description": "Zero-dependency OIDC/OAuth 2.0 functions for JavaScript. Pure, functional, works everywhere.",
   "type": "module",
   "main": "./dist/index.cjs",

@@ -48,6 +48,9 @@
     <button data-testid="refresh-button" onclick={() => auth.actions.refresh().catch(() => {})}>
       Refresh
     </button>
+    <button data-testid="fetch-profile-button" onclick={() => auth.actions.fetchProfile().catch(() => {})}>
+      Fetch Profile
+    </button>
     <nav>
       <a href="/protected-a" data-testid="link-protected-a" onclick={(e) => goTo(e, "/protected-a")}>Protected A</a>
       <a href="/protected-b" data-testid="link-protected-b" onclick={(e) => goTo(e, "/protected-b")}>Protected B</a>

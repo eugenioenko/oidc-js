@@ -48,6 +48,9 @@ export function HomePage(_props: HomePageProps) {
       <button data-testid="refresh-button" onClick={() => actions.refresh().catch(() => {})}>
         Refresh
       </button>
+      <button data-testid="fetch-profile-button" onClick={() => actions.fetchProfile().catch(() => {})}>
+        Fetch Profile
+      </button>
       <nav>
         <a data-testid="link-protected-a" href="/protected-a">Protected A</a>
         <a data-testid="link-protected-b" href="/protected-b">Protected B</a>

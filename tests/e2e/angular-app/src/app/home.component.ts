@@ -34,6 +34,7 @@ import { AuthService } from "oidc-js-angular";
         <div data-testid="expires-at">{{ auth.tokens().expiresAt ?? 'none' }}</div>
         <button data-testid="logout-button" (click)="logout()">Logout</button>
         <button data-testid="refresh-button" (click)="refresh()">Refresh</button>
+        <button data-testid="fetch-profile-button" (click)="doFetchProfile()">Fetch Profile</button>
         <nav>
           <a data-testid="link-protected-a" routerLink="/protected-a">Protected A</a>
           <a data-testid="link-protected-b" routerLink="/protected-b">Protected B</a>
@@ -60,5 +61,9 @@ export class HomeComponent {
 
   refresh() {
     this.auth.refresh().catch(() => {});
+  }
+
+  doFetchProfile() {
+    this.auth.fetchProfile().catch(() => {});
   }
 }

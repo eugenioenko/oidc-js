@@ -22,6 +22,7 @@
     <div data-testid="expires-at">{{auth.tokens.value.expiresAt ?? "none"}}</div>
     <button data-testid="logout-button" @on:click="auth.actions.logout()">Logout</button>
     <button data-testid="refresh-button" @on:click="handleRefresh()">Refresh</button>
+    <button data-testid="fetch-profile-button" @on:click="handleFetchProfile()">Fetch Profile</button>
     <nav>
       <a href="/protected-a" data-testid="link-protected-a" @on:click.prevent="goTo('/protected-a')">Protected A</a>
       <a href="/protected-b" data-testid="link-protected-b" @on:click.prevent="goTo('/protected-b')">Protected B</a>
@@ -43,6 +44,10 @@ export class HomePage extends Component {
 
   handleRefresh() {
     this.auth.actions.refresh().catch(() => {});
+  }
+
+  handleFetchProfile() {
+    this.auth.actions.fetchProfile().catch(() => {});
   }
 
   goTo(path) {

@@ -54,6 +54,9 @@ export class HomePage extends LitElement {
         <button data-testid="refresh-button" @click=${() => this.auth.refresh().catch(() => {})}>
           Refresh
         </button>
+        <button data-testid="fetch-profile-button" @click=${() => this.auth.fetchProfile().catch(() => {})}>
+          Fetch Profile
+        </button>
         <nav>
           <a data-testid="link-protected-a" href="/protected-a" @click=${(e: Event) => { e.preventDefault(); this.navigate("/protected-a"); }}>Protected A</a>
           <a data-testid="link-protected-b" href="/protected-b" @click=${(e: Event) => { e.preventDefault(); this.navigate("/protected-b"); }}>Protected B</a>

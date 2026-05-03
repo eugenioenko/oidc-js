@@ -1,9 +1,13 @@
 <template>
-  <div data-testid="auth-loading">Loading...</div>
+  <div @if="auth.error.value" data-testid="auth-error">Error: {{auth.error.value.message}}</div>
+  <div @else data-testid="auth-loading">Loading...</div>
 </template>
 
 <script>
 import { Component } from "kasper-js";
+import { useAuth } from "oidc-js-kasper";
 
-export class CallbackPage extends Component {}
+export class CallbackPage extends Component {
+  auth = useAuth();
+}
 </script>
