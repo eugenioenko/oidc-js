@@ -23,12 +23,15 @@ pnpm --filter oidc-js-react build       # Build react only
 
 ```
 oidc-js-core          → Pure functions, no IO, no state, no fetch. Web Crypto API only.
-oidc-js               → Convenience client: core + fetch + sessionStorage (not yet implemented)
-oidc-js-react         → core + fetch + React context/hooks (needs update for new core)
-oidc-js-angular       → core + HttpClient + Angular service/guard (placeholder)
-oidc-js-vue           → core + fetch + Vue composables (placeholder)
-oidc-js-svelte        → core + fetch + Svelte stores (placeholder)
-oidc-js-solid         → core + fetch + Solid signals (placeholder)
+oidc-js               → Convenience client: core + fetch + sessionStorage
+oidc-js-react         → core + fetch + React context/hooks
+oidc-js-angular       → core + HttpClient + Angular service/guard
+oidc-js-vue           → core + fetch + Vue composables
+oidc-js-svelte        → core + fetch + Svelte stores
+oidc-js-solid         → core + fetch + Solid signals
+oidc-js-preact        → core + fetch + Preact context/hooks
+oidc-js-lit           → core + fetch + Lit reactive controller
+oidc-js-kasper        → core + fetch + Kasper integration
 ```
 
 ### Core package (`packages/core/src/`)

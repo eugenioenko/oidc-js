@@ -134,7 +134,30 @@ See each package's README for framework-specific setup, full API reference, and 
 
 ## Testing
 
-Every framework adapter runs against a real OIDC identity provider — no mocked endpoints, no simulated responses. The E2E suite spins up a live [Autentico](https://github.com/eugenioenko/autentico) instance, performs actual OAuth 2.0 flows through a browser, and asserts on both the UI state and the exact OIDC network traffic.
+The project has two layers of testing: unit tests for the functional core and each adapter, and E2E tests that run every adapter against a real OIDC identity provider.
+
+### Unit tests
+
+The functional core and every framework adapter have unit tests that validate protocol logic, state management, and component behavior with plain input/output — no mocked `fetch` or `window`.
+
+```bash
+pnpm -r test    # Run all unit tests
+```
+
+### E2E tests
+
+**26 end-to-end tests** run real OIDC flows against a live [Autentico](https://github.com/eugenioenko/autentico) instance — no mocked endpoints, no simulated responses. Every test runs on all 8 framework adapters.
+
+| Category | What's tested |
+|----------|---------------|
+| Login flow | Full lifecycle from unauthenticated state through login, token exchange, userinfo, refresh, and logout |
+| Security | Nonce tampering, CSRF state mismatch, unique PKCE per login, tokens not in storage, concurrent tab isolation |
+| RequireAuth | Route protection, auto-refresh on expired tokens, redirect on revoked refresh tokens |
+| Edge cases | Concurrent refresh deduplication, revoked access token recovery, session loss on reload, multiple login/logout cycles |
+
+Every test also asserts the exact sequence of OIDC network requests (`discovery → token → userinfo`) to catch regressions that UI-only assertions would miss — like a silent double-refresh or a missing discovery call.
+
+The test harness is framework-agnostic: each adapter implements the same `data-testid` contract and runs the same Playwright spec. See [`tests/e2e/harness.md`](./tests/e2e/harness.md) for the full contract. A separate [stress workflow](./.github/workflows/e2e-stress.yml) runs the full suite repeatedly to surface race conditions and flaky tests.
 
 ### Why a dedicated test IdP
 
@@ -143,25 +166,8 @@ We use [Autentico](https://github.com/eugenioenko/autentico), a lightweight Go-b
 - **Fast startup (~500ms)** — enables per-run isolation with no shared state between test runs
 - **Admin API** — test users, clients, and token lifetimes are configured programmatically, not through a UI
 - **Deterministic** — no rate limits, no external dependencies, no flaky third-party auth servers
-- **Repeated execution** — the suite runs 10x per CI execution to detect race conditions and timing-dependent failures
 
 This testing strategy prioritizes determinism and reproducibility over provider diversity in CI. Provider compatibility is validated separately (see below).
-
-### Test coverage
-
-**16 tests** cover the full OIDC lifecycle across all 8 framework adapters:
-
-| Category | Tests |
-|----------|-------|
-| Login flow | Unauthenticated state, full login with tokens, ID token claims, userinfo profile, fetchProfile toggle, logout, manual refresh |
-| Security | Tokens not in storage, back-button after logout |
-| Error handling | IdP error callback, CSRF state mismatch |
-| Deep linking | Login from protected page preserves returnTo |
-| RequireAuth | Protected content, multi-page navigation without re-auth, auto-refresh on expired token, login redirect on revoked refresh token |
-
-Every test also asserts the exact sequence of OIDC fetch requests (`discovery → token → userinfo`) and page navigations (`/oauth2/authorize`, `/oauth2/logout`) to verify no unexpected network calls are made. This catches regressions that UI-only assertions would miss — like a silent double-refresh or a missing discovery call.
-
-The test harness is framework-agnostic: each adapter implements the same `data-testid` contract and runs the same Playwright spec. See [`tests/e2e/harness.md`](./tests/e2e/harness.md) for the full contract.
 
 ### Provider Compatibility
 
