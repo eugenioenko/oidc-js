@@ -65,7 +65,7 @@ The core never calls `fetch` or touches browser APIs (except Web Crypto for PKCE
 Install the adapter for your framework:
 
 ```bash
-npm install oidc-js-react    # or oidc-js-vue, oidc-js-svelte, etc.
+npm install oidc-js-react    # or oidc-js-vue, oidc-js-svelte, etc
 ```
 
 Wrap your app with the provider:
