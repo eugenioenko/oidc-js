@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "ng serve --port 5173",
+    "dev": "ng serve",
     "build": "ng build"
   },
   "dependencies": {

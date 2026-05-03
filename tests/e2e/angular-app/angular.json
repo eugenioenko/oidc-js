@@ -20,8 +20,7 @@
         "serve": {
           "builder": "@angular/build:dev-server",
           "options": {
-            "buildTarget": "e2e-angular-app:build",
-            "port": 5173
+            "buildTarget": "e2e-angular-app:build"
           }
         }
       }

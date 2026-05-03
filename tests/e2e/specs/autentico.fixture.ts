@@ -1,17 +1,30 @@
 import { test as base } from "@playwright/test";
 import { execSync, spawn } from "child_process";
-import { createWriteStream, existsSync, rmSync } from "fs";
+import { randomBytes, generateKeyPairSync } from "crypto";
+import { createWriteStream, existsSync, mkdirSync, rmSync } from "fs";
 import { join } from "path";
 
+const IDP_PORT = process.env.E2E_IDP_PORT ?? "9999";
+const APP_PORT = process.env.E2E_APP_PORT ?? "5173";
 const AUTENTICO_DIR = join(import.meta.dirname, "..", ".autentico");
 const AUTENTICO_BIN = join(AUTENTICO_DIR, "autentico");
-const AUTENTICO_URL = "http://localhost:9999";
+const DB_DIR = join(AUTENTICO_DIR, "db");
+const LOG_DIR = join(AUTENTICO_DIR, "logs");
+const AUTENTICO_URL = `http://localhost:${IDP_PORT}`;
+const DB_FILE = join(DB_DIR, `autentico-${IDP_PORT}.db`);
 const ADMIN_USER = "admin";
 const ADMIN_PASS = "TestAdmin123!";
 const ADMIN_EMAIL = "admin@test.com";
 const TEST_USER = "testuser";
 const TEST_PASS = "TestUser123!";
 const TEST_EMAIL = "testuser@test.com";
+
+const ACCESS_TOKEN_SECRET = randomBytes(32).toString("hex");
+const REFRESH_TOKEN_SECRET = randomBytes(32).toString("hex");
+const CSRF_SECRET_KEY = randomBytes(32).toString("hex");
+const PRIVATE_KEY = generateKeyPairSync("rsa", { modulusLength: 2048 })
+  .privateKey.export({ type: "pkcs1", format: "pem" });
+const PRIVATE_KEY_B64 = Buffer.from(PRIVATE_KEY as string).toString("base64");
 
 async function waitForHealthy(url: string, timeoutMs = 15_000) {
   const start = Date.now();
@@ -49,8 +62,8 @@ async function seedTestData(token: string) {
     body: JSON.stringify({
       client_id: "e2e-test-app",
       client_name: "E2E Test App",
-      redirect_uris: ["http://localhost:5173/callback"],
-      post_logout_redirect_uris: ["http://localhost:5173"],
+      redirect_uris: [`http://localhost:${APP_PORT}/callback`],
+      post_logout_redirect_uris: [`http://localhost:${APP_PORT}`],
       grant_types: ["authorization_code", "refresh_token"],
       response_types: ["code"],
       scopes: "openid profile email offline_access",
@@ -76,33 +89,48 @@ async function seedTestData(token: string) {
 }
 
 function cleanDb() {
-  for (const f of ["autentico.db", "autentico.db-shm", "autentico.db-wal"]) {
-    const p = join(AUTENTICO_DIR, f);
+  mkdirSync(DB_DIR, { recursive: true });
+  for (const suffix of ["", "-shm", "-wal"]) {
+    const p = `${DB_FILE}${suffix}`;
     if (existsSync(p)) rmSync(p);
   }
 }
 
 export const test = base.extend<{ autentico: void }>({
   // eslint-disable-next-line no-empty-pattern
-  autentico: [async ({}, use) => {
+  autentico: [async ({ }, use) => {
     cleanDb();
+
+    const envVars = {
+      ...process.env,
+      AUTENTICO_ACCESS_TOKEN_SECRET: ACCESS_TOKEN_SECRET,
+      AUTENTICO_REFRESH_TOKEN_SECRET: REFRESH_TOKEN_SECRET,
+      AUTENTICO_CSRF_SECRET_KEY: CSRF_SECRET_KEY,
+      AUTENTICO_PRIVATE_KEY: PRIVATE_KEY_B64,
+      AUTENTICO_DB_FILE_PATH: DB_FILE,
+      AUTENTICO_APP_URL: AUTENTICO_URL,
+      AUTENTICO_LISTEN_PORT: IDP_PORT,
+      AUTENTICO_RATE_LIMIT_RPS: "0",
+      AUTENTICO_RATE_LIMIT_RPM: "0",
+      AUTENTICO_RATE_LIMIT_BURST: "0",
+      AUTENTICO_RATE_LIMIT_RPM_BURST: "0",
+      AUTENTICO_ANTI_TIMING_MIN_MS: "0",
+      AUTENTICO_ANTI_TIMING_MAX_MS: "0",
+      AUTENTICO_CSRF_SECURE_COOKIE: "false",
+      AUTENTICO_IDP_SESSION_SECURE: "false",
+    };
 
     execSync(
       `${AUTENTICO_BIN} onboard --username ${ADMIN_USER} --password "${ADMIN_PASS}" --email ${ADMIN_EMAIL} --enable-admin-password-grant`,
-      { cwd: AUTENTICO_DIR, stdio: "pipe" },
+      { cwd: AUTENTICO_DIR, stdio: "pipe", env: envVars },
     );
 
-    const logFile = createWriteStream(join(AUTENTICO_DIR, "autentico.log"));
+    mkdirSync(LOG_DIR, { recursive: true });
+    const logFile = createWriteStream(join(LOG_DIR, `autentico-${IDP_PORT}.log`));
     const proc = spawn(AUTENTICO_BIN, ["start"], {
       cwd: AUTENTICO_DIR,
       stdio: ["ignore", "pipe", "pipe"],
-      env: {
-        ...process.env,
-        AUTENTICO_RATE_LIMIT_RPS: "0",
-        AUTENTICO_RATE_LIMIT_RPM: "0",
-        AUTENTICO_ANTI_TIMING_MIN_MS: "0",
-        AUTENTICO_ANTI_TIMING_MAX_MS: "0",
-      },
+      env: envVars,
     });
     proc.stdout?.pipe(logFile);
     proc.stderr?.pipe(logFile);

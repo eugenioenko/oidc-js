@@ -7,5 +7,5 @@ coverage/
 
 # E2E test artifacts
 tests/e2e/.env
-tests/e2e/autentico.db
-tests/e2e/autentico.log
+tests/e2e/.autentico/db/
+tests/e2e/.autentico/logs/

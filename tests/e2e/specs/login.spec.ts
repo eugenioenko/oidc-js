@@ -1,10 +1,17 @@
 import { test, expect } from "./autentico.fixture.js";
 import type { Page } from "@playwright/test";
 
-const AUTENTICO_URL = "http://localhost:9999";
+const IDP_PORT = process.env.E2E_IDP_PORT ?? "9999";
+const APP_PORT = process.env.E2E_APP_PORT ?? "5173";
+const FRAMEWORK = process.env.E2E_FRAMEWORK ?? "unknown";
+
+const AUTENTICO_URL = `http://localhost:${IDP_PORT}`;
 const TEST_USER = "testuser";
 const TEST_PASS = "TestUser123!";
 const TIMEOUT = 10_000;
+
+const idpPattern = new RegExp(`localhost:${IDP_PORT}`);
+const appPattern = new RegExp(`localhost:${APP_PORT}`);
 
 type TrafficEntry = { method: string; path: string };
 
@@ -46,11 +53,11 @@ function trackTraffic(page: Page) {
 async function login(page: Page) {
   await page.goto("/");
   await page.getByTestId("login-button").click();
-  await page.waitForURL(/localhost:9999/);
+  await page.waitForURL(idpPattern);
   await page.fill('input[name="username"]', TEST_USER);
   await page.fill('input[name="password"]', TEST_PASS);
   await page.click('button[type="submit"]');
-  await page.waitForURL(/localhost:5173/, { timeout: TIMEOUT });
+  await page.waitForURL(appPattern, { timeout: TIMEOUT });
   await expect(page.getByTestId("authenticated")).toBeVisible({ timeout: TIMEOUT });
 }
 
@@ -80,7 +87,7 @@ const LOGIN_NAVIGATIONS = [
   "/oauth2/authorize",
 ];
 
-test.describe("OIDC Login Flow", () => {
+test.describe(`[${FRAMEWORK}] OIDC Login Flow`, () => {
   test("shows login button when not authenticated", async ({ page }) => {
     const traffic = trackTraffic(page);
     await page.goto("/");
@@ -108,7 +115,7 @@ test.describe("OIDC Login Flow", () => {
     const traffic = trackTraffic(page);
     await login(page);
     await expect(page.getByTestId("user-sub")).not.toBeEmpty();
-    await expect(page.getByTestId("user-iss")).toHaveText("http://localhost:9999/oauth2");
+    await expect(page.getByTestId("user-iss")).toHaveText(`${AUTENTICO_URL}/oauth2`);
     await expect(page.getByTestId("user-aud")).not.toBeEmpty();
     await expect(page.getByTestId("user-exp")).not.toBeEmpty();
     await expect(page.getByTestId("user-iat")).not.toBeEmpty();
@@ -133,11 +140,11 @@ test.describe("OIDC Login Flow", () => {
     await page.evaluate(() => localStorage.setItem("e2e-fetchProfile", "false"));
     await page.reload();
     await page.getByTestId("login-button").click();
-    await page.waitForURL(/localhost:9999/);
+    await page.waitForURL(idpPattern);
     await page.fill('input[name="username"]', TEST_USER);
     await page.fill('input[name="password"]', TEST_PASS);
     await page.click('button[type="submit"]');
-    await page.waitForURL(/localhost:5173/);
+    await page.waitForURL(appPattern);
     await expect(page.getByTestId("authenticated")).toBeVisible();
     await expect(page.getByTestId("user-profile-null")).toHaveText("true");
     await expect(page.getByTestId("user-email")).toHaveText("no profile");
@@ -187,7 +194,7 @@ test.describe("OIDC Login Flow", () => {
   });
 });
 
-test.describe("Session Lifecycle", () => {
+test.describe(`[${FRAMEWORK}] Session Lifecycle`, () => {
   test("cleans callback URL params after login", async ({ page }) => {
     await login(page);
     const url = new URL(page.url());
@@ -212,11 +219,11 @@ test.describe("Session Lifecycle", () => {
     await expect(page.getByTestId("unauthenticated")).toBeVisible({ timeout: TIMEOUT });
 
     await page.getByTestId("login-button").click();
-    await page.waitForURL(/localhost:9999/);
+    await page.waitForURL(idpPattern);
     await page.fill('input[name="username"]', TEST_USER);
     await page.fill('input[name="password"]', TEST_PASS);
     await page.click('button[type="submit"]');
-    await page.waitForURL(/localhost:5173/, { timeout: TIMEOUT });
+    await page.waitForURL(appPattern, { timeout: TIMEOUT });
     await expect(page.getByTestId("authenticated")).toBeVisible({ timeout: TIMEOUT });
     await expect(page.getByTestId("access-token")).toHaveText("present");
   });
@@ -232,7 +239,7 @@ test.describe("Session Lifecycle", () => {
   });
 });
 
-test.describe("Security", () => {
+test.describe(`[${FRAMEWORK}] Security`, () => {
   test("tokens are not stored in localStorage or sessionStorage", async ({ page }) => {
     await login(page);
 
@@ -265,7 +272,7 @@ test.describe("Security", () => {
   });
 });
 
-test.describe("Error Handling", () => {
+test.describe(`[${FRAMEWORK}] Error Handling`, () => {
   test("shows error when IdP returns error in callback", async ({ page }) => {
     const traffic = trackTraffic(page);
     await page.goto("/?error=access_denied&error_description=User+denied+consent");
@@ -282,17 +289,15 @@ test.describe("Error Handling", () => {
     const traffic = trackTraffic(page);
     await page.goto("/");
 
-    // Plant a fake PKCE auth state with a known state value
-    await page.evaluate(() => {
+    await page.evaluate((appPort) => {
       sessionStorage.setItem("oidc-js:auth-state", JSON.stringify({
         codeVerifier: "fake-verifier",
         state: "correct-state",
         nonce: "fake-nonce",
-        redirectUri: "http://localhost:5173/callback",
+        redirectUri: `http://localhost:${appPort}/callback`,
       }));
-    });
+    }, APP_PORT);
 
-    // Navigate with a tampered state — should trigger state mismatch error
     await page.goto("/?code=fake-code&state=tampered-state");
     await expect(page.getByTestId("auth-error")).toBeVisible({ timeout: TIMEOUT });
     await expect(page.getByTestId("auth-error")).toContainText("State");
@@ -305,7 +310,7 @@ test.describe("Error Handling", () => {
   });
 });
 
-test.describe("Deep Linking", () => {
+test.describe(`[${FRAMEWORK}] Deep Linking`, () => {
   test("login from protected page returns to that page", async ({ page }) => {
     const traffic = trackTraffic(page);
     await page.goto("/protected-a", { waitUntil: "networkidle" });
@@ -315,7 +320,6 @@ test.describe("Deep Linking", () => {
     await page.fill('input[name="password"]', TEST_PASS);
     await page.click('button[type="submit"]');
 
-    // After login, should land back on /protected-a (not /)
     await expect(page.getByTestId("protected-a")).toBeVisible({ timeout: TIMEOUT });
     expect(page.url()).toContain("/protected-a");
 
@@ -324,7 +328,7 @@ test.describe("Deep Linking", () => {
   });
 });
 
-test.describe("RequireAuth", () => {
+test.describe(`[${FRAMEWORK}] RequireAuth`, () => {
   test("shows protected content when authenticated", async ({ page }) => {
     const traffic = trackTraffic(page);
     await login(page);
@@ -347,11 +351,9 @@ test.describe("RequireAuth", () => {
     await page.getByTestId("link-protected-a").click();
     await expect(page.getByTestId("protected-a")).toBeVisible();
 
-    // Navigate home and verify still authenticated
     await page.getByTestId("link-home").click();
     await expect(page.getByTestId("authenticated")).toBeVisible();
 
-    // No extra requests beyond the initial login flow
     expect(traffic.requests()).toEqual(LOGIN_REQUESTS);
     expect(traffic.navigations()).toEqual(LOGIN_NAVIGATIONS);
   });
@@ -364,10 +366,6 @@ test.describe("RequireAuth", () => {
     await page.getByTestId("link-protected-a").click();
     await expect(page.getByTestId("protected-a")).toBeVisible();
 
-    // Override Date.now and patch fetch so the clock is restored from inside
-    // the browser's promise chain — before React re-renders with new tokens.
-    // Restoring via Playwright's page.evaluate() would arrive as a macrotask,
-    // after React's synchronous re-render from the microtask chain.
     await page.evaluate((exp) => {
       const realDateNow = Date.now;
       const originalFetch = window.fetch;
@@ -383,7 +381,6 @@ test.describe("RequireAuth", () => {
       } as typeof fetch;
     }, expiresAt);
 
-    // Navigate to second protected page — RequireAuth should auto-refresh
     await page.getByTestId("link-protected-b").click();
     await expect(page.getByTestId("protected-b")).toBeVisible({ timeout: TIMEOUT });
 
@@ -407,8 +404,6 @@ test.describe("RequireAuth", () => {
 
     await revokeToken(refreshToken!, "refresh_token");
 
-    // Override Date.now and patch fetch to restore the clock from inside
-    // the browser's promise chain — before React re-renders.
     await page.evaluate((exp) => {
       const realDateNow = Date.now;
       const originalFetch = window.fetch;
@@ -424,11 +419,9 @@ test.describe("RequireAuth", () => {
       } as typeof fetch;
     }, expiresAt);
 
-    // Navigate to second protected page — refresh should fail, triggering login redirect
     await page.getByTestId("link-protected-b").click();
     await expect(page.locator('input[name="username"]')).toBeVisible({ timeout: TIMEOUT });
 
-    // Failed refresh POST + redirect to authorize
     expect(traffic.requests()).toEqual([
       ...LOGIN_REQUESTS,
       "POST /oauth2/token",
