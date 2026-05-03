@@ -158,7 +158,7 @@ test.describe(`[${FRAMEWORK}] OIDC Login Flow`, () => {
 
   test("user.profile is null when fetchProfile is false", async ({ page }) => {
     const traffic = trackTraffic(page);
-    await page.goto("/");
+    await page.goto("/", { waitUntil: "networkidle" });
     await page.evaluate(() => localStorage.setItem("e2e-fetchProfile", "false"));
     await page.reload();
     await page.getByTestId("login-button").click();
