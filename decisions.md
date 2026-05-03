@@ -302,3 +302,16 @@ Architectural and design decisions for the oidc-js project. Each entry captures 
 **Decision**: Option 2. Ship React, Vue, Svelte, Angular, Solid, Preact, and Lit. The Ember PR stays open for future consideration.
 
 **Rationale**: Ember's ecosystem adds significant weight (lockfile, ember-cli build, @glimmer dependencies) for a framework with declining adoption. The adapter works and the PR is ready, but merging it increases maintenance burden and CI time disproportionately. Keeping it open preserves the work without committing to maintenance.
+
+### 026 - Unified sequence tracker supersedes split fetch/navigation tracking (2026-05-02)
+
+**Context**: Decision 023 split traffic tracking into separate `requests()` and `navigations()` arrays, asserting each independently. The rationale was that mixing fetch and navigation events would create race condition risks. In practice, the split hid the actual interleaving. The logout test appeared to show a discovery fetch before the logout navigation, but a combined tracker revealed the real order: the navigation fires first, then both discoveries happen on the post-logout page load.
+
+**Alternatives considered**:
+1. Keep only the separate trackers (status quo from decision 023)
+2. Replace separate trackers with a single combined sequence
+3. Add a combined `sequence()` tracker alongside the existing `requests()` and `navigations()`
+
+**Decision**: Option 3. `trackTraffic(page)` now returns `{ requests(), navigations(), sequence() }`. The sequence log records fetch requests as `GET /path` or `POST /path` and navigations as `NAV /path`, in the order Playwright observes them. All three are asserted in tests that check traffic.
+
+**Rationale**: The combined sequence is the source of truth for protocol ordering. The separate `requests()` and `navigations()` remain as convenience filters for tests that only need to check "which fetches happened" without reasoning about navigation interleaving. The assumed race condition from decision 023 turned out to be incorrect. Playwright's `page.on("request")` fires deterministically for both fetch and document requests, and the combined log is stable across runs. Named constants (`GET_WELLKNOWN`, `POST_TOKEN`, `GET_USERINFO`, `NAV_AUTHORIZE`, `NAV_LOGOUT`) make the sequence assertions read like a protocol spec.

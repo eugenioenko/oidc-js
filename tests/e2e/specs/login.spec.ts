@@ -26,6 +26,7 @@ const OIDC_PATHS = [
 function trackTraffic(page: Page) {
   const log: TrafficEntry[] = [];
   const navs: string[] = [];
+  const sequence: string[] = [];
 
   page.on("request", (req) => {
     const type = req.resourceType();
@@ -33,6 +34,7 @@ function trackTraffic(page: Page) {
     const url = new URL(req.url());
     if (url.origin === AUTENTICO_URL && OIDC_PATHS.includes(url.pathname)) {
       log.push({ method: req.method(), path: url.pathname });
+      sequence.push(`${req.method()} ${url.pathname}`);
     }
   });
 
@@ -41,12 +43,14 @@ function trackTraffic(page: Page) {
     const url = new URL(req.url());
     if (url.origin === AUTENTICO_URL && OIDC_PATHS.includes(url.pathname)) {
       navs.push(url.pathname);
+      sequence.push(`NAV ${url.pathname}`);
     }
   });
 
   return {
     requests: () => log.map((e) => `${e.method} ${e.path}`),
     navigations: () => navs,
+    sequence: () => sequence,
   };
 }
 
@@ -74,17 +78,29 @@ async function revokeToken(token: string, hint?: string) {
   }
 }
 
-const DISCOVERY = "GET /oauth2/.well-known/openid-configuration";
+const GET_WELLKNOWN = "GET /oauth2/.well-known/openid-configuration";
+const POST_TOKEN = "POST /oauth2/token";
+const GET_USERINFO = "GET /oauth2/userinfo";
+const NAV_AUTHORIZE = "NAV /oauth2/authorize";
+const NAV_LOGOUT = "NAV /oauth2/logout";
 
 const LOGIN_REQUESTS = [
-  DISCOVERY,
-  DISCOVERY,
-  "POST /oauth2/token",
-  "GET /oauth2/userinfo",
+  GET_WELLKNOWN,
+  GET_WELLKNOWN,
+  POST_TOKEN,
+  GET_USERINFO,
 ];
 
 const LOGIN_NAVIGATIONS = [
   "/oauth2/authorize",
+];
+
+const LOGIN_SEQUENCE = [
+  GET_WELLKNOWN,
+  NAV_AUTHORIZE,
+  GET_WELLKNOWN,
+  POST_TOKEN,
+  GET_USERINFO,
 ];
 
 test.describe(`[${FRAMEWORK}] OIDC Login Flow`, () => {
@@ -95,9 +111,12 @@ test.describe(`[${FRAMEWORK}] OIDC Login Flow`, () => {
     await expect(page.getByTestId("login-button")).toBeVisible();
 
     expect(traffic.requests()).toEqual([
-      DISCOVERY,
+      GET_WELLKNOWN,
     ]);
     expect(traffic.navigations()).toEqual([]);
+    expect(traffic.sequence()).toEqual([
+      GET_WELLKNOWN,
+    ]);
   });
 
   test("completes full login flow with tokens", async ({ page }) => {
@@ -109,6 +128,7 @@ test.describe(`[${FRAMEWORK}] OIDC Login Flow`, () => {
 
     expect(traffic.requests()).toEqual(LOGIN_REQUESTS);
     expect(traffic.navigations()).toEqual(LOGIN_NAVIGATIONS);
+    expect(traffic.sequence()).toEqual(LOGIN_SEQUENCE);
   });
 
   test("user.claims has required OIDC fields", async ({ page }) => {
@@ -122,6 +142,7 @@ test.describe(`[${FRAMEWORK}] OIDC Login Flow`, () => {
 
     expect(traffic.requests()).toEqual(LOGIN_REQUESTS);
     expect(traffic.navigations()).toEqual(LOGIN_NAVIGATIONS);
+    expect(traffic.sequence()).toEqual(LOGIN_SEQUENCE);
   });
 
   test("user.profile is populated when fetchProfile is true", async ({ page }) => {
@@ -132,6 +153,7 @@ test.describe(`[${FRAMEWORK}] OIDC Login Flow`, () => {
 
     expect(traffic.requests()).toEqual(LOGIN_REQUESTS);
     expect(traffic.navigations()).toEqual(LOGIN_NAVIGATIONS);
+    expect(traffic.sequence()).toEqual(LOGIN_SEQUENCE);
   });
 
   test("user.profile is null when fetchProfile is false", async ({ page }) => {
@@ -151,12 +173,19 @@ test.describe(`[${FRAMEWORK}] OIDC Login Flow`, () => {
     await page.evaluate(() => localStorage.removeItem("e2e-fetchProfile"));
 
     expect(traffic.requests()).toEqual([
-      DISCOVERY,
-      DISCOVERY,
-      DISCOVERY,
-      "POST /oauth2/token",
+      GET_WELLKNOWN,
+      GET_WELLKNOWN,
+      GET_WELLKNOWN,
+      POST_TOKEN,
     ]);
     expect(traffic.navigations()).toEqual(LOGIN_NAVIGATIONS);
+    expect(traffic.sequence()).toEqual([
+      GET_WELLKNOWN,
+      GET_WELLKNOWN,
+      NAV_AUTHORIZE,
+      GET_WELLKNOWN,
+      POST_TOKEN,
+    ]);
   });
 
   test("logout clears state", async ({ page }) => {
@@ -169,12 +198,18 @@ test.describe(`[${FRAMEWORK}] OIDC Login Flow`, () => {
 
     expect(traffic.requests()).toEqual([
       ...LOGIN_REQUESTS,
-      DISCOVERY,
-      DISCOVERY,
+      GET_WELLKNOWN,
+      GET_WELLKNOWN,
     ]);
     expect(traffic.navigations()).toEqual([
       ...LOGIN_NAVIGATIONS,
       "/oauth2/logout",
+    ]);
+    expect(traffic.sequence()).toEqual([
+      ...LOGIN_SEQUENCE,
+      NAV_LOGOUT,
+      GET_WELLKNOWN,
+      GET_WELLKNOWN,
     ]);
   });
 
@@ -187,10 +222,15 @@ test.describe(`[${FRAMEWORK}] OIDC Login Flow`, () => {
 
     expect(traffic.requests()).toEqual([
       ...LOGIN_REQUESTS,
-      "POST /oauth2/token",
-      "GET /oauth2/userinfo",
+      POST_TOKEN,
+      GET_USERINFO,
     ]);
     expect(traffic.navigations()).toEqual(LOGIN_NAVIGATIONS);
+    expect(traffic.sequence()).toEqual([
+      ...LOGIN_SEQUENCE,
+      POST_TOKEN,
+      GET_USERINFO,
+    ]);
   });
 });
 
@@ -280,9 +320,12 @@ test.describe(`[${FRAMEWORK}] Error Handling`, () => {
     await expect(page.getByTestId("auth-error")).toContainText("User denied consent");
 
     expect(traffic.requests()).toEqual([
-      DISCOVERY,
+      GET_WELLKNOWN,
     ]);
     expect(traffic.navigations()).toEqual([]);
+    expect(traffic.sequence()).toEqual([
+      GET_WELLKNOWN,
+    ]);
   });
 
   test("shows error when callback state does not match (CSRF protection)", async ({ page }) => {
@@ -303,10 +346,14 @@ test.describe(`[${FRAMEWORK}] Error Handling`, () => {
     await expect(page.getByTestId("auth-error")).toContainText("State");
 
     expect(traffic.requests()).toEqual([
-      DISCOVERY,
-      DISCOVERY,
+      GET_WELLKNOWN,
+      GET_WELLKNOWN,
     ]);
     expect(traffic.navigations()).toEqual([]);
+    expect(traffic.sequence()).toEqual([
+      GET_WELLKNOWN,
+      GET_WELLKNOWN,
+    ]);
   });
 });
 
@@ -325,6 +372,7 @@ test.describe(`[${FRAMEWORK}] Deep Linking`, () => {
 
     expect(traffic.requests()).toEqual(LOGIN_REQUESTS);
     expect(traffic.navigations()).toEqual(LOGIN_NAVIGATIONS);
+    expect(traffic.sequence()).toEqual(LOGIN_SEQUENCE);
   });
 });
 
@@ -337,6 +385,7 @@ test.describe(`[${FRAMEWORK}] RequireAuth`, () => {
 
     expect(traffic.requests()).toEqual(LOGIN_REQUESTS);
     expect(traffic.navigations()).toEqual(LOGIN_NAVIGATIONS);
+    expect(traffic.sequence()).toEqual(LOGIN_SEQUENCE);
   });
 
   test("navigates between protected pages without re-authentication", async ({ page }) => {
@@ -356,6 +405,7 @@ test.describe(`[${FRAMEWORK}] RequireAuth`, () => {
 
     expect(traffic.requests()).toEqual(LOGIN_REQUESTS);
     expect(traffic.navigations()).toEqual(LOGIN_NAVIGATIONS);
+    expect(traffic.sequence()).toEqual(LOGIN_SEQUENCE);
   });
 
   test("auto-refreshes expired token when navigating to protected page", async ({ page }) => {
@@ -386,10 +436,15 @@ test.describe(`[${FRAMEWORK}] RequireAuth`, () => {
 
     expect(traffic.requests()).toEqual([
       ...LOGIN_REQUESTS,
-      "POST /oauth2/token",
-      "GET /oauth2/userinfo",
+      POST_TOKEN,
+      GET_USERINFO,
     ]);
     expect(traffic.navigations()).toEqual(LOGIN_NAVIGATIONS);
+    expect(traffic.sequence()).toEqual([
+      ...LOGIN_SEQUENCE,
+      POST_TOKEN,
+      GET_USERINFO,
+    ]);
   });
 
   test("redirects to login when refresh token is revoked", async ({ page }) => {
@@ -424,11 +479,16 @@ test.describe(`[${FRAMEWORK}] RequireAuth`, () => {
 
     expect(traffic.requests()).toEqual([
       ...LOGIN_REQUESTS,
-      "POST /oauth2/token",
+      POST_TOKEN,
     ]);
     expect(traffic.navigations()).toEqual([
       ...LOGIN_NAVIGATIONS,
       "/oauth2/authorize",
+    ]);
+    expect(traffic.sequence()).toEqual([
+      ...LOGIN_SEQUENCE,
+      POST_TOKEN,
+      NAV_AUTHORIZE,
     ]);
   });
 });
