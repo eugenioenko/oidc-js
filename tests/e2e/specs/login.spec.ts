@@ -419,7 +419,7 @@ test.describe(`[${FRAMEWORK}] RequireAuth`, () => {
     await page.evaluate((exp) => {
       const realDateNow = Date.now;
       const originalFetch = window.fetch;
-      Date.now = () => exp + 1;
+      Date.now = () => (exp + 1) * 1000;
       window.fetch = function (...args: Parameters<typeof fetch>) {
         return originalFetch.apply(window, args).then((response) => {
           if (new URL(response.url).pathname === "/oauth2/token") {
@@ -462,7 +462,7 @@ test.describe(`[${FRAMEWORK}] RequireAuth`, () => {
     await page.evaluate((exp) => {
       const realDateNow = Date.now;
       const originalFetch = window.fetch;
-      Date.now = () => exp + 1;
+      Date.now = () => (exp + 1) * 1000;
       window.fetch = function (...args: Parameters<typeof fetch>) {
         return originalFetch.apply(window, args).then((response) => {
           if (new URL(response.url).pathname === "/oauth2/token") {
