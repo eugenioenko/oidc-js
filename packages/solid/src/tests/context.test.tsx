@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { nowSeconds } from "oidc-js-core";
 import { render, screen, waitFor, cleanup } from "@solidjs/testing-library";
 import { AuthProvider, useAuth } from "../context.js";
 import type { OidcConfig } from "oidc-js-core";
@@ -34,8 +35,8 @@ const TOKEN_RESPONSE = {
     sub: "user-1",
     iss: "https://auth.example.com",
     aud: "my-app",
-    exp: Math.floor(Date.now() / 1000) + 3600,
-    iat: Math.floor(Date.now() / 1000),
+    exp: nowSeconds() + 3600,
+    iat: nowSeconds(),
     nonce: "test-nonce",
   }),
   refresh_token: "rt_123",

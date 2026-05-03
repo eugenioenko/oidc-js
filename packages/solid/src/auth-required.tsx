@@ -1,6 +1,7 @@
 import { Show, createEffect, type JSX, type ParentComponent } from "solid-js";
 import { useAuth } from "./context.js";
 import type { LoginOptions } from "oidc-js";
+import { isExpiredAt } from "oidc-js-core";
 
 /**
  * Props for the {@link RequireAuth} component.
@@ -12,6 +13,8 @@ interface RequireAuthProps {
   autoRefresh?: boolean;
   /** Additional options passed to the login redirect. */
   loginOptions?: LoginOptions;
+  /** Buffer in milliseconds before token expiry to consider it expired. Defaults to 30000. */
+  tokenExpirationBuffer?: number;
 }
 
 /**
@@ -32,7 +35,7 @@ export const RequireAuth: ParentComponent<RequireAuthProps> = (props) => {
   let refreshAttempted = false;
 
   createEffect(() => {
-    const isExpired = auth.tokens.expiresAt !== null && auth.tokens.expiresAt <= Date.now();
+    const isExpired = isExpiredAt(auth.tokens.expiresAt, props.tokenExpirationBuffer);
     const needsAuth = !auth.isAuthenticated || isExpired;
 
     if (!needsAuth) {
@@ -54,7 +57,7 @@ export const RequireAuth: ParentComponent<RequireAuthProps> = (props) => {
 
   return (
     <Show
-      when={!auth.isLoading && auth.isAuthenticated && !(auth.tokens.expiresAt !== null && auth.tokens.expiresAt <= Date.now())}
+      when={!auth.isLoading && auth.isAuthenticated && !isExpiredAt(auth.tokens.expiresAt, props.tokenExpirationBuffer)}
       fallback={props.fallback}
     >
       {props.children}

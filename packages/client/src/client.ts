@@ -26,15 +26,15 @@ type Subscriber = (state: AuthState) => void;
 const EMPTY_TOKENS: AuthTokens = { access: null, id: null, refresh: null, expiresAt: null };
 
 /**
- * Extracts the `exp` claim from an access token JWT and converts it to milliseconds.
+ * Extracts the `exp` claim from an access token JWT.
  *
  * @param accessToken - A JWT access token string.
- * @returns The expiration time in milliseconds, or null if the token cannot be decoded.
+ * @returns The expiration time as a Unix timestamp in seconds, or null if the token cannot be decoded.
  */
 function extractExpiresAt(accessToken: string): number | null {
   try {
     const payload = decodeJwtPayload(accessToken);
-    if (typeof payload.exp === "number") return payload.exp * 1000;
+    if (typeof payload.exp === "number") return payload.exp;
   } catch { /* malformed JWT */ }
   return null;
 }

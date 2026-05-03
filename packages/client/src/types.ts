@@ -40,7 +40,7 @@ export interface AuthTokens {
   id: string | null;
   /** The refresh token string, or null if not returned. */
   refresh: string | null;
-  /** Access token expiration as a Unix timestamp in milliseconds, or null if unknown. */
+  /** Access token expiration as a Unix timestamp in seconds, or null if unknown. */
   expiresAt: number | null;
 }
 

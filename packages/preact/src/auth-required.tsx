@@ -2,12 +2,14 @@ import { useEffect, useRef } from "preact/hooks";
 import type { ComponentChildren } from "preact";
 import { useAuth } from "./context.js";
 import type { LoginOptions } from "oidc-js";
+import { isExpiredAt } from "oidc-js-core";
 
 interface RequireAuthProps {
   children: ComponentChildren;
   fallback?: ComponentChildren;
   autoRefresh?: boolean;
   loginOptions?: LoginOptions;
+  tokenExpirationBuffer?: number;
 }
 
 /**
@@ -24,11 +26,12 @@ export function RequireAuth({
   fallback = null,
   autoRefresh = true,
   loginOptions,
+  tokenExpirationBuffer,
 }: RequireAuthProps) {
   const { isAuthenticated, isLoading, tokens, actions } = useAuth();
   const refreshAttempted = useRef(false);
 
-  const isExpired = tokens.expiresAt !== null && tokens.expiresAt <= Date.now();
+  const isExpired = isExpiredAt(tokens.expiresAt, tokenExpirationBuffer);
   const needsAuth = !isAuthenticated || isExpired;
 
   useEffect(() => {

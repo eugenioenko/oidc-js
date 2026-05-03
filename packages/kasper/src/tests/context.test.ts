@@ -121,7 +121,7 @@ describe("_initAuth", () => {
       isAuthenticated: true,
       isLoading: false,
       error: null,
-      tokens: { access: "at_123", id: "id_456", refresh: "rt_789", expiresAt: 9999999999999 },
+      tokens: { access: "at_123", id: "id_456", refresh: "rt_789", expiresAt: 9999999999 },
     });
 
     const auth = useAuth();

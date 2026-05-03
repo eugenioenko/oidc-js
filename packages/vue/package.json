@@ -1,6 +1,6 @@
 {
   "name": "oidc-js-vue",
-  "version": "1.0.4",
+  "version": "1.0.6",
   "description": "Simple OIDC authentication for Vue. Plugin, composables, and navigation guards with zero dependencies.",
   "type": "module",
   "main": "./dist/index.cjs",

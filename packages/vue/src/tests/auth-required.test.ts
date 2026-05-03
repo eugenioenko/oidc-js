@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { nowSeconds } from "oidc-js-core";
 import { defineComponent, ref, provide, h } from "vue";
 import { mount } from "@vue/test-utils";
 import { RequireAuth } from "../auth-required.js";
@@ -46,7 +47,7 @@ describe("RequireAuth", () => {
   it("renders default slot when authenticated", () => {
     const wrapper = mount(makeWrapper({
       isAuthenticated: ref(true),
-      tokens: ref({ access: "token", id: null, refresh: null, expiresAt: Date.now() + 3600_000 }),
+      tokens: ref({ access: "token", id: null, refresh: null, expiresAt: nowSeconds() + 3600 }),
     }), {
       slots: {
         default: () => h(RequireAuth, null, {
@@ -123,7 +124,7 @@ describe("RequireAuth", () => {
 
     mount(makeWrapper({
       isAuthenticated: ref(true),
-      tokens: ref({ access: "expired", id: null, refresh: "valid-refresh", expiresAt: Date.now() - 60_000 }),
+      tokens: ref({ access: "expired", id: null, refresh: "valid-refresh", expiresAt: nowSeconds() - 60 }),
       actions,
     }), {
       slots: {

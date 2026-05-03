@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { nowSeconds } from "oidc-js-core";
 import { ref } from "vue";
 import { createAuthGuard } from "../guard.js";
 
@@ -58,7 +59,7 @@ describe("createAuthGuard", () => {
   it("allows navigation when authenticated", async () => {
     const context = makeContext({
       isAuthenticated: ref(true),
-      tokens: ref({ access: "token", id: null, refresh: null, expiresAt: Date.now() + 3600_000 }),
+      tokens: ref({ access: "token", id: null, refresh: null, expiresAt: nowSeconds() + 3600 }),
     });
     vi.mocked(inject).mockReturnValue(context);
 
@@ -94,7 +95,7 @@ describe("createAuthGuard", () => {
     const actions = makeActions();
     const context = makeContext({
       isAuthenticated: ref(true),
-      tokens: ref({ access: "expired", id: null, refresh: "rt", expiresAt: Date.now() - 60_000 }),
+      tokens: ref({ access: "expired", id: null, refresh: "rt", expiresAt: nowSeconds() - 60 }),
       actions,
     });
     vi.mocked(inject).mockReturnValue(context);
@@ -116,7 +117,7 @@ describe("createAuthGuard", () => {
     });
     const context = makeContext({
       isAuthenticated: ref(true),
-      tokens: ref({ access: "expired", id: null, refresh: "rt", expiresAt: Date.now() - 60_000 }),
+      tokens: ref({ access: "expired", id: null, refresh: "rt", expiresAt: nowSeconds() - 60 }),
       actions,
     });
     vi.mocked(inject).mockReturnValue(context);

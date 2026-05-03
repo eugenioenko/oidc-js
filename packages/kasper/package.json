@@ -1,6 +1,6 @@
 {
   "name": "oidc-js-kasper",
-  "version": "1.0.4",
+  "version": "1.0.6",
   "description": "Simple OIDC authentication for Kasper.js. Signals, components, and auth guards with zero dependencies.",
   "type": "module",
   "main": "./dist/index.cjs",

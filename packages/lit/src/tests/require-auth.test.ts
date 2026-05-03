@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { nowSeconds } from "oidc-js-core";
 import type { ReactiveControllerHost } from "lit";
 import { RequireAuthController } from "../require-auth.js";
 import type { AuthController } from "../auth-controller.js";
@@ -60,7 +61,7 @@ describe("RequireAuthController", () => {
     const auth = makeAuth({
       isAuthenticated: true,
       isLoading: false,
-      tokens: { access: "token", id: null, refresh: null, expiresAt: Date.now() + 3600_000 },
+      tokens: { access: "token", id: null, refresh: null, expiresAt: nowSeconds() + 3600 },
     });
     const guard = new RequireAuthController(host, { auth });
 
@@ -71,7 +72,7 @@ describe("RequireAuthController", () => {
     const host = createMockHost();
     const auth = makeAuth({
       isAuthenticated: true,
-      tokens: { access: "expired", id: null, refresh: null, expiresAt: Date.now() - 60_000 },
+      tokens: { access: "expired", id: null, refresh: null, expiresAt: nowSeconds() - 60 },
     });
     const guard = new RequireAuthController(host, { auth });
 
@@ -83,7 +84,7 @@ describe("RequireAuthController", () => {
     const auth = makeAuth({
       isAuthenticated: true,
       isLoading: true,
-      tokens: { access: "token", id: null, refresh: null, expiresAt: Date.now() + 3600_000 },
+      tokens: { access: "token", id: null, refresh: null, expiresAt: nowSeconds() + 3600 },
     });
     const guard = new RequireAuthController(host, { auth });
 
@@ -120,7 +121,7 @@ describe("RequireAuthController", () => {
     const host = createMockHost();
     const auth = makeAuth({
       isAuthenticated: true,
-      tokens: { access: "token", id: null, refresh: null, expiresAt: Date.now() + 3600_000 },
+      tokens: { access: "token", id: null, refresh: null, expiresAt: nowSeconds() + 3600 },
     });
     const guard = new RequireAuthController(host, { auth });
 
@@ -134,7 +135,7 @@ describe("RequireAuthController", () => {
     const host = createMockHost();
     const auth = makeAuth({
       isAuthenticated: true,
-      tokens: { access: "expired", id: null, refresh: "rt", expiresAt: Date.now() - 60_000 },
+      tokens: { access: "expired", id: null, refresh: "rt", expiresAt: nowSeconds() - 60 },
       refresh: vi.fn().mockResolvedValue(undefined),
     });
     const guard = new RequireAuthController(host, { auth });
