@@ -1,6 +1,6 @@
 {
   "name": "oidc-js",
-  "version": "1.0.4",
+  "version": "1.0.6",
   "description": "Simple OIDC authentication for JavaScript. Drop-in client with login, logout, token refresh, and zero dependencies.",
   "type": "module",
   "main": "./dist/index.cjs",

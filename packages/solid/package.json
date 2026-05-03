@@ -1,6 +1,6 @@
 {
   "name": "oidc-js-solid",
-  "version": "1.0.4",
+  "version": "1.0.6",
   "description": "Simple OIDC authentication for SolidJS. Signals, context, and auth guards with zero dependencies.",
   "type": "module",
   "main": "./dist/index.cjs",

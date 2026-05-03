@@ -1,6 +1,6 @@
 {
   "name": "oidc-js-angular",
-  "version": "1.0.4",
+  "version": "1.0.6",
   "description": "Simple OIDC authentication for Angular. Signals, DI, and route guards with zero dependencies.",
   "type": "module",
   "main": "./dist/index.cjs",
