@@ -134,7 +134,50 @@ See each package's README for framework-specific setup, full API reference, and 
 
 ## Testing
 
-Every framework adapter runs against a real OIDC identity provider — no mocked endpoints, no simulated responses. The E2E suite spins up a live [Autentico](https://github.com/eugenioenko/autentico) instance, performs actual OAuth 2.0 flows through a browser, and asserts on both the UI state and the exact OIDC network traffic.
+The project has two layers of testing: unit tests for the functional core and each adapter, and E2E tests that run every adapter against a real OIDC identity provider.
+
+### Unit tests
+
+The functional core and every framework adapter have unit tests that validate protocol logic, state management, and component behavior with plain input/output — no mocked `fetch` or `window`.
+
+| Package | Tests |
+|---------|-------|
+| `oidc-js-core` | 95 |
+| `oidc-js-kasper` | 28 |
+| `oidc-js-lit` | 23 |
+| `oidc-js` (client) | 22 |
+| `oidc-js-angular` | 20 |
+| `oidc-js-vue` | 19 |
+| `oidc-js-react` | 18 |
+| `oidc-js-preact` | 12 |
+| `oidc-js-solid` | 10 |
+| `oidc-js-svelte` | 7 |
+| **Total** | **254** |
+
+```bash
+pnpm -r test    # Run all unit tests
+```
+
+### E2E tests
+
+Every framework adapter runs full OIDC flows against a real identity provider — real discovery, real authorization redirects, real token exchanges, real refresh and revocation. No mocked endpoints, no simulated responses. The E2E suite spins up a live [Autentico](https://github.com/eugenioenko/autentico) instance and tests the complete lifecycle including edge cases like concurrent refreshes, nonce tampering, tab isolation, and token revocation recovery.
+
+**26 tests × 8 framework adapters = 208 E2E tests**:
+
+| Category | Tests |
+|----------|-------|
+| Login flow | Unauthenticated state, full login with tokens, ID token claims, userinfo profile, fetchProfile toggle, logout, manual refresh, clean callback URL, session loss on reload, multiple login/logout cycles, error recovery |
+| Security | Tokens not in storage, back-button after logout, nonce tampering (replay protection), unique state/nonce/code_challenge per login, concurrent tab isolation |
+| Error handling | IdP error callback, CSRF state mismatch |
+| Deep linking | Login from protected page preserves returnTo |
+| RequireAuth | Protected content, multi-page navigation without re-auth, auto-refresh on expired token, login redirect on revoked refresh token |
+| Concurrency | Concurrent refresh deduplication, revoked access token handling, manual refresh after expiry |
+
+Every test also asserts the exact sequence of OIDC fetch requests (`discovery → token → userinfo`) and page navigations (`/oauth2/authorize`, `/oauth2/logout`) to verify no unexpected network calls are made. This catches regressions that UI-only assertions would miss — like a silent double-refresh or a missing discovery call.
+
+The test harness is framework-agnostic: each adapter implements the same `data-testid` contract and runs the same Playwright spec. See [`tests/e2e/harness.md`](./tests/e2e/harness.md) for the full contract.
+
+The E2E suite is run multiple times per CI execution to surface race conditions, timing-dependent failures, and flaky tests that a single pass would miss.
 
 ### Why a dedicated test IdP
 
@@ -143,25 +186,8 @@ We use [Autentico](https://github.com/eugenioenko/autentico), a lightweight Go-b
 - **Fast startup (~500ms)** — enables per-run isolation with no shared state between test runs
 - **Admin API** — test users, clients, and token lifetimes are configured programmatically, not through a UI
 - **Deterministic** — no rate limits, no external dependencies, no flaky third-party auth servers
-- **Repeated execution** — the suite runs 10x per CI execution to detect race conditions and timing-dependent failures
 
 This testing strategy prioritizes determinism and reproducibility over provider diversity in CI. Provider compatibility is validated separately (see below).
-
-### Test coverage
-
-**16 tests** cover the full OIDC lifecycle across all 8 framework adapters:
-
-| Category | Tests |
-|----------|-------|
-| Login flow | Unauthenticated state, full login with tokens, ID token claims, userinfo profile, fetchProfile toggle, logout, manual refresh |
-| Security | Tokens not in storage, back-button after logout |
-| Error handling | IdP error callback, CSRF state mismatch |
-| Deep linking | Login from protected page preserves returnTo |
-| RequireAuth | Protected content, multi-page navigation without re-auth, auto-refresh on expired token, login redirect on revoked refresh token |
-
-Every test also asserts the exact sequence of OIDC fetch requests (`discovery → token → userinfo`) and page navigations (`/oauth2/authorize`, `/oauth2/logout`) to verify no unexpected network calls are made. This catches regressions that UI-only assertions would miss — like a silent double-refresh or a missing discovery call.
-
-The test harness is framework-agnostic: each adapter implements the same `data-testid` contract and runs the same Playwright spec. See [`tests/e2e/harness.md`](./tests/e2e/harness.md) for the full contract.
 
 ### Provider Compatibility
 

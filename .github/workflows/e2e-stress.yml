@@ -1,0 +1,67 @@
+name: E2E Stress Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "Branch to test"
+        required: false
+        default: "main"
+      runs:
+        description: "Number of repetitions"
+        required: false
+        default: "10"
+
+jobs:
+  e2e-stress:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch }}
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+      - name: Get Playwright version
+        id: playwright-version
+        run: echo "version=$(pnpm --filter e2e-tests exec playwright --version | head -1)" >> $GITHUB_OUTPUT
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
+
+      - name: Install Playwright browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: pnpm --filter e2e-tests exec playwright install --with-deps chromium
+
+      - name: Install Playwright deps
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: pnpm --filter e2e-tests exec playwright install-deps chromium
+
+      - name: Run E2E stress test
+        run: |
+          for i in $(seq 1 ${{ github.event.inputs.runs }}); do
+            echo "=== Run $i / ${{ github.event.inputs.runs }} ==="
+            pnpm --filter e2e-tests test
+          done
+
+      - name: Dump Autentico logs
+        if: failure()
+        run: cat tests/e2e/.autentico/logs/*.log || true
