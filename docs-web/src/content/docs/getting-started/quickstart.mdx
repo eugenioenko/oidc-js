@@ -191,7 +191,6 @@ This guide walks through adding OIDC authentication to your app. You'll need an 
        clientId: "my-app",
        redirectUri: "http://localhost:5173/callback",
        scopes: ["openid", "profile", "email", "offline_access"],
-       postLogoutRedirectUri: "http://localhost:5173",
      };
 
      function Root() {
@@ -238,7 +237,6 @@ This guide walks through adding OIDC authentication to your app. You'll need an 
          clientId: "my-app",
          redirectUri: "http://localhost:5173/callback",
          scopes: ["openid", "profile", "email", "offline_access"],
-         postLogoutRedirectUri: "http://localhost:5173",
        },
        onLogin(returnTo: string) {
          router.replace(returnTo);
@@ -260,7 +258,6 @@ This guide walks through adding OIDC authentication to your app. You'll need an 
          clientId: "my-app",
          redirectUri: "http://localhost:5173/callback",
          scopes: ["openid", "profile", "email", "offline_access"],
-         postLogoutRedirectUri: "http://localhost:5173",
        };
 
        function handleLogin(returnTo: string) {
@@ -293,7 +290,6 @@ This guide walks through adding OIDC authentication to your app. You'll need an 
              clientId: "my-app",
              redirectUri: "http://localhost:5173/callback",
              scopes: ["openid", "profile", "email", "offline_access"],
-             postLogoutRedirectUri: "http://localhost:5173",
            },
          }),
        ],
@@ -312,7 +308,6 @@ This guide walks through adding OIDC authentication to your app. You'll need an 
        clientId: "my-app",
        redirectUri: "http://localhost:5173/callback",
        scopes: ["openid", "profile", "email", "offline_access"],
-       postLogoutRedirectUri: "http://localhost:5173",
      };
 
      export const App: ParentComponent = (props) => {
@@ -343,7 +338,6 @@ This guide walks through adding OIDC authentication to your app. You'll need an 
        clientId: "my-app",
        redirectUri: "http://localhost:5173/callback",
        scopes: ["openid", "profile", "email", "offline_access"],
-       postLogoutRedirectUri: "http://localhost:5173",
      };
 
      function Root() {
@@ -376,7 +370,6 @@ This guide walks through adding OIDC authentication to your app. You'll need an 
            clientId: "my-app",
            redirectUri: "http://localhost:5173/callback",
            scopes: ["openid", "profile", "email", "offline_access"],
-           postLogoutRedirectUri: "http://localhost:5173",
          },
          onLogin: (returnTo: string) => {
            window.history.replaceState({}, "", returnTo);
@@ -424,7 +417,6 @@ This guide walks through adding OIDC authentication to your app. You'll need an 
          clientId: "my-app",
          redirectUri: "http://localhost:5173/callback",
          scopes: ["openid", "profile", "email", "offline_access"],
-         postLogoutRedirectUri: "http://localhost:5173",
        };
 
        handleLogin = (returnTo) => {
