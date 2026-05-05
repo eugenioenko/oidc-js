@@ -58,7 +58,7 @@ function trackTraffic(page: Page) {
 
 // Performs a full login: navigates to app, clicks login, fills IdP form, waits for redirect back.
 async function login(page: Page) {
-  await page.goto("/");
+  await page.goto("/", { waitUntil: "networkidle" });
   await page.getByTestId("login-button").click();
   await page.waitForURL(idpPattern);
   await page.fill('input[name="username"]', TEST_USER);
@@ -133,7 +133,7 @@ test.describe(`[${FRAMEWORK}] OIDC Login Flow`, () => {
   // Verifies the app's initial unauthenticated state and that only discovery is fetched.
   test("shows login button when not authenticated", async ({ page }) => {
     const traffic = trackTraffic(page);
-    await page.goto("/");
+    await page.goto("/", { waitUntil: "networkidle" });
     await expect(page.getByTestId("unauthenticated")).toBeVisible();
     await expect(page.getByTestId("login-button")).toBeVisible();
 
@@ -225,7 +225,7 @@ test.describe(`[${FRAMEWORK}] OIDC Login Flow`, () => {
     await login(page);
     await page.getByTestId("logout-button").click();
     await expect(page.getByTestId("unauthenticated")).toBeVisible({ timeout: TIMEOUT });
-    await page.goto("/");
+    await page.goto("/", { waitUntil: "networkidle" });
     await expect(page.getByTestId("unauthenticated")).toBeVisible();
 
     expect(traffic.requests()).toEqual([
@@ -319,10 +319,10 @@ test.describe(`[${FRAMEWORK}] Session Lifecycle`, () => {
 
   // After an OAuth error callback, the user can start a fresh login successfully.
   test("recovers from error state with fresh login", async ({ page }) => {
-    await page.goto("/?error=access_denied&error_description=User+denied+consent");
+    await page.goto("/?error=access_denied&error_description=User+denied+consent", { waitUntil: "networkidle" });
     await expect(page.getByTestId("auth-error")).toBeVisible();
 
-    await page.goto("/");
+    await page.goto("/", { waitUntil: "networkidle" });
     await login(page);
     await expect(page.getByTestId("authenticated")).toBeVisible();
     await expect(page.getByTestId("access-token")).toHaveText("present");
@@ -368,7 +368,7 @@ test.describe(`[${FRAMEWORK}] Error Handling`, () => {
   // OAuth error params in the callback URL (e.g. access_denied) surface as a visible error.
   test("shows error when IdP returns error in callback", async ({ page }) => {
     const traffic = trackTraffic(page);
-    await page.goto("/?error=access_denied&error_description=User+denied+consent");
+    await page.goto("/?error=access_denied&error_description=User+denied+consent", { waitUntil: "networkidle" });
     await expect(page.getByTestId("auth-error")).toBeVisible();
     await expect(page.getByTestId("auth-error")).toContainText("User denied consent");
 
@@ -384,7 +384,7 @@ test.describe(`[${FRAMEWORK}] Error Handling`, () => {
   // State mismatch between stored and callback value is caught (CSRF protection).
   test("shows error when callback state does not match (CSRF protection)", async ({ page }) => {
     const traffic = trackTraffic(page);
-    await page.goto("/");
+    await page.goto("/", { waitUntil: "networkidle" });
 
     await page.evaluate((appPort) => {
       sessionStorage.setItem("oidc-js:auth-state", JSON.stringify({
@@ -395,7 +395,7 @@ test.describe(`[${FRAMEWORK}] Error Handling`, () => {
       }));
     }, APP_PORT);
 
-    await page.goto("/?code=fake-code&state=tampered-state");
+    await page.goto("/?code=fake-code&state=tampered-state", { waitUntil: "networkidle" });
     await expect(page.getByTestId("auth-error")).toBeVisible({ timeout: TIMEOUT });
     await expect(page.getByTestId("auth-error")).toContainText("State");
 
@@ -591,7 +591,7 @@ test.describe(`[${FRAMEWORK}] Nonce Validation`, () => {
       }
     });
 
-    await page.goto("/");
+    await page.goto("/", { waitUntil: "networkidle" });
     await page.getByTestId("login-button").click();
     await page.waitForURL(idpPattern);
     await page.fill('input[name="username"]', TEST_USER);
@@ -715,11 +715,11 @@ test.describe(`[${FRAMEWORK}] Concurrent Tabs`, () => {
   test("concurrent logins in separate tabs do not interfere", async ({ page, context }) => {
     const page2 = await context.newPage();
 
-    await page.goto("/");
+    await page.goto("/", { waitUntil: "networkidle" });
     await page.getByTestId("login-button").click();
     await page.waitForURL(idpPattern);
 
-    await page2.goto(`http://localhost:${APP_PORT}/`);
+    await page2.goto(`http://localhost:${APP_PORT}/`, { waitUntil: "networkidle" });
     await page2.getByTestId("login-button").click();
     await page2.waitForURL(idpPattern);
 
