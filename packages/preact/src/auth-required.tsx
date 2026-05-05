@@ -9,7 +9,6 @@ interface RequireAuthProps {
   fallback?: ComponentChildren;
   autoRefresh?: boolean;
   loginOptions?: LoginOptions;
-  tokenExpirationBuffer?: number;
 }
 
 /**
@@ -26,12 +25,11 @@ export function RequireAuth({
   fallback = null,
   autoRefresh = true,
   loginOptions,
-  tokenExpirationBuffer,
 }: RequireAuthProps) {
-  const { isAuthenticated, isLoading, tokens, actions } = useAuth();
+  const { isAuthenticated, isLoading, tokens, actions, config } = useAuth();
   const refreshAttempted = useRef(false);
 
-  const isExpired = isExpiredAt(tokens.expiresAt, tokenExpirationBuffer);
+  const isExpired = isExpiredAt(tokens.expiresAt, config.expiryBuffer);
   const needsAuth = !isAuthenticated || isExpired;
 
   useEffect(() => {

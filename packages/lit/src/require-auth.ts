@@ -13,8 +13,6 @@ export interface RequireAuthOptions {
   autoRefresh?: boolean;
   /** Additional options passed to the login redirect if authentication is required. */
   loginOptions?: LoginOptions;
-  /** Buffer in milliseconds before token expiry to consider it expired. Defaults to 30000. */
-  tokenExpirationBuffer?: number;
 }
 
 /**
@@ -55,7 +53,6 @@ export class RequireAuthController implements ReactiveController {
   private auth: AuthController;
   private autoRefresh: boolean;
   private loginOptions?: LoginOptions;
-  private tokenExpirationBuffer?: number;
   private refreshAttempted = false;
 
   /**
@@ -69,7 +66,6 @@ export class RequireAuthController implements ReactiveController {
     this.auth = options.auth;
     this.autoRefresh = options.autoRefresh ?? true;
     this.loginOptions = options.loginOptions;
-    this.tokenExpirationBuffer = options.tokenExpirationBuffer;
     host.addController(this);
   }
 
@@ -79,7 +75,7 @@ export class RequireAuthController implements ReactiveController {
    */
   get authorized(): boolean {
     const { isAuthenticated, isLoading, tokens } = this.auth;
-    const isExpired = isExpiredAt(tokens.expiresAt, this.tokenExpirationBuffer);
+    const isExpired = isExpiredAt(tokens.expiresAt, this.auth.config.expiryBuffer);
     return isAuthenticated && !isExpired && !isLoading;
   }
 
@@ -99,7 +95,7 @@ export class RequireAuthController implements ReactiveController {
    */
   hostUpdated(): void {
     const { isAuthenticated, isLoading, tokens } = this.auth;
-    const isExpired = isExpiredAt(tokens.expiresAt, this.tokenExpirationBuffer);
+    const isExpired = isExpiredAt(tokens.expiresAt, this.auth.config.expiryBuffer);
     const needsAuth = !isAuthenticated || isExpired;
 
     if (!needsAuth) {

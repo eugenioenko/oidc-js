@@ -17,6 +17,8 @@ export interface OidcConfig {
   scopes?: string[];
   /** URI to redirect to after logout (OpenID Connect RP-Initiated Logout 1.0). */
   postLogoutRedirectUri?: string;
+  /** Buffer in seconds before token expiry to consider the token expired. Defaults to 30. */
+  expiryBuffer?: number;
 }
 
 /**

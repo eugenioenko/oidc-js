@@ -1,12 +1,7 @@
 import { inject } from "@angular/core";
 import type { CanActivateFn } from "@angular/router";
 import { isExpiredAt } from "oidc-js-core";
-import { AuthService } from "./auth.service.js";
-
-export interface AuthGuardOptions {
-  /** Buffer in milliseconds before token expiry to consider it expired. Defaults to 30000. */
-  tokenExpirationBuffer?: number;
-}
+import { AuthService, AUTH_OPTIONS } from "./auth.service.js";
 
 /**
  * Creates a functional route guard that protects routes behind authentication.
@@ -25,16 +20,17 @@ export interface AuthGuardOptions {
  * ];
  * ```
  */
-export function createAuthGuard(options?: AuthGuardOptions): CanActivateFn {
+export function createAuthGuard(): CanActivateFn {
   return async (route, state) => {
     const auth = inject(AuthService);
+    const authOptions = inject(AUTH_OPTIONS);
 
     if (auth.isLoading()) {
       await waitForLoading(auth);
     }
 
     const tokens = auth.tokens();
-    const isExpired = isExpiredAt(tokens.expiresAt, options?.tokenExpirationBuffer);
+    const isExpired = isExpiredAt(tokens.expiresAt, authOptions.config.expiryBuffer);
 
     if (auth.isAuthenticated() && !isExpired) {
       return true;

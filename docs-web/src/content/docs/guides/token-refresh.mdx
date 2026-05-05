@@ -40,12 +40,12 @@ sequenceDiagram
 </RequireAuth>
 ```
 
-You can set a `tokenExpirationBuffer` (in seconds) to refresh the token early, accounting for clock skew and network latency. The default buffer is 30 seconds.
+You can set an `expiryBuffer` (in seconds) on the provider config to refresh the token early, accounting for clock skew and network latency. The default buffer is 30 seconds.
 
 ```tsx
-<RequireAuth tokenExpirationBuffer={60}>
-  <Dashboard />
-</RequireAuth>
+<AuthProvider config={{ ...config, expiryBuffer: 60 }}>
+  <App />
+</AuthProvider>
 ```
 
 ## Manual refresh

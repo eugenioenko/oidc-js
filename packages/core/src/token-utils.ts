@@ -1,5 +1,8 @@
-/** Default token expiration buffer in seconds (30 seconds). */
-export const DEFAULT_TOKEN_EXPIRATION_BUFFER = 30;
+/** Default expiry buffer in seconds (30 seconds). */
+export const DEFAULT_EXPIRY_BUFFER = 30;
+
+/** @deprecated Use {@link DEFAULT_EXPIRY_BUFFER} instead. */
+export const DEFAULT_TOKEN_EXPIRATION_BUFFER = DEFAULT_EXPIRY_BUFFER;
 
 /** Returns the current time as a Unix timestamp in seconds. */
 export function nowSeconds(): number {
@@ -24,7 +27,7 @@ export function computeExpiresAt(expiresIn: number): number {
  * @param bufferSeconds - Buffer in seconds subtracted from expiry to account for clock skew and network latency.
  * @returns `true` if the current time is at or past the buffered expiry time.
  */
-export function isExpiredAt(expiresAt: number | null, bufferSeconds: number = DEFAULT_TOKEN_EXPIRATION_BUFFER): boolean {
+export function isExpiredAt(expiresAt: number | null, bufferSeconds: number = DEFAULT_EXPIRY_BUFFER): boolean {
   if (expiresAt === null) return false;
   return nowSeconds() >= expiresAt - bufferSeconds;
 }
