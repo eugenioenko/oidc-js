@@ -24,11 +24,25 @@ function Dashboard() {
 
 If the user is not authenticated, `RequireAuth` automatically redirects to the IdP login page.
 
+<Aside type="note">
+All framework adapters provide an equivalent component or guard: `RequireAuth` (React, Preact, Solid, Svelte, Lit, Kasper), `AuthRequired` (Vue), and `authGuard` (Angular). The examples below use React, but the same patterns apply across frameworks.
+</Aside>
+
 ## With React Router
 
+Use a layout route with a single `RequireAuth` to protect all nested routes at once:
+
 ```tsx
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Outlet } from "react-router";
 import { AuthProvider, RequireAuth } from "oidc-js-react";
+
+function ProtectedLayout() {
+  return (
+    <RequireAuth>
+      <Outlet />
+    </RequireAuth>
+  );
+}
 
 function App() {
   return (
@@ -36,27 +50,31 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route
-            path="/dashboard"
-            element={
-              <RequireAuth>
-                <Dashboard />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/settings"
-            element={
-              <RequireAuth>
-                <Settings />
-              </RequireAuth>
-            }
-          />
+          <Route element={<ProtectedLayout />}>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/settings" element={<Settings />} />
+          </Route>
         </Routes>
       </BrowserRouter>
     </AuthProvider>
   );
 }
+```
+
+You can also wrap individual routes if only specific pages need protection:
+
+```tsx
+<Routes>
+  <Route path="/" element={<Home />} />
+  <Route
+    path="/dashboard"
+    element={
+      <RequireAuth>
+        <Dashboard />
+      </RequireAuth>
+    }
+  />
+</Routes>
 ```
 
 ## Loading fallback

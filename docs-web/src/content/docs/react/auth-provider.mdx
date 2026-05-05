@@ -57,7 +57,7 @@ interface OidcConfig {
 By default, `AuthProvider` restores the pre-login URL using `window.history.replaceState`. If you're using a client-side router, you may want to handle navigation yourself:
 
 ```tsx
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 
 function App() {
   const navigate = useNavigate();
