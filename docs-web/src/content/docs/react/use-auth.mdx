@@ -58,7 +58,7 @@ interface AuthTokens {
   access: string | null;     // Access token
   id: string | null;         // ID token
   refresh: string | null;    // Refresh token
-  expiresAt: number | null;  // Expiry timestamp in milliseconds
+  expiresAt: number | null;  // Expiry timestamp in seconds (Unix)
 }
 ```
 

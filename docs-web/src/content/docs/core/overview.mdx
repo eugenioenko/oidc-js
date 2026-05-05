@@ -46,7 +46,7 @@ const discovery = parseDiscoveryResponse(json, expectedIssuer);
 | Revocation | `buildRevocationRequest` |
 | Logout | `buildLogoutUrl` |
 | JWT | `decodeJwtPayload`, `parseIdTokenClaims` |
-| Token Utils | `computeExpiresAt`, `isTokenExpired`, `timeUntilExpiry` |
+| Token Utils | `computeExpiresAt`, `isExpiredAt`, `timeUntilExpiry`, `nowSeconds` |
 | Crypto | `generatePkce`, `generateState`, `generateNonce`, `computeCodeChallenge` |
 
 ## Error handling

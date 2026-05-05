@@ -29,13 +29,21 @@ sequenceDiagram
 
 `RequireAuth` handles refresh automatically. When a user navigates to a protected route with an expired token:
 
-1. Checks `tokens.expiresAt` against `Date.now()`
+1. Checks `tokens.expiresAt` using `isExpiredAt()` from core (with an optional buffer)
 2. If expired, calls `actions.refresh()`
 3. If refresh succeeds, renders the children with new tokens
 4. If refresh fails, redirects to login
 
 ```tsx
 <RequireAuth>
+  <Dashboard />
+</RequireAuth>
+```
+
+You can set a `tokenExpirationBuffer` (in seconds) to refresh the token early, accounting for clock skew and network latency. The default buffer is 30 seconds.
+
+```tsx
+<RequireAuth tokenExpirationBuffer={60}>
   <Dashboard />
 </RequireAuth>
 ```
@@ -69,15 +77,29 @@ The `tokens` object from `useAuth` includes expiry information:
 ```tsx
 const { tokens } = useAuth();
 
-// Millisecond timestamp when the access token expires
+// Unix timestamp in seconds when the access token expires
 console.log(tokens.expiresAt);
+```
 
-// Check if expired
-const isExpired = tokens.expiresAt !== null && tokens.expiresAt <= Date.now();
+Use the helper functions from `oidc-js-core` to work with token expiry:
+
+```tsx
+import { isExpiredAt, timeUntilExpiry } from "oidc-js-core";
+
+const { tokens } = useAuth();
+
+// Check if expired (includes a default 30-second buffer)
+const expired = isExpiredAt(tokens.expiresAt);
+
+// Check with a custom buffer (in seconds)
+const expiringSoon = isExpiredAt(tokens.expiresAt, 120);
+
+// Get seconds remaining until expiry
+const secondsLeft = timeUntilExpiry(tokens.expiresAt);
 ```
 
 <Aside type="note">
-The `expiresAt` value is extracted from the `exp` claim in the JWT access token and converted to milliseconds. If the access token is not a JWT or doesn't contain an `exp` claim, `expiresAt` will be `null`.
+The `expiresAt` value is extracted from the `exp` claim in the JWT access token as a Unix timestamp in seconds. If the access token is not a JWT or doesn't contain an `exp` claim, `expiresAt` will be `null`.
 </Aside>
 
 ## Requesting a refresh token
