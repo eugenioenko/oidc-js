@@ -260,7 +260,7 @@ Before deploying to production, verify:
 - [ ] Tested against your specific OIDC provider (discovery, login, token exchange, refresh, logout)
 - [ ] HTTPS enforced in all environments (tokens travel over TLS)
 - [ ] Refresh token rotation enabled at your IdP (prevents stolen refresh token reuse)
-- [ ] `tokenExpirationBuffer` configured appropriately (default: 30 seconds)
+- [ ] `expiryBuffer` configured appropriately (default: 30 seconds)
 - [ ] CSP headers configured (mitigates XSS, the primary threat to SPA token storage)
 - [ ] `postLogoutRedirectUri` set correctly for your IdP
 - [ ] Error handling implemented for `OidcError` codes your app may encounter

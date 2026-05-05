@@ -9,8 +9,6 @@ import { isExpiredAt } from "oidc-js-core";
 export interface AuthGuardOptions {
   /** Options to pass to the login method when redirecting unauthenticated users. */
   loginOptions?: LoginOptions;
-  /** Buffer in milliseconds before token expiry to consider it expired. Defaults to 30000. */
-  tokenExpirationBuffer?: number;
 }
 
 /**
@@ -62,7 +60,7 @@ export function createAuthGuard(
       });
     }
 
-    const isExpired = isExpiredAt(context.tokens.value.expiresAt, options?.tokenExpirationBuffer);
+    const isExpired = isExpiredAt(context.tokens.value.expiresAt, context.config.expiryBuffer);
 
     if (context.isAuthenticated.value && !isExpired) {
       next();

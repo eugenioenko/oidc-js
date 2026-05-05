@@ -49,7 +49,7 @@ Purely functional — every function takes data in and returns data out. No `fet
 - **`revocation.ts`** — `buildRevocationRequest` (returns null if no endpoint)
 - **`logout.ts`** — `buildLogoutUrl` (returns null if no end_session_endpoint)
 - **`jwt.ts`** — `decodeJwtPayload`, `parseIdTokenClaims` (decode only, no signature verification)
-- **`token-utils.ts`** — `computeExpiresAt`, `isExpiredAt`, `timeUntilExpiry`, `nowSeconds`, `DEFAULT_TOKEN_EXPIRATION_BUFFER`
+- **`token-utils.ts`** — `computeExpiresAt`, `isExpiredAt`, `timeUntilExpiry`, `nowSeconds`, `DEFAULT_EXPIRY_BUFFER`
 
 ### Config model
 

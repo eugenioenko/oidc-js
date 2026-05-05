@@ -13,8 +13,6 @@ interface RequireAuthProps {
   autoRefresh?: boolean;
   /** Additional options passed to the login redirect. */
   loginOptions?: LoginOptions;
-  /** Buffer in milliseconds before token expiry to consider it expired. Defaults to 30000. */
-  tokenExpirationBuffer?: number;
 }
 
 /**
@@ -35,7 +33,7 @@ export const RequireAuth: ParentComponent<RequireAuthProps> = (props) => {
   let refreshAttempted = false;
 
   createEffect(() => {
-    const isExpired = isExpiredAt(auth.tokens.expiresAt, props.tokenExpirationBuffer);
+    const isExpired = isExpiredAt(auth.tokens.expiresAt, auth.config.expiryBuffer);
     const needsAuth = !auth.isAuthenticated || isExpired;
 
     if (!needsAuth) {
@@ -57,7 +55,7 @@ export const RequireAuth: ParentComponent<RequireAuthProps> = (props) => {
 
   return (
     <Show
-      when={!auth.isLoading && auth.isAuthenticated && !isExpiredAt(auth.tokens.expiresAt, props.tokenExpirationBuffer)}
+      when={!auth.isLoading && auth.isAuthenticated && !isExpiredAt(auth.tokens.expiresAt, auth.config.expiryBuffer)}
       fallback={props.fallback}
     >
       {props.children}

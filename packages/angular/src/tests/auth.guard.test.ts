@@ -12,6 +12,8 @@ const { mockAuthService } = vi.hoisted(() => {
   return { mockAuthService };
 });
 
+const mockAuthOptions = { config: { issuer: "https://auth.example.com", clientId: "app" } };
+
 vi.mock("@angular/core", () => ({
   Injectable: () => (target: unknown) => target,
   InjectionToken: class {
@@ -25,7 +27,12 @@ vi.mock("@angular/core", () => ({
     fn.asReadonly = () => fn;
     return fn;
   },
-  inject: vi.fn().mockReturnValue(mockAuthService),
+  inject: vi.fn().mockImplementation((token: unknown) => {
+    if (token instanceof Object && "desc" in (token as Record<string, unknown>)) {
+      return mockAuthOptions;
+    }
+    return mockAuthService;
+  }),
 }));
 
 vi.mock("@angular/router", () => ({

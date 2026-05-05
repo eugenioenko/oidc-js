@@ -203,9 +203,9 @@ Architectural and design decisions for the oidc-js project. Each entry captures 
 
 **Context**: RequireAuth compares `tokens.expiresAt` to `Date.now()` to detect expired tokens. An exact comparison creates a race: a request can go out with a token that expires mid-flight.
 
-**Decision**: Add `tokenExpirationBuffer` prop on AuthProvider (default 30 seconds). RequireAuth treats the token as expired `buffer` seconds before actual expiration: `expiresAt - buffer > Date.now()`.
+**Decision**: Add `expiryBuffer` to `OidcConfig` (default 30 seconds). RequireAuth reads it from the provider config and treats the token as expired `buffer` seconds before actual expiration: `expiresAt - buffer > Date.now()`. Previously named `tokenExpirationBuffer` and set per-component; moved to global config for simplicity.
 
-**Rationale**: 30s default is conservative enough to cover most request round-trips without triggering unnecessary refreshes. Configurable for apps with different needs (long-running uploads, real-time connections).
+**Rationale**: 30s default is conservative enough to cover most request round-trips without triggering unnecessary refreshes. Configurable for apps with different needs (long-running uploads, real-time connections). A global config value avoids repetition across multiple guarded routes.
 
 ### 018 - `onError` callback on AuthProvider (2026-04-30)
 

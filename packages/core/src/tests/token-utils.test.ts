@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { nowSeconds, computeExpiresAt, timeUntilExpiry, isExpiredAt, DEFAULT_TOKEN_EXPIRATION_BUFFER } from "../token-utils.js";
+import { nowSeconds, computeExpiresAt, timeUntilExpiry, isExpiredAt, DEFAULT_EXPIRY_BUFFER, DEFAULT_TOKEN_EXPIRATION_BUFFER } from "../token-utils.js";
 
 describe("computeExpiresAt", () => {
   beforeEach(() => {
@@ -54,10 +54,14 @@ describe("isExpiredAt", () => {
     expect(isExpiredAt(nowSeconds() + 1, 0)).toBe(false);
   });
 
-  it("defaults to DEFAULT_TOKEN_EXPIRATION_BUFFER (30s)", () => {
-    expect(DEFAULT_TOKEN_EXPIRATION_BUFFER).toBe(30);
+  it("defaults to DEFAULT_EXPIRY_BUFFER (30s)", () => {
+    expect(DEFAULT_EXPIRY_BUFFER).toBe(30);
     expect(isExpiredAt(nowSeconds() + 29)).toBe(true);
     expect(isExpiredAt(nowSeconds() + 31)).toBe(false);
+  });
+
+  it("DEFAULT_TOKEN_EXPIRATION_BUFFER is a deprecated alias", () => {
+    expect(DEFAULT_TOKEN_EXPIRATION_BUFFER).toBe(DEFAULT_EXPIRY_BUFFER);
   });
 });
 

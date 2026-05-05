@@ -33,17 +33,15 @@
     autoRefresh?: boolean;
     /** Options to pass to the login redirect if authentication is required. */
     loginOptions?: LoginOptions;
-    /** Buffer in milliseconds before token expiry to consider it expired. Defaults to 30000. */
-    tokenExpirationBuffer?: number;
   }
 
-  let { children, fallback, autoRefresh = true, loginOptions, tokenExpirationBuffer }: Props = $props();
+  let { children, fallback, autoRefresh = true, loginOptions }: Props = $props();
 
   const auth = getAuthContext();
   let refreshAttempted = false;
 
   $effect(() => {
-    const isExpired = isExpiredAt(auth.tokens.expiresAt, tokenExpirationBuffer);
+    const isExpired = isExpiredAt(auth.tokens.expiresAt, auth.config.expiryBuffer);
     const needsAuth = !auth.isAuthenticated || isExpired;
 
     if (!needsAuth) {
@@ -62,7 +60,7 @@
   });
 </script>
 
-{#if auth.isLoading || !auth.isAuthenticated || isExpiredAt(auth.tokens.expiresAt, tokenExpirationBuffer)}
+{#if auth.isLoading || !auth.isAuthenticated || isExpiredAt(auth.tokens.expiresAt, auth.config.expiryBuffer)}
   {#if fallback}
     {@render fallback()}
   {/if}

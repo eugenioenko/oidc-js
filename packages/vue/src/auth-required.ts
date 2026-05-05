@@ -37,20 +37,15 @@ export const RequireAuth = defineComponent({
       type: Object as PropType<LoginOptions>,
       default: undefined,
     },
-    /** Buffer in milliseconds before token expiry to consider it expired. Defaults to 30000. */
-    tokenExpirationBuffer: {
-      type: Number,
-      default: undefined,
-    },
   },
   setup(props, { slots }) {
-    const { isAuthenticated, isLoading, tokens, actions } = useAuth();
+    const { isAuthenticated, isLoading, tokens, actions, config } = useAuth();
     const refreshAttempted = ref(false);
 
     watch(
       [isAuthenticated, isLoading, tokens],
       () => {
-        const isExpired = isExpiredAt(tokens.value.expiresAt, props.tokenExpirationBuffer);
+        const isExpired = isExpiredAt(tokens.value.expiresAt, config.expiryBuffer);
         const needsAuth = !isAuthenticated.value || isExpired;
 
         if (!needsAuth) {
@@ -72,7 +67,7 @@ export const RequireAuth = defineComponent({
     );
 
     return (): VNode | VNode[] | null => {
-      const isExpired = isExpiredAt(tokens.value.expiresAt, props.tokenExpirationBuffer);
+      const isExpired = isExpiredAt(tokens.value.expiresAt, config.expiryBuffer);
       const needsAuth = !isAuthenticated.value || isExpired;
 
       if (isLoading.value || needsAuth) {
