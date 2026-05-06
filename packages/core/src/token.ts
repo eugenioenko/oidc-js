@@ -1,5 +1,5 @@
 import type { OidcConfig, OidcDiscovery, HttpRequest, TokenSet } from "./types.js";
-import { OidcError } from "./errors.js";
+import { OidcErrors } from "./errors.js";
 import { decodeJwtPayload } from "./jwt.js";
 import { buildClientAuthHeaders } from "./auth.js";
 import { computeExpiresAt } from "./token-utils.js";
@@ -90,7 +90,7 @@ export function buildRefreshRequest(
 // OIDC Core §3.1.3.7: nonce in ID token MUST match the nonce sent in the authorization request
 export function parseTokenResponse(data: unknown, expectedNonce?: string): TokenSet {
   if (!data || typeof data !== "object") {
-    throw new OidcError("TOKEN_EXCHANGE_ERROR", "Token response must be a JSON object");
+    throw OidcErrors.tokenResponseNotObject();
   }
 
   const response = data as Record<string, unknown>;
@@ -100,18 +100,18 @@ export function parseTokenResponse(data: unknown, expectedNonce?: string): Token
     const description = typeof response.error_description === "string"
       ? `${response.error}: ${response.error_description}`
       : response.error;
-    throw new OidcError("TOKEN_EXCHANGE_ERROR", description);
+    throw OidcErrors.tokenExchangeError(description);
   }
 
   if (typeof response.access_token !== "string") {
-    throw new OidcError("TOKEN_EXCHANGE_ERROR", "Missing access_token in token response");
+    throw OidcErrors.missingAccessToken();
   }
 
   // OIDC Core §3.1.3.7: if a nonce was sent, it MUST be present and match in the ID token
   if (expectedNonce && typeof response.id_token === "string") {
     const claims = decodeJwtPayload(response.id_token);
     if (claims.nonce !== expectedNonce) {
-      throw new OidcError("NONCE_MISMATCH", "Nonce in ID token does not match the expected value");
+      throw OidcErrors.nonceMismatch();
     }
   }
 

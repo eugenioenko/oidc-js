@@ -1,5 +1,5 @@
 import type { OidcConfig, OidcDiscovery } from "./types.js";
-import { OidcError } from "./errors.js";
+import { OidcErrors } from "./errors.js";
 
 /**
  * Builds the full authorization endpoint URL with all required query parameters.
@@ -32,7 +32,7 @@ export function buildAuthUrl(
   extraParams?: Record<string, string>,
 ): string {
   if (!config.redirectUri) {
-    throw new OidcError("MISSING_REDIRECT_URI", "redirectUri is required for authorization requests");
+    throw OidcErrors.missingRedirectUri();
   }
 
   // RFC 6749 §4.1.1: required parameters
@@ -76,18 +76,18 @@ export function parseCallbackUrl(url: string, expectedState: string): { code: st
   // RFC 6749 §4.1.2.1: Error Response
   if (error) {
     const description = parsed.searchParams.get("error_description") ?? error;
-    throw new OidcError("AUTHORIZATION_ERROR", description);
+    throw OidcErrors.authorizationError(description);
   }
 
   const code = parsed.searchParams.get("code");
   if (!code) {
-    throw new OidcError("MISSING_AUTH_CODE", "No authorization code in callback URL");
+    throw OidcErrors.missingAuthCode();
   }
 
   const returnedState = parsed.searchParams.get("state");
   // RFC 6749 §10.12: the client MUST verify that the state matches
   if (returnedState !== expectedState) {
-    throw new OidcError("STATE_MISMATCH", "State parameter does not match — possible CSRF attack");
+    throw OidcErrors.stateMismatch();
   }
 
   return { code, state: returnedState };

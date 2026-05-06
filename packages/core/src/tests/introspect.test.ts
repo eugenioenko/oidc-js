@@ -97,29 +97,29 @@ describe("parseIntrospectResponse", () => {
     expect(result.active).toBe(false);
   });
 
-  it("throws TOKEN_EXCHANGE_ERROR on non-object input", () => {
+  it("throws INTROSPECTION_ERROR on non-object input", () => {
     expect(() => parseIntrospectResponse(null)).toThrow(OidcError);
     expect(() => parseIntrospectResponse("string")).toThrow(OidcError);
     expect(() => parseIntrospectResponse(42)).toThrow(OidcError);
   });
 
-  it("throws TOKEN_EXCHANGE_ERROR when active field is missing", () => {
+  it("throws INTROSPECTION_ERROR when active field is missing", () => {
     try {
       parseIntrospectResponse({ scope: "openid" });
       expect.fail("should have thrown");
     } catch (e) {
       expect(e).toBeInstanceOf(OidcError);
-      expect((e as OidcError).code).toBe("TOKEN_EXCHANGE_ERROR");
+      expect((e as OidcError).code).toBe("INTROSPECTION_ERROR");
     }
   });
 
-  it("throws TOKEN_EXCHANGE_ERROR when active field is not boolean", () => {
+  it("throws INTROSPECTION_ERROR when active field is not boolean", () => {
     try {
       parseIntrospectResponse({ active: "true" });
       expect.fail("should have thrown");
     } catch (e) {
       expect(e).toBeInstanceOf(OidcError);
-      expect((e as OidcError).code).toBe("TOKEN_EXCHANGE_ERROR");
+      expect((e as OidcError).code).toBe("INTROSPECTION_ERROR");
     }
   });
 });

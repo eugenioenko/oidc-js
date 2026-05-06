@@ -1,4 +1,4 @@
-export { OidcError, type OidcErrorCode } from "./errors.js";
+export { OidcError, OidcErrors, type OidcErrorCode } from "./errors.js";
 
 export {
   generateRandom,

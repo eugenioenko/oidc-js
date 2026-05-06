@@ -1,5 +1,5 @@
 import type { OidcUser } from "./types.js";
-import { OidcError } from "./errors.js";
+import { OidcErrors } from "./errors.js";
 
 /**
  * Decodes the payload of a JWT without verifying its signature (RFC 7519 §7.2).
@@ -12,7 +12,7 @@ import { OidcError } from "./errors.js";
 export function decodeJwtPayload(token: string): Record<string, unknown> {
   const parts = token.split(".");
   if (parts.length !== 3) {
-    throw new OidcError("INVALID_JWT", "JWT must have 3 parts separated by dots");
+    throw OidcErrors.invalidJwtParts();
   }
 
   try {
@@ -20,7 +20,7 @@ export function decodeJwtPayload(token: string): Record<string, unknown> {
     const padded = payload + "=".repeat((4 - (payload.length % 4)) % 4);
     return JSON.parse(atob(padded));
   } catch {
-    throw new OidcError("INVALID_JWT", "Failed to decode JWT payload");
+    throw OidcErrors.invalidJwtDecode();
   }
 }
 

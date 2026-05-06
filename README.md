@@ -238,10 +238,12 @@ try {
 | `NONCE_MISMATCH` | `parseTokenResponse` | Nonce in ID token doesn't match |
 | `MISSING_AUTH_CODE` | `parseCallbackUrl` | No authorization code in callback URL |
 | `INVALID_JWT` | `decodeJwtPayload` | Malformed JWT |
-| `TOKEN_EXCHANGE_ERROR` | `parseTokenResponse` | Invalid token response |
+| `TOKEN_EXCHANGE_ERROR` | `parseTokenResponse`, `executeFetch` | Token endpoint error (includes IdP error code when available) |
 | `AUTHORIZATION_ERROR` | `parseCallbackUrl` | Authorization server returned an error |
 | `MISSING_REDIRECT_URI` | `buildAuthUrl` | `redirectUri` not set in config |
 | `MISSING_CLIENT_SECRET` | `buildIntrospectRequest` | `clientSecret` required but not set |
+| `USERINFO_ERROR` | `parseUserinfoResponse` | Malformed userinfo response or missing `sub` claim |
+| `INTROSPECTION_ERROR` | `parseIntrospectResponse` | Malformed introspection response or missing `active` field |
 
 ## RFC Compliance
 

@@ -1,5 +1,5 @@
 import type { OidcConfig, OidcDiscovery, HttpRequest, IntrospectionResponse } from "./types.js";
-import { OidcError } from "./errors.js";
+import { OidcErrors } from "./errors.js";
 import { buildClientAuthHeaders } from "./auth.js";
 
 /**
@@ -25,7 +25,7 @@ export function buildIntrospectRequest(
   }
 
   if (!config.clientSecret) {
-    throw new OidcError("MISSING_CLIENT_SECRET", "clientSecret is required for token introspection");
+    throw OidcErrors.missingClientSecret();
   }
 
   const body = new URLSearchParams({ token });
@@ -46,20 +46,20 @@ export function buildIntrospectRequest(
  *
  * @param data - The parsed JSON body returned from the introspection endpoint.
  * @returns The validated {@link IntrospectionResponse}.
- * @throws {@link OidcError} with code `TOKEN_EXCHANGE_ERROR` if the response is not an object or `active` is missing.
+ * @throws {@link OidcError} with code `INTROSPECTION_ERROR` if the response is not an object or `active` is missing.
  *
  * @see RFC 7662 §2.2 -- Introspection Response
  */
 // RFC 7662 §2.2: Introspection Response
 export function parseIntrospectResponse(data: unknown): IntrospectionResponse {
   if (!data || typeof data !== "object") {
-    throw new OidcError("TOKEN_EXCHANGE_ERROR", "Introspection response must be a JSON object");
+    throw OidcErrors.introspectionNotObject();
   }
 
   const response = data as Record<string, unknown>;
 
   if (typeof response.active !== "boolean") {
-    throw new OidcError("TOKEN_EXCHANGE_ERROR", "Missing or invalid 'active' field in introspection response");
+    throw OidcErrors.introspectionMissingActive();
   }
 
   return data as IntrospectionResponse;

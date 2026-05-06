@@ -1,4 +1,4 @@
-import { OidcError, type HttpRequest } from "oidc-js-core";
+import { OidcErrors, type HttpRequest } from "oidc-js-core";
 
 /**
  * Executes an HTTP request built by oidc-js-core and returns the parsed JSON response.
@@ -24,7 +24,7 @@ export async function executeFetch(
     try {
       errorBody = await response.json();
     } catch {
-      throw new OidcError("TOKEN_EXCHANGE_ERROR", `HTTP ${response.status}: ${response.statusText}`);
+      throw OidcErrors.tokenExchangeError(`HTTP ${response.status}: ${response.statusText}`);
     }
     // RFC 6749 §5.2: Error Response
     if (
@@ -36,9 +36,9 @@ export async function executeFetch(
       const message = typeof record.error_description === "string"
         ? `${record.error}: ${record.error_description}`
         : String(record.error);
-      throw new OidcError("TOKEN_EXCHANGE_ERROR", message);
+      throw OidcErrors.tokenExchangeError(message);
     }
-    throw new OidcError("TOKEN_EXCHANGE_ERROR", `HTTP ${response.status}: ${response.statusText}`);
+    throw OidcErrors.tokenExchangeError(`HTTP ${response.status}: ${response.statusText}`);
   }
 
   return response.json();

@@ -1,5 +1,5 @@
 import type { OidcDiscovery } from "./types.js";
-import { OidcError } from "./errors.js";
+import { OidcErrors } from "./errors.js";
 
 /**
  * Constructs the well-known OpenID Provider Configuration URL for the given issuer.
@@ -46,20 +46,20 @@ const REQUIRED_ARRAY_FIELDS: (keyof OidcDiscovery)[] = [
 // OIDC Discovery §4.3: OpenID Provider Configuration Response
 export function parseDiscoveryResponse(data: unknown, expectedIssuer: string): OidcDiscovery {
   if (!data || typeof data !== "object") {
-    throw new OidcError("DISCOVERY_INVALID", "Discovery response must be a JSON object");
+    throw OidcErrors.discoveryNotObject();
   }
 
   const doc = data as Record<string, unknown>;
 
   for (const field of REQUIRED_STRING_FIELDS) {
     if (typeof doc[field] !== "string") {
-      throw new OidcError("DISCOVERY_INVALID", `Missing or invalid required field: ${field}`);
+      throw OidcErrors.discoveryMissingField(field);
     }
   }
 
   for (const field of REQUIRED_ARRAY_FIELDS) {
     if (!Array.isArray(doc[field])) {
-      throw new OidcError("DISCOVERY_INVALID", `Missing or invalid required field: ${field}`);
+      throw OidcErrors.discoveryMissingField(field);
     }
   }
 
@@ -67,10 +67,7 @@ export function parseDiscoveryResponse(data: unknown, expectedIssuer: string): O
   const normalizedExpected = expectedIssuer.replace(/\/+$/, "");
   const normalizedActual = (doc.issuer as string).replace(/\/+$/, "");
   if (normalizedActual !== normalizedExpected) {
-    throw new OidcError(
-      "DISCOVERY_ISSUER_MISMATCH",
-      `Expected issuer ${normalizedExpected}, got ${normalizedActual}`,
-    );
+    throw OidcErrors.discoveryIssuerMismatch(normalizedExpected, normalizedActual);
   }
 
   return data as OidcDiscovery;
