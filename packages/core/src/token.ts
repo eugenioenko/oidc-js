@@ -95,6 +95,14 @@ export function parseTokenResponse(data: unknown, expectedNonce?: string): Token
 
   const response = data as Record<string, unknown>;
 
+  // RFC 6749 §5.2: Error Response — check before access_token so callers get the IdP's error code
+  if (typeof response.error === "string") {
+    const description = typeof response.error_description === "string"
+      ? `${response.error}: ${response.error_description}`
+      : response.error;
+    throw new OidcError("TOKEN_EXCHANGE_ERROR", description);
+  }
+
   if (typeof response.access_token !== "string") {
     throw new OidcError("TOKEN_EXCHANGE_ERROR", "Missing access_token in token response");
   }

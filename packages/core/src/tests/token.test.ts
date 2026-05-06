@@ -169,6 +169,32 @@ describe("parseTokenResponse", () => {
     expect(result.access_token).toBe("at");
   });
 
+  // RFC 6749 §5.2: Error Response
+  it("RFC 6749 §5.2: throws TOKEN_EXCHANGE_ERROR with error code from IdP", () => {
+    try {
+      parseTokenResponse({ error: "invalid_grant" });
+      expect.fail("should have thrown");
+    } catch (e) {
+      expect(e).toBeInstanceOf(OidcError);
+      expect((e as OidcError).code).toBe("TOKEN_EXCHANGE_ERROR");
+      expect((e as OidcError).message).toBe("invalid_grant");
+    }
+  });
+
+  it("RFC 6749 §5.2: includes error_description when present", () => {
+    try {
+      parseTokenResponse({
+        error: "invalid_grant",
+        error_description: "Refresh token has been revoked",
+      });
+      expect.fail("should have thrown");
+    } catch (e) {
+      expect(e).toBeInstanceOf(OidcError);
+      expect((e as OidcError).code).toBe("TOKEN_EXCHANGE_ERROR");
+      expect((e as OidcError).message).toBe("invalid_grant: Refresh token has been revoked");
+    }
+  });
+
   it("throws TOKEN_EXCHANGE_ERROR on missing access_token", () => {
     try {
       parseTokenResponse({ token_type: "Bearer" });
