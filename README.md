@@ -55,12 +55,7 @@ oidc-js-core              Pure functions. No IO. No state.
     └── oidc-js-kasper     core + fetch + Kasper integration
 ```
 
-The core never calls `fetch` or touches browser APIs (except Web Crypto for PKCE). Each framework adapter composes the core functions with its own HTTP layer and state management:
-
-- **Angular** uses `HttpClient` with its interceptor chain, not a `fetch` workaround
-- **React/Vue/Svelte/Solid/Preact/Lit** use `fetch` directly, lightweight with no wrapper overhead
-- **Node.js/Deno/Bun** work out of the box via `oidc-js-core`, no browser polyfills required
-- **Tests are trivial**: pure input/output, no mocking `fetch` or `window`
+The core never calls `fetch` or touches browser APIs (except Web Crypto for PKCE). Each framework adapter composes the core with its own HTTP layer and state management.
 
 ## Quick Start
 
@@ -109,6 +104,20 @@ See each package's README for framework-specific setup, full API reference, and 
 
 ## Security Model
 
+### Security Philosophy
+
+The real security boundary in an OIDC application is the **resource server**, not the browser. oidc-js is designed around this principle.
+
+**Tokens are treated as opaque on the client.** An access token is a bearer token — if an attacker steals it via XSS, they use it as-is. Client-side signature verification doesn't prevent that. The server must validate every token before granting access regardless of what the client does, making browser-side verification redundant rather than "defense in depth."
+
+**Tokens arrive over a trusted channel.** In the Authorization Code + PKCE flow, the client exchanges the code for tokens directly with the IdP over TLS. The OpenID Connect spec explicitly permits this: *"If the ID Token is received via direct communication between the Client and the Token Endpoint, the TLS server validation MAY be used to validate the issuer in place of checking the token signature"* ([OIDC Core 1.0 §3.1.3.7, step 6](https://openid.net/specs/openid-connect-core-1_0.html#IDTokenValidation)). If you can't trust the HTTPS channel, signature verification won't save you — an attacker who compromised your discovery or DNS could serve a validly signed token from a malicious IdP.
+
+**Where oidc-js invests instead:**
+
+- **Memory-only token storage** — tokens never touch `localStorage` or `sessionStorage`, limiting XSS-based token theft, the primary threat to SPAs
+- **Zero runtime dependencies** — no dependency tree means no supply chain attack surface in the core package
+- **Modern refresh flow** — uses refresh tokens instead of iframe-based silent auth, avoiding third-party cookie issues and the insecure workarounds developers resort to when iframes break
+
 ### What is validated
 
 - **State parameter** — generated per login, validated on callback. Prevents CSRF attacks on the authorization flow.
@@ -117,11 +126,11 @@ See each package's README for framework-specific setup, full API reference, and 
 - **Discovery issuer** — `parseDiscoveryResponse` validates that the `issuer` field in the discovery document matches the expected issuer exactly. Prevents mix-up attacks.
 - **Token response structure** — `parseTokenResponse` validates required fields and computes `expires_at` from the response. Malformed or error responses throw typed errors.
 
-### What is NOT validated
+### What is not verified
 
-- **JWT signatures** — `decodeJwtPayload` and `parseIdTokenClaims` decode the JWT payload without verifying the signature. In browser-based applications, tokens are obtained directly from the token endpoint over TLS, and the client relies on the HTTPS channel and the authorization server for integrity. However, this library does not perform cryptographic signature verification. If your application requires token verification (e.g., server-side validation, zero-trust environments), you must validate tokens independently using the provider's JWKs.
-- **Access token contents** — access tokens are treated as opaque strings. The library does not parse or validate their structure. Server-side validation (introspection or signature verification) is the responsibility of your resource server.
-- **`at_hash` / `c_hash` claims** — the library does not validate access token or code hash claims in the ID token.
+- **JWT signatures** — tokens are decoded but not cryptographically verified. Per [OIDC Core 1.0 §3.1.3.7](https://openid.net/specs/openid-connect-core-1_0.html#IDTokenValidation), TLS validation may be used in place of signature verification when tokens are received directly from the token endpoint. If your application requires signature verification (e.g., server-side validation, zero-trust environments), validate tokens independently using the provider's JWKs.
+- **Access token contents** — access tokens are treated as opaque strings. Server-side validation (introspection or signature verification) is the responsibility of your resource server.
+- **`at_hash` / `c_hash` claims** — access token and code hash claims in the ID token are not validated.
 
 ### Threat Model
 
@@ -185,25 +194,18 @@ This testing strategy prioritizes determinism and reproducibility over provider 
 
 The library follows the OIDC and OAuth 2.0 specifications closely (see [RFC Compliance](#rfc-compliance)). However, real-world providers may have non-standard behaviors or quirks. Testing against your specific provider before deploying to production is strongly recommended. If you've tested with a provider not listed here, contributions are welcome.
 
-## Design Tradeoffs
+## Design Decisions
 
 These are deliberate constraints, not missing features:
 
 | Choice | Tradeoff |
 |--------|----------|
-| **Single test IdP for CI** | Optimizes for determinism and speed over multi-provider coverage. Compatibility relies on strict RFC adherence. |
-| **No iframe-based silent auth** | Uses explicit refresh token flow instead. Avoids third-party cookie issues and the complexity of iframe state management. |
 | **Memory-only token storage** | Most secure for SPAs, but tokens are lost on page refresh. Apps must handle re-authentication or use refresh tokens. |
-| **No JWT signature verification** | SPA tokens arrive over TLS from the token endpoint. Server-side verification belongs in the resource server, not the client library. |
-| **Core has no `fetch`** | Framework adapters control HTTP entirely. This means the core can't auto-discover or auto-refresh — adapters handle that orchestration. |
-| **No silent login on load** | AuthProvider does not attempt background login on mount. If the user's session is valid at the IdP but tokens were lost (page refresh), the user must click login again. This avoids invisible network requests and iframe hacks. |
-
-## Architectural Guarantees
-
-- Core is side-effect free — no IO, no global state, no implicit network calls
-- All protocol operations are explicit — no hidden fetches, no background iframes, no silent token acquisition
-- Framework adapters are thin and replaceable — swapping frameworks means changing the adapter, not the auth logic
-- No tokens are persisted beyond memory — the most secure default for browser-based applications
+| **No JWT signature verification** | Spec-compliant ([OIDC Core §3.1.3.7](https://openid.net/specs/openid-connect-core-1_0.html#IDTokenValidation)). Server-side verification belongs in the resource server. |
+| **Core has no `fetch`** | Framework adapters control HTTP entirely — the core can't auto-discover or auto-refresh, adapters handle that orchestration. |
+| **No iframe-based silent auth** | Uses refresh tokens instead. Avoids third-party cookie issues and iframe state management complexity. |
+| **No silent login on load** | If tokens were lost (page refresh), the user must log in again. No invisible network requests or iframe hacks. |
+| **Single test IdP for CI** | Optimizes for determinism and speed over multi-provider coverage. Compatibility relies on strict RFC adherence. |
 
 ## Error Handling
 
