@@ -27,7 +27,7 @@ The library follows a **functional core, imperative shell** architecture: the co
 <Tabs>
   <TabItem label="React">
   ```tsx
-  import { AuthProvider, RequireAuth } from "oidc-js-react";
+  import { AuthProvider, RequireAuth, useAuth } from "oidc-js-react";
 
   const config = {
     issuer: "https://auth.example.com",
@@ -38,7 +38,7 @@ The library follows a **functional core, imperative shell** architecture: the co
     return (
       <AuthProvider config={config}>
         <RequireAuth>
-          <MyApp />
+          <Dashboard />
         </RequireAuth>
       </AuthProvider>
     );
@@ -47,16 +47,27 @@ The library follows a **functional core, imperative shell** architecture: the co
   </TabItem>
   <TabItem label="Vue">
   ```ts
-  import { createApp } from "vue";
   import { oidcPlugin } from "oidc-js-vue";
 
-  const app = createApp(App);
   app.use(oidcPlugin, {
     config: {
       issuer: "https://auth.example.com",
       clientId: "my-app",
     },
   });
+  ```
+
+  ```vue
+  <!-- In any component -->
+  <script setup lang="ts">
+  import { RequireAuth } from "oidc-js-vue";
+  </script>
+
+  <template>
+    <RequireAuth>
+      <Dashboard />
+    </RequireAuth>
+  </template>
   ```
   </TabItem>
   <TabItem label="Svelte">
@@ -79,88 +90,6 @@ The library follows a **functional core, imperative shell** architecture: the co
       </RequireAuth>
     {/snippet}
   </AuthProvider>
-  ```
-  </TabItem>
-  <TabItem label="Angular">
-  ```ts
-  import { provideAuth, authGuard } from "oidc-js-angular";
-
-  const routes = [
-    { path: "protected", component: MyApp, canActivate: [authGuard] },
-  ];
-
-  bootstrapApplication(AppComponent, {
-    providers: [
-      provideRouter(routes),
-      provideAuth({
-        config: {
-          issuer: "https://auth.example.com",
-          clientId: "my-app",
-        },
-      }),
-    ],
-  });
-  ```
-  </TabItem>
-  <TabItem label="Solid">
-  ```tsx
-  import { AuthProvider, RequireAuth } from "oidc-js-solid";
-
-  const config = {
-    issuer: "https://auth.example.com",
-    clientId: "my-app",
-  };
-
-  function App() {
-    return (
-      <AuthProvider config={config}>
-        <RequireAuth>
-          <MyApp />
-        </RequireAuth>
-      </AuthProvider>
-    );
-  }
-  ```
-  </TabItem>
-  <TabItem label="Preact">
-  ```tsx
-  import { AuthProvider, RequireAuth } from "oidc-js-preact";
-
-  const config = {
-    issuer: "https://auth.example.com",
-    clientId: "my-app",
-  };
-
-  function App() {
-    return (
-      <AuthProvider config={config}>
-        <RequireAuth>
-          <MyApp />
-        </RequireAuth>
-      </AuthProvider>
-    );
-  }
-  ```
-  </TabItem>
-  <TabItem label="Lit">
-  ```ts
-  import { LitElement, html } from "lit";
-  import { AuthController, RequireAuthController } from "oidc-js-lit";
-
-  class AppRoot extends LitElement {
-    auth = new AuthController(this, {
-      config: {
-        issuer: "https://auth.example.com",
-        clientId: "my-app",
-      },
-    });
-    guard = new RequireAuthController(this, { auth: this.auth });
-
-    render() {
-      if (!this.guard.authorized) return html`<p>Loading...</p>`;
-      return html`<my-app></my-app>`;
-    }
-  }
   ```
   </TabItem>
 </Tabs>
