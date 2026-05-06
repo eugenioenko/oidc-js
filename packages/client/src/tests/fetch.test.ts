@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { executeFetch } from "../fetch.js";
-import type { HttpRequest } from "oidc-js-core";
+import { OidcError, type HttpRequest } from "oidc-js-core";
 
 beforeEach(() => {
   vi.restoreAllMocks();
@@ -67,19 +67,41 @@ describe("executeFetch", () => {
     expect(result).toEqual({ access_token: "at_123" });
   });
 
-  it("throws on non-OK response with OIDC error body", async () => {
+  it("RFC 6749 §5.2: throws OidcError with error code and description", async () => {
     vi.stubGlobal("fetch", mockFetch(
       { error: "invalid_grant", error_description: "Code expired" },
       400,
       "Bad Request",
     ));
 
-    await expect(
-      executeFetch({ url: "https://auth.example.com/token", method: "POST", headers: {} }),
-    ).rejects.toThrow("Token error: Code expired");
+    try {
+      await executeFetch({ url: "https://auth.example.com/token", method: "POST", headers: {} });
+      expect.fail("should have thrown");
+    } catch (e) {
+      expect(e).toBeInstanceOf(OidcError);
+      expect((e as OidcError).code).toBe("TOKEN_EXCHANGE_ERROR");
+      expect((e as OidcError).message).toBe("invalid_grant: Code expired");
+    }
   });
 
-  it("throws on non-OK response without JSON body", async () => {
+  it("RFC 6749 §5.2: throws OidcError with error code when no description", async () => {
+    vi.stubGlobal("fetch", mockFetch(
+      { error: "invalid_client" },
+      401,
+      "Unauthorized",
+    ));
+
+    try {
+      await executeFetch({ url: "https://auth.example.com/token", method: "POST", headers: {} });
+      expect.fail("should have thrown");
+    } catch (e) {
+      expect(e).toBeInstanceOf(OidcError);
+      expect((e as OidcError).code).toBe("TOKEN_EXCHANGE_ERROR");
+      expect((e as OidcError).message).toBe("invalid_client");
+    }
+  });
+
+  it("throws OidcError on non-OK response without JSON body", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
       ok: false,
       status: 500,
@@ -87,8 +109,13 @@ describe("executeFetch", () => {
       json: () => Promise.reject(new Error("not json")),
     }));
 
-    await expect(
-      executeFetch({ url: "https://auth.example.com/token", method: "POST", headers: {} }),
-    ).rejects.toThrow("HTTP 500: Internal Server Error");
+    try {
+      await executeFetch({ url: "https://auth.example.com/token", method: "POST", headers: {} });
+      expect.fail("should have thrown");
+    } catch (e) {
+      expect(e).toBeInstanceOf(OidcError);
+      expect((e as OidcError).code).toBe("TOKEN_EXCHANGE_ERROR");
+      expect((e as OidcError).message).toBe("HTTP 500: Internal Server Error");
+    }
   });
 });
