@@ -13,7 +13,6 @@ export default defineConfig({
       formats: ["es"],
       fileName: () => "index.js",
     },
-    sourcemap: true,
     rollupOptions: {
       external: [/^svelte(\/.*)?$/, "oidc-js", "oidc-js-core"],
     },
