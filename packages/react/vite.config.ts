@@ -9,7 +9,6 @@ export default defineConfig({
       formats: ["es", "cjs"],
       fileName: (format) => `index.${format === "es" ? "js" : "cjs"}`,
     },
-    sourcemap: true,
     rollupOptions: {
       external: ["react", "react/jsx-runtime", "oidc-js", "oidc-js-core"],
     },
