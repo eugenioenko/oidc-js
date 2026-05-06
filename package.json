@@ -4,7 +4,7 @@
   "type": "module",
   "description": "Zero-dependency OIDC client libraries",
   "scripts": {
-    "build": "pnpm -r build",
+    "build": "pnpm --filter './packages/*' -r build",
     "test": "pnpm -r test",
     "lint": "eslint . && pnpm -r lint",
     "test:e2e": "pnpm --filter e2e-tests test",
