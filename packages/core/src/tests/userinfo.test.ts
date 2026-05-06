@@ -68,30 +68,30 @@ describe("parseUserinfoResponse", () => {
     expect(user.groups).toEqual(["admin", "users"]);
   });
 
-  it("throws TOKEN_EXCHANGE_ERROR on non-object input", () => {
+  it("throws USERINFO_ERROR on non-object input", () => {
     expect(() => parseUserinfoResponse(null)).toThrow(OidcError);
     expect(() => parseUserinfoResponse("string")).toThrow(OidcError);
     expect(() => parseUserinfoResponse(42)).toThrow(OidcError);
   });
 
   // OIDC Core §5.3.2: sub claim is REQUIRED
-  it("OIDC Core §5.3.2: throws TOKEN_EXCHANGE_ERROR when sub claim is missing", () => {
+  it("OIDC Core §5.3.2: throws USERINFO_ERROR when sub claim is missing", () => {
     try {
       parseUserinfoResponse({ email: "user@example.com" });
       expect.fail("should have thrown");
     } catch (e) {
       expect(e).toBeInstanceOf(OidcError);
-      expect((e as OidcError).code).toBe("TOKEN_EXCHANGE_ERROR");
+      expect((e as OidcError).code).toBe("USERINFO_ERROR");
     }
   });
 
-  it("throws TOKEN_EXCHANGE_ERROR when sub claim is not a string", () => {
+  it("throws USERINFO_ERROR when sub claim is not a string", () => {
     try {
       parseUserinfoResponse({ sub: 123, email: "user@example.com" });
       expect.fail("should have thrown");
     } catch (e) {
       expect(e).toBeInstanceOf(OidcError);
-      expect((e as OidcError).code).toBe("TOKEN_EXCHANGE_ERROR");
+      expect((e as OidcError).code).toBe("USERINFO_ERROR");
     }
   });
 });

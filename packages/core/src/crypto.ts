@@ -1,4 +1,4 @@
-import { OidcError } from "./errors.js";
+import { OidcErrors } from "./errors.js";
 
 // RFC 7636 §4.1: unreserved characters for code_verifier
 const UNRESERVED = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~";
@@ -34,7 +34,7 @@ export function base64UrlDecode(str: string): Uint8Array {
     }
     return bytes;
   } catch {
-    throw new OidcError("INVALID_JWT", "Invalid base64url input");
+    throw OidcErrors.invalidBase64url();
   }
 }
 
