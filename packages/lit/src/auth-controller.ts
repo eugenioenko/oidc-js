@@ -148,8 +148,9 @@ export class AuthController implements ReactiveController {
    *
    * @throws Error if no refresh token is available or discovery has not been fetched.
    */
-  async refresh(): Promise<void> {
-    await this.client?.refresh();
+  async refresh() {
+    const result = await this.client?.refresh();
+    return result ?? { access: null, id: null, refresh: null, expiresAt: null };
   }
 
   /**
@@ -157,7 +158,7 @@ export class AuthController implements ReactiveController {
    *
    * @throws Error if no access token is available or discovery has not been fetched.
    */
-  async fetchProfile(): Promise<void> {
-    await this.client?.fetchProfile();
+  async fetchProfile() {
+    return (await this.client?.fetchProfile()) ?? null;
   }
 }

@@ -127,8 +127,8 @@ export class AuthService {
    *
    * @throws Error if no refresh token is available.
    */
-  async refresh(): Promise<void> {
-    await this.client.refresh();
+  async refresh() {
+    return this.client.refresh();
   }
 
   /**
@@ -136,7 +136,7 @@ export class AuthService {
    *
    * @throws Error if no access token is available.
    */
-  async fetchProfile(): Promise<void> {
-    await this.client.fetchProfile();
+  async fetchProfile() {
+    return this.client.fetchProfile();
   }
 }

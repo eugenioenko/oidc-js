@@ -25,6 +25,7 @@ function makeActions(overrides: Partial<AuthContextValue["actions"]> = {}) {
 function makeAuth(overrides: Partial<AuthContextValue> = {}): AuthContextValue {
   return {
     config: { issuer: "https://auth.example.com", clientId: "app" },
+    client: {} as AuthContextValue["client"],
     user: null,
     isAuthenticated: false,
     isLoading: false,
