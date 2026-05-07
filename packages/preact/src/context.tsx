@@ -88,11 +88,12 @@ export function AuthProvider({
   }, []);
 
   const refresh = useCallback(async () => {
-    await clientRef.current?.refresh();
+    const result = await clientRef.current?.refresh();
+    return result ?? { access: null, id: null, refresh: null, expiresAt: null };
   }, []);
 
   const doFetchProfile = useCallback(async () => {
-    await clientRef.current?.fetchProfile();
+    return (await clientRef.current?.fetchProfile()) ?? null;
   }, []);
 
   const actions = useMemo(

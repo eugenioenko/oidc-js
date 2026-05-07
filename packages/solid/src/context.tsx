@@ -90,11 +90,12 @@ export const AuthProvider: ParentComponent<AuthProviderProps> = (props) => {
   };
 
   const refresh = async () => {
-    await client?.refresh();
+    const result = await client?.refresh();
+    return result ?? { access: null, id: null, refresh: null, expiresAt: null };
   };
 
   const doFetchProfile = async () => {
-    await client?.fetchProfile();
+    return (await client?.fetchProfile()) ?? null;
   };
 
   const actions = { login, logout, refresh, fetchProfile: doFetchProfile };

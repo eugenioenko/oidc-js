@@ -51,7 +51,7 @@ export class OidcClient {
   private discovery: OidcDiscovery | null = null;
   private subscribers = new Set<Subscriber>();
   private abortController: AbortController | null = null;
-  private refreshPromise: Promise<void> | null = null;
+  private refreshPromise: Promise<AuthTokens> | null = null;
 
   private _state: AuthState = {
     user: null,
@@ -243,7 +243,7 @@ export class OidcClient {
    *
    * @throws Error if no refresh token is available or discovery has not been fetched.
    */
-  async refresh(): Promise<void> {
+  async refresh(): Promise<AuthTokens> {
     if (this.refreshPromise) {
       return this.refreshPromise;
     }
@@ -255,7 +255,7 @@ export class OidcClient {
     return this.refreshPromise;
   }
 
-  private async refreshInternal(): Promise<void> {
+  private async refreshInternal(): Promise<AuthTokens> {
     const refreshToken = this._state.tokens.refresh;
 
     if (!this.discovery || !refreshToken) {
@@ -289,6 +289,8 @@ export class OidcClient {
       isAuthenticated: true,
       error: null,
     });
+
+    return newTokens;
   }
 
   /**
@@ -298,7 +300,7 @@ export class OidcClient {
    *
    * @throws Error if no access token is available or discovery has not been fetched.
    */
-  async fetchProfile(): Promise<void> {
+  async fetchProfile(): Promise<OidcUser | null> {
     if (!this.discovery || !this._state.tokens.access) {
       throw new Error("No access token available");
     }
@@ -307,6 +309,7 @@ export class OidcClient {
     if (this._state.user) {
       this.setState({ user: { ...this._state.user, profile } });
     }
+    return profile;
   }
 
   /**

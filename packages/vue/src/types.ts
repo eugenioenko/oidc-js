@@ -3,6 +3,7 @@ import type { OidcConfig } from "oidc-js-core";
 export type { IdTokenClaims, AuthUser, AuthTokens, LoginOptions } from "oidc-js";
 
 import type { AuthUser, AuthTokens, LoginOptions } from "oidc-js";
+import type { OidcUser } from "oidc-js-core";
 
 /**
  * Actions available for authentication operations.
@@ -16,9 +17,9 @@ export interface AuthActions {
   /** Logs the user out and redirects to the OP's end-session endpoint. */
   logout: () => void;
   /** Uses the stored refresh token to obtain a new set of tokens. */
-  refresh: () => Promise<void>;
+  refresh: () => Promise<AuthTokens>;
   /** Fetches the user's profile from the userinfo endpoint. */
-  fetchProfile: () => Promise<void>;
+  fetchProfile: () => Promise<OidcUser | null>;
 }
 
 /**

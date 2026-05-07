@@ -1,6 +1,7 @@
 import type { Signal } from "kasper-js";
 import type { OidcConfig } from "oidc-js-core";
 import type { AuthUser, AuthTokens, LoginOptions } from "oidc-js";
+import type { OidcUser } from "oidc-js-core";
 
 export type { IdTokenClaims, AuthUser, AuthTokens, LoginOptions } from "oidc-js";
 export type { Signal } from "kasper-js";
@@ -12,9 +13,9 @@ export interface AuthActions {
   /** Logs the user out and redirects to the post-logout URI. */
   logout: () => void;
   /** Refreshes the access token using the refresh token. */
-  refresh: () => Promise<void>;
+  refresh: () => Promise<AuthTokens>;
   /** Fetches the user's profile from the userinfo endpoint. */
-  fetchProfile: () => Promise<void>;
+  fetchProfile: () => Promise<OidcUser | null>;
 }
 
 /** Value returned by {@link useAuth}. All state properties are Kasper signals. */

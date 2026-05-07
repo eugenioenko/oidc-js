@@ -92,11 +92,11 @@ export const oidcPlugin = {
     };
 
     const refresh = async () => {
-      await client.refresh();
+      return client.refresh();
     };
 
     const doFetchProfile = async () => {
-      await client.fetchProfile();
+      return client.fetchProfile();
     };
 
     const actions: AuthActions = {
