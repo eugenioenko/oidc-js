@@ -1,6 +1,5 @@
 import { ref, type App, type InjectionKey, type Ref } from "vue";
-import { OidcClient, type AuthState, type LoginOptions } from "oidc-js";
-import type { OidcConfig } from "oidc-js-core";
+import { OidcClient, type OidcClientConfig, type AuthState, type LoginOptions } from "oidc-js";
 import type { AuthActions, AuthContextValue, OidcPluginOptions } from "./types.js";
 
 /**
@@ -10,7 +9,7 @@ import type { AuthActions, AuthContextValue, OidcPluginOptions } from "./types.j
  * to provide and inject the reactive auth state.
  */
 export const AUTH_CONTEXT_KEY: InjectionKey<{
-  config: OidcConfig;
+  config: OidcClientConfig;
   user: Ref<AuthContextValue["user"]>;
   isAuthenticated: Ref<boolean>;
   isLoading: Ref<boolean>;

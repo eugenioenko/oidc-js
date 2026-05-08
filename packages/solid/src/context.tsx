@@ -6,8 +6,7 @@ import {
   onCleanup,
   type ParentComponent,
 } from "solid-js";
-import { OidcClient, type AuthState, type LoginOptions } from "oidc-js";
-import type { OidcConfig } from "oidc-js-core";
+import { OidcClient, type OidcClientConfig, type AuthState, type LoginOptions } from "oidc-js";
 import type { AuthContextValue } from "./types.js";
 
 const AuthContext = createContext<AuthContextValue>();
@@ -17,7 +16,7 @@ const AuthContext = createContext<AuthContextValue>();
  */
 interface AuthProviderProps {
   /** OIDC configuration including issuer, clientId, and redirectUri. */
-  config: OidcConfig;
+  config: OidcClientConfig;
   /** Whether to fetch the userinfo profile after token exchange. Defaults to true. */
   fetchProfile?: boolean;
   /** Callback invoked after a successful login with the returnTo path. */

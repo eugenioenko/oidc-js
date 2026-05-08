@@ -1,10 +1,10 @@
 import { Component } from "kasper-js";
-import type { OidcConfig } from "oidc-js-core";
+import type { OidcClientConfig } from "oidc-js";
 import type { OidcClient } from "oidc-js";
 import { _initAuth, _destroyAuth } from "./context.js";
 
 interface AuthProviderArgs {
-  config: OidcConfig;
+  config: OidcClientConfig;
   fetchProfile?: boolean;
   onLogin?: (returnTo: string) => void;
   onError?: (error: Error) => void;

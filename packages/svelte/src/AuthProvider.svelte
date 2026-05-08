@@ -16,14 +16,14 @@
   ```
 -->
 <script lang="ts">
-  import type { OidcConfig } from "oidc-js-core";
+  import type { OidcClientConfig } from "oidc-js";
   import type { Snippet } from "svelte";
   import { onDestroy } from "svelte";
   import { AuthStateManager, setAuthContext } from "./context.svelte.js";
 
   interface Props {
     /** OIDC configuration including issuer, clientId, and redirectUri. */
-    config: OidcConfig;
+    config: OidcClientConfig;
     /** Whether to fetch the userinfo profile after token exchange. Defaults to true. */
     fetchProfile?: boolean;
     /** Callback invoked after a successful login with the returnTo path. */

@@ -8,14 +8,13 @@ import {
   useMemo,
 } from "preact/hooks";
 import type { ComponentChildren } from "preact";
-import { OidcClient, type AuthState, type LoginOptions } from "oidc-js";
-import type { OidcConfig } from "oidc-js-core";
+import { OidcClient, type OidcClientConfig, type AuthState, type LoginOptions } from "oidc-js";
 import type { AuthContextValue } from "./types.js";
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 interface AuthProviderProps {
-  config: OidcConfig;
+  config: OidcClientConfig;
   fetchProfile?: boolean;
   onLogin?: (returnTo: string) => void;
   onError?: (error: Error) => void;

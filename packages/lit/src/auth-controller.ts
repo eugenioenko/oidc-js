@@ -1,6 +1,5 @@
 import type { ReactiveController, ReactiveControllerHost } from "lit";
-import { OidcClient, type AuthState, type AuthUser, type AuthTokens, type LoginOptions } from "oidc-js";
-import type { OidcConfig } from "oidc-js-core";
+import { OidcClient, type OidcClientConfig, type AuthState, type AuthUser, type AuthTokens, type LoginOptions } from "oidc-js";
 import type { AuthControllerOptions } from "./types.js";
 
 /**
@@ -85,7 +84,7 @@ export class AuthController implements ReactiveController {
   }
 
   /** The OIDC configuration passed to this controller. */
-  get config(): OidcConfig {
+  get config(): OidcClientConfig {
     return this.options.config;
   }
 

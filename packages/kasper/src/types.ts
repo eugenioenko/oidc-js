@@ -1,6 +1,5 @@
 import type { Signal } from "kasper-js";
-import type { OidcConfig } from "oidc-js-core";
-import type { AuthUser, AuthTokens, LoginOptions } from "oidc-js";
+import type { OidcClientConfig, AuthUser, AuthTokens, LoginOptions } from "oidc-js";
 import type { OidcUser } from "oidc-js-core";
 
 export type { IdTokenClaims, AuthUser, AuthTokens, LoginOptions } from "oidc-js";
@@ -21,7 +20,7 @@ export interface AuthActions {
 /** Value returned by {@link useAuth}. All state properties are Kasper signals. */
 export interface AuthContextValue {
   /** The OIDC configuration used to initialize the provider. */
-  readonly config: OidcConfig;
+  readonly config: OidcClientConfig;
   /** The authenticated user, or null if not authenticated. */
   readonly user: Signal<AuthUser | null>;
   /** Whether the user is currently authenticated. */
