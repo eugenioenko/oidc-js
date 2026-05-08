@@ -49,7 +49,7 @@ interface AuthUser {
 }
 ```
 
-`null` when not authenticated. After login, `claims` is always populated from the ID token. `profile` is populated from the UserInfo endpoint if `fetchProfile` is `true` (default).
+`null` when not authenticated. After login, `claims` is always populated from the ID token. `profile` is populated from the UserInfo endpoint if `config.fetchProfile` is `true` (default).
 
 ### tokens
 

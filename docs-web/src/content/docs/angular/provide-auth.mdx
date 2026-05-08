@@ -38,7 +38,6 @@ bootstrapApplication(AppComponent, {
 | Option | Type | Default | Description |
 |---|---|---|---|
 | `config` | `OidcConfig` | **required** | OIDC configuration (issuer, clientId, redirectUri, etc.) |
-| `fetchProfile` | `boolean` | `true` | Whether to fetch the UserInfo endpoint after login |
 | `onLogin` | `(returnTo: string) => void` | - | Called after successful login with the URL to restore |
 | `onError` | `(error: Error) => void` | - | Called when an error occurs during initialization |
 
