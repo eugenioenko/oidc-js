@@ -25,9 +25,42 @@ sequenceDiagram
     OidcClient->>App: Render protected content
 ```
 
-## Automatic refresh with RequireAuth
+## Proactive refresh
 
-`RequireAuth` handles refresh automatically. When a user navigates to a protected route with an expired token:
+By default, `OidcClient` proactively refreshes the access token *before* it expires using a short `setInterval` poll. Every tick compares the current time against `expiresAt - expiryBuffer` and triggers a refresh when the token is about to expire. This means the token is always fresh — no 401s, no interceptors needed, no fallback flash.
+
+This is enabled by default. You can configure the behavior with two options:
+
+```ts
+const config = {
+  issuer: "https://auth.example.com",
+  clientId: "my-app",
+  redirectUri: "http://localhost:5173/callback",
+  expiryBuffer: 60,           // refresh 60s before expiry (default: 30)
+  autoRefresh: true,           // enabled by default
+  autoRefreshInterval: 10,     // polling interval in seconds (default: 10)
+};
+```
+
+The polling interval is lightweight — one number comparison per tick, no re-renders or network calls until a refresh is actually needed. The approach is drift-proof and sleep-proof: after a laptop wakes from sleep, the very first tick catches the expiration.
+
+<Aside type="tip">
+If the refresh request fails (e.g. network error), the polling stops to avoid hammering the token endpoint. The auth state stays authenticated with the current token. A subsequent successful manual refresh (or a new login) restarts the polling automatically.
+</Aside>
+
+### Disabling proactive refresh
+
+Set `autoRefresh: false` to rely on reactive mechanisms instead (interceptors, `RequireAuth` re-mount):
+
+```tsx
+<AuthProvider config={{ ...config, autoRefresh: false }}>
+  <App />
+</AuthProvider>
+```
+
+## Reactive refresh with RequireAuth
+
+`RequireAuth` handles refresh reactively. When a user navigates to a protected route with an expired token:
 
 1. Checks `tokens.expiresAt` using `isExpiredAt()` from core (with an optional buffer)
 2. If expired, calls `actions.refresh()`
@@ -47,6 +80,10 @@ You can set an `expiryBuffer` (in seconds) on the provider config to refresh the
   <App />
 </AuthProvider>
 ```
+
+<Aside type="note">
+With proactive refresh enabled (the default), `RequireAuth` rarely needs to trigger a refresh because the token is typically renewed before it expires. It serves as a safety net for edge cases like initial page load with a stale token.
+</Aside>
 
 ## Manual refresh
 
