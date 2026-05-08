@@ -21,8 +21,7 @@ const config = {
 @customElement("app-root")
 export class AppRoot extends LitElement {
   auth = new AuthController(this, {
-    config,
-    fetchProfile,
+    config: { ...config, fetchProfile },
     onLogin: (returnTo: string) => {
       window.history.replaceState({}, "", returnTo);
       this._path = window.location.pathname;

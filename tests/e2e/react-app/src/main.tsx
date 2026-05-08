@@ -23,7 +23,7 @@ function Root() {
   }, [navigate]);
 
   return (
-    <AuthProvider config={config} fetchProfile={fetchProfile} onLogin={onLogin}>
+    <AuthProvider config={{ ...config, fetchProfile }} onLogin={onLogin}>
       <App />
     </AuthProvider>
   );

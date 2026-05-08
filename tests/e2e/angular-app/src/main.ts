@@ -24,8 +24,7 @@ bootstrapApplication(AppComponent, {
   providers: [
     provideRouter(routes),
     provideAuth({
-      config,
-      fetchProfile,
+      config: { ...config, fetchProfile },
     }),
   ],
 }).catch((err) => console.error(err));

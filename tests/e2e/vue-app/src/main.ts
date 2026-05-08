@@ -30,8 +30,8 @@ app.use(oidcPlugin, {
     redirectUri: `http://localhost:${appPort}/callback`,
     scopes: ["openid", "profile", "email", "offline_access"],
     postLogoutRedirectUri: `http://localhost:${appPort}`,
+    fetchProfile,
   },
-  fetchProfile,
   onLogin(returnTo: string) {
     router.replace(returnTo);
   },

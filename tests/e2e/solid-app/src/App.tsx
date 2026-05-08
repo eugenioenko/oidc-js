@@ -21,7 +21,7 @@ export const App: ParentComponent = (props) => {
   };
 
   return (
-    <AuthProvider config={config} fetchProfile={fetchProfile} onLogin={onLogin}>
+    <AuthProvider config={{ ...config, fetchProfile }} onLogin={onLogin}>
       {props.children}
     </AuthProvider>
   );

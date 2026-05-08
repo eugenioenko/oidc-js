@@ -38,7 +38,7 @@
   });
 </script>
 
-<AuthProvider {config} {fetchProfile} onLogin={handleLogin}>
+<AuthProvider config={{ ...config, fetchProfile }} onLogin={handleLogin}>
   {#snippet children()}
     {#if path === "/callback"}
       <Callback />
