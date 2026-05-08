@@ -1,5 +1,5 @@
 <template>
-  <auth-provider @:config="config" @:fetchProfile="fetchProfile" @:onLogin="handleLogin">
+  <auth-provider @:config="config" @:onLogin="handleLogin">
     <router>
       <route @path="/" @component="HomePage" />
       <route @path="/callback" @component="CallbackPage" />
@@ -17,10 +17,10 @@ import { ProtectedAPage } from "./ProtectedA.kasper";
 import { ProtectedBPage } from "./ProtectedB.kasper";
 
 export class AppRoot extends Component {
-  fetchProfile = localStorage.getItem("e2e-fetchProfile") !== "false";
-
   config = (() => {
+    const fetchProfile = localStorage.getItem("e2e-fetchProfile") !== "false";
     const autoRefreshInterval = Number(localStorage.getItem("e2e-autoRefreshInterval"));
+
     const idpPort = import.meta.env.VITE_IDP_PORT ?? "9999";
     const appPort = import.meta.env.VITE_APP_PORT ?? "5173";
     return {
@@ -29,6 +29,7 @@ export class AppRoot extends Component {
       redirectUri: `http://localhost:${appPort}/callback`,
       scopes: ["openid", "profile", "email", "offline_access"],
       postLogoutRedirectUri: `http://localhost:${appPort}`,
+      fetchProfile,
       autoRefreshInterval: autoRefreshInterval || undefined,
     };
   })();
