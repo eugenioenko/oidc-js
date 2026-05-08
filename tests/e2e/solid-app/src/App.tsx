@@ -4,6 +4,7 @@ import type { ParentComponent } from "solid-js";
 
 const fetchProfile = localStorage.getItem("e2e-fetchProfile") !== "false";
 const autoRefreshInterval = localStorage.getItem("e2e-autoRefreshInterval");
+
 const idpPort = import.meta.env.VITE_IDP_PORT ?? "9999";
 const appPort = import.meta.env.VITE_APP_PORT ?? "5173";
 

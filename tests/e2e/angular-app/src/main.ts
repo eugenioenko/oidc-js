@@ -8,6 +8,7 @@ import { routes } from "./app/app.routes";
 
 const fetchProfile = localStorage.getItem("e2e-fetchProfile") !== "false";
 const autoRefreshInterval = localStorage.getItem("e2e-autoRefreshInterval");
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const viteEnv = (import.meta as any).env ?? {};
 const idpPort = viteEnv.VITE_IDP_PORT ?? "9999";
