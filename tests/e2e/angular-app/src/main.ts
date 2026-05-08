@@ -20,7 +20,7 @@ const config = {
   redirectUri: `http://localhost:${appPort}/callback`,
   scopes: ["openid", "profile", "email", "offline_access"],
   postLogoutRedirectUri: `http://localhost:${appPort}`,
-  ...(autoRefreshInterval ? { autoRefreshInterval } : {}),
+  autoRefreshInterval: autoRefreshInterval || undefined,
 };
 
 bootstrapApplication(AppComponent, {
