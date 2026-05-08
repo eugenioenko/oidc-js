@@ -63,6 +63,7 @@ describe("isExpiredAt", () => {
   it("DEFAULT_TOKEN_EXPIRATION_BUFFER is a deprecated alias", () => {
     expect(DEFAULT_TOKEN_EXPIRATION_BUFFER).toBe(DEFAULT_EXPIRY_BUFFER);
   });
+
 });
 
 describe("timeUntilExpiry", () => {

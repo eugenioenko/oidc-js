@@ -13,8 +13,10 @@ import {
   parseUserinfoResponse,
   buildLogoutUrl,
   decodeJwtPayload,
+  DEFAULT_EXPIRY_BUFFER,
   type OidcDiscovery,
   type OidcUser,
+  type TokenSet,
 } from "oidc-js-core";
 import { executeFetch } from "./fetch.js";
 import { saveAuthState, loadAuthState, clearAuthState } from "./storage.js";
@@ -24,6 +26,17 @@ import type { OidcClientConfig, AuthState, AuthUser, AuthTokens, IdTokenClaims, 
 type Subscriber = (state: AuthState) => void;
 
 const EMPTY_TOKENS: AuthTokens = { access: null, id: null, refresh: null, expiresAt: null };
+
+function warnIfShortLivedToken(tokenSet: TokenSet, expiryBuffer: number | undefined): void {
+  const buffer = expiryBuffer ?? DEFAULT_EXPIRY_BUFFER;
+  if (tokenSet.expires_in != null && tokenSet.expires_in <= buffer) {
+    console.warn(
+      `[oidc-js] Token lifetime (${tokenSet.expires_in}s) is shorter than expiryBuffer (${buffer}s). ` +
+      `This will cause the token to be treated as expired immediately. ` +
+      `Set a lower expiryBuffer in your config to avoid infinite refresh loops.`,
+    );
+  }
+}
 
 /**
  * Extracts the `exp` claim from an access token JWT.
@@ -136,6 +149,7 @@ export class OidcClient {
         const tokenReq = buildTokenRequest(this.discovery, this.config, code, authState.codeVerifier);
         const tokenData = await executeFetch(tokenReq, signal);
         const tokenSet = parseTokenResponse(tokenData, authState.nonce);
+        warnIfShortLivedToken(tokenSet, this.config.expiryBuffer);
 
         const newTokens: AuthTokens = {
           access: tokenSet.access_token,
@@ -265,6 +279,7 @@ export class OidcClient {
     const req = buildRefreshRequest(this.discovery, this.config, refreshToken);
     const data = await executeFetch(req);
     const tokenSet = parseTokenResponse(data);
+    warnIfShortLivedToken(tokenSet, this.config.expiryBuffer);
 
     const newTokens: AuthTokens = {
       access: tokenSet.access_token,
