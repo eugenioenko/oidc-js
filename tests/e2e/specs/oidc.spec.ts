@@ -576,6 +576,39 @@ test.describe(`[${FRAMEWORK}] RequireAuth`, () => {
   });
 });
 
+test.describe(`[${FRAMEWORK}] Proactive Auto-Refresh`, () => {
+  // Configures autoRefreshInterval=1s via localStorage, logs in, simulates token expiry,
+  // and verifies that the polling interval automatically triggers a token refresh
+  // without any user interaction (no navigation, no button click).
+  test("auto-refresh polling refreshes expired token without user interaction", async ({ page }) => {
+    const traffic = trackTraffic(page);
+    // Set 1-second polling interval before the app loads with it
+    await page.goto("/", { waitUntil: "networkidle" });
+    await page.evaluate(() => localStorage.setItem("e2e-autoRefreshInterval", "1"));
+
+    // login() calls page.goto("/") which reloads with the new interval
+    await login(page);
+    const oldToken = await page.getByTestId("access-token-value").textContent();
+    const expiresAt = Number(await page.getByTestId("expires-at").textContent());
+
+    // Snapshot request count after login, before auto-refresh fires
+    const requestCountAfterLogin = traffic.requests().length;
+
+    // Advance Date.now past token expiry — the 1s interval will detect it and auto-refresh
+    await simulateTokenExpiry(page, expiresAt);
+
+    // Token should change without any user interaction (no click, no navigation)
+    await expect(page.getByTestId("access-token-value")).not.toHaveText(oldToken!, { timeout: TIMEOUT });
+    await expect(page.getByTestId("authenticated")).toBeVisible();
+
+    // Verify that auto-refresh issued a POST /token after login completed
+    const autoRefreshRequests = traffic.requests().slice(requestCountAfterLogin);
+    expect(autoRefreshRequests).toContain(POST_TOKEN);
+
+    await page.evaluate(() => localStorage.removeItem("e2e-autoRefreshInterval"));
+  });
+});
+
 test.describe(`[${FRAMEWORK}] Nonce Validation`, () => {
   // Tampers with the stored nonce before callback. The library should detect the mismatch
   // and surface an error instead of accepting the tokens (prevents token injection/replay).

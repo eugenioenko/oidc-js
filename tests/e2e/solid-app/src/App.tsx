@@ -3,6 +3,7 @@ import { AuthProvider } from "oidc-js-solid";
 import type { ParentComponent } from "solid-js";
 
 const fetchProfile = localStorage.getItem("e2e-fetchProfile") !== "false";
+const autoRefreshInterval = localStorage.getItem("e2e-autoRefreshInterval");
 const idpPort = import.meta.env.VITE_IDP_PORT ?? "9999";
 const appPort = import.meta.env.VITE_APP_PORT ?? "5173";
 
@@ -12,6 +13,7 @@ const config = {
   redirectUri: `http://localhost:${appPort}/callback`,
   scopes: ["openid", "profile", "email", "offline_access"],
   postLogoutRedirectUri: `http://localhost:${appPort}`,
+  ...(autoRefreshInterval ? { autoRefreshInterval: Number(autoRefreshInterval) } : {}),
 };
 
 export const App: ParentComponent = (props) => {
