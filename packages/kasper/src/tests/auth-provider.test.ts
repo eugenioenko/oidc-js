@@ -27,7 +27,7 @@ vi.mock("oidc-js", () => ({
 import { AuthProvider } from "../auth-provider.js";
 import { _destroyAuth, useAuth } from "../context.js";
 
-const CONFIG: OidcConfig = {
+const CONFIG: OidcClientConfig = {
   issuer: "https://auth.example.com",
   clientId: "my-app",
   redirectUri: "http://localhost:3000/callback",
