@@ -20,6 +20,7 @@ const config = {
   redirectUri: `http://localhost:${appPort}/callback`,
   scopes: ["openid", "profile", "email", "offline_access"],
   postLogoutRedirectUri: `http://localhost:${appPort}`,
+  fetchProfile,
   autoRefreshInterval: autoRefreshInterval || undefined,
 };
 
@@ -27,7 +28,7 @@ bootstrapApplication(AppComponent, {
   providers: [
     provideRouter(routes),
     provideAuth({
-      config: { ...config, fetchProfile },
+      config,
     }),
   ],
 }).catch((err) => console.error(err));

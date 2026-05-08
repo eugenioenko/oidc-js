@@ -14,6 +14,7 @@ const config = {
   redirectUri: `http://localhost:${appPort}/callback`,
   scopes: ["openid", "profile", "email", "offline_access"],
   postLogoutRedirectUri: `http://localhost:${appPort}`,
+  fetchProfile,
   autoRefreshInterval: autoRefreshInterval || undefined,
 };
 
@@ -24,7 +25,7 @@ export const App: ParentComponent = (props) => {
   };
 
   return (
-    <AuthProvider config={{ ...config, fetchProfile }} onLogin={onLogin}>
+    <AuthProvider config={config} onLogin={onLogin}>
       {props.children}
     </AuthProvider>
   );

@@ -18,13 +18,14 @@ const config = {
   redirectUri: `http://localhost:${appPort}/callback`,
   scopes: ["openid", "profile", "email", "offline_access"],
   postLogoutRedirectUri: `http://localhost:${appPort}`,
+  fetchProfile,
   autoRefreshInterval: autoRefreshInterval || undefined,
 };
 
 @customElement("app-root")
 export class AppRoot extends LitElement {
   auth = new AuthController(this, {
-    config: { ...config, fetchProfile },
+    config,
     onLogin: (returnTo: string) => {
       window.history.replaceState({}, "", returnTo);
       this._path = window.location.pathname;

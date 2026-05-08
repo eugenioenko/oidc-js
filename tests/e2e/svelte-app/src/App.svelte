@@ -17,6 +17,7 @@
     redirectUri: `http://localhost:${appPort}/callback`,
     scopes: ["openid", "profile", "email", "offline_access"],
     postLogoutRedirectUri: `http://localhost:${appPort}`,
+    fetchProfile,
     autoRefreshInterval: autoRefreshInterval || undefined,
   };
 
@@ -41,7 +42,7 @@
   });
 </script>
 
-<AuthProvider config={{ ...config, fetchProfile }} onLogin={handleLogin}>
+<AuthProvider config={config} onLogin={handleLogin}>
   {#snippet children()}
     {#if path === "/callback"}
       <Callback />
