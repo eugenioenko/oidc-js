@@ -6,7 +6,7 @@
   import ProtectedB from "./routes/ProtectedB.svelte";
 
   const fetchProfile = localStorage.getItem("e2e-fetchProfile") !== "false";
-  const autoRefreshInterval = localStorage.getItem("e2e-autoRefreshInterval");
+  const autoRefreshInterval = Number(localStorage.getItem("e2e-autoRefreshInterval"));
 
   const idpPort = import.meta.env.VITE_IDP_PORT ?? "9999";
   const appPort = import.meta.env.VITE_APP_PORT ?? "5173";
@@ -17,7 +17,7 @@
     redirectUri: `http://localhost:${appPort}/callback`,
     scopes: ["openid", "profile", "email", "offline_access"],
     postLogoutRedirectUri: `http://localhost:${appPort}`,
-    ...(autoRefreshInterval ? { autoRefreshInterval: Number(autoRefreshInterval) } : {}),
+    ...(autoRefreshInterval ? { autoRefreshInterval } : {}),
   };
 
   let path = $state(window.location.pathname);
