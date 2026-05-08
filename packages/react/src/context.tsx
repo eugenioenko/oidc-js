@@ -15,7 +15,6 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 interface AuthProviderProps {
   config: OidcClientConfig;
-  fetchProfile?: boolean;
   onLogin?: (returnTo: string) => void;
   onError?: (error: Error) => void;
   children: ReactNode;
@@ -23,7 +22,6 @@ interface AuthProviderProps {
 
 export function AuthProvider({
   config,
-  fetchProfile = true,
   onLogin,
   onError,
   children,
@@ -44,7 +42,7 @@ export function AuthProvider({
   onErrorRef.current = onError;
 
   useEffect(() => {
-    const client = new OidcClient({ ...config, fetchProfile });
+    const client = new OidcClient(config);
     clientRef.current = client;
 
     const unsub = client.subscribe(setState);
@@ -65,7 +63,7 @@ export function AuthProvider({
       unsub();
       client.destroy();
     };
-  }, [config, fetchProfile]);
+  }, [config]);
 
   const login = useCallback(
     async (options?: LoginOptions) => {

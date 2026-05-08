@@ -23,8 +23,6 @@ export interface AuthActions {
 export interface AuthControllerOptions {
   /** OIDC configuration including issuer, clientId, and redirectUri. */
   config: OidcClientConfig;
-  /** Whether to fetch the userinfo profile after token exchange. Defaults to true. */
-  fetchProfile?: boolean;
   /**
    * Called after a successful login callback with the `returnTo` path.
    * If not provided, the controller calls `window.history.replaceState` to update the URL.

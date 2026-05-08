@@ -58,20 +58,20 @@ afterEach(() => {
 describe("AuthStateManager", () => {
   it("creates OidcClient with config", async () => {
     const { OidcClient } = await vi.importMock<typeof import("oidc-js")>("oidc-js");
-    new AuthStateManager(CONFIG, true);
+    new AuthStateManager(CONFIG);
 
-    expect(OidcClient).toHaveBeenCalledWith({ ...CONFIG, fetchProfile: true });
+    expect(OidcClient).toHaveBeenCalledWith(CONFIG);
   });
 
   it("exposes config and client", () => {
-    const manager = new AuthStateManager(CONFIG, false);
+    const manager = new AuthStateManager({ ...CONFIG, fetchProfile: false });
 
-    expect(manager.config).toEqual(CONFIG);
+    expect(manager.config).toEqual({ ...CONFIG, fetchProfile: false });
     expect(manager.client).toBeDefined();
   });
 
   it("has correct initial state", () => {
-    const manager = new AuthStateManager(CONFIG, true);
+    const manager = new AuthStateManager(CONFIG);
 
     expect(manager.user).toBeNull();
     expect(manager.isAuthenticated).toBe(false);
@@ -81,7 +81,7 @@ describe("AuthStateManager", () => {
   });
 
   it("updates state via update()", () => {
-    const manager = new AuthStateManager(CONFIG, true);
+    const manager = new AuthStateManager(CONFIG);
 
     manager.update({
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -99,7 +99,7 @@ describe("AuthStateManager", () => {
   });
 
   it("exposes actions that delegate to client", () => {
-    const manager = new AuthStateManager(CONFIG, true);
+    const manager = new AuthStateManager(CONFIG);
 
     manager.actions.login();
     expect(mockClientInstance.login).toHaveBeenCalled();
@@ -125,7 +125,7 @@ describe("getAuthContext", () => {
 
 describe("setAuthContext / getAuthContext round-trip", () => {
   it("setAuthContext stores context retrievable by getAuthContext", () => {
-    const manager = new AuthStateManager(CONFIG, true);
+    const manager = new AuthStateManager(CONFIG);
 
     setAuthContext(manager);
     const ctx = getAuthContext();

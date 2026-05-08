@@ -91,7 +91,7 @@ function wrapper({ children }: { children: ReactNode }) {
 
 function wrapperWithProfile({ children }: { children: ReactNode }) {
   return (
-    <AuthProvider config={CONFIG} fetchProfile={true}>
+    <AuthProvider config={{ ...CONFIG, fetchProfile: true }}>
       {children}
     </AuthProvider>
   );
@@ -99,7 +99,7 @@ function wrapperWithProfile({ children }: { children: ReactNode }) {
 
 function wrapperNoProfile({ children }: { children: ReactNode }) {
   return (
-    <AuthProvider config={CONFIG} fetchProfile={false}>
+    <AuthProvider config={{ ...CONFIG, fetchProfile: false }}>
       {children}
     </AuthProvider>
   );

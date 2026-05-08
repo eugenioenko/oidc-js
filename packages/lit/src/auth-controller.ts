@@ -93,8 +93,8 @@ export class AuthController implements ReactiveController {
    * Creates the {@link OidcClient}, subscribes to state changes, and initializes the OIDC flow.
    */
   hostConnected(): void {
-    const { config, fetchProfile, onLogin, onError } = this.options;
-    const client = new OidcClient({ ...config, fetchProfile });
+    const { config, onLogin, onError } = this.options;
+    const client = new OidcClient(config);
     this.client = client;
 
     this.unsubscribe = client.subscribe((state: AuthState) => {

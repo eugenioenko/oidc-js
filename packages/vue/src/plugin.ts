@@ -47,9 +47,9 @@ export const AUTH_CONTEXT_KEY: InjectionKey<{
  */
 export const oidcPlugin = {
   install(app: App, options: OidcPluginOptions): void {
-    const { config, fetchProfile = true, onLogin, onError } = options;
+    const { config, onLogin, onError } = options;
 
-    const client = new OidcClient({ ...config, fetchProfile });
+    const client = new OidcClient(config);
 
     const user = ref<AuthContextValue["user"]>(null);
     const isAuthenticated = ref(false);

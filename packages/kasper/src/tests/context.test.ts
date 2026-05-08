@@ -52,7 +52,7 @@ describe("useAuth", () => {
   });
 
   it("returns auth context after _initAuth", () => {
-    _initAuth(CONFIG, true);
+    _initAuth(CONFIG);
     const auth = useAuth();
 
     expect(auth.config).toEqual(CONFIG);
@@ -69,7 +69,7 @@ describe("useAuth", () => {
   });
 
   it("exposes actions that delegate to OidcClient", () => {
-    _initAuth(CONFIG, true);
+    _initAuth(CONFIG);
     const auth = useAuth();
 
     auth.actions.login();
@@ -87,25 +87,25 @@ describe("useAuth", () => {
 });
 
 describe("_initAuth", () => {
-  it("creates OidcClient with config and fetchProfile", async () => {
+  it("creates OidcClient with config", async () => {
     const { OidcClient } = await vi.importMock<typeof import("oidc-js")>(
       "oidc-js",
     );
 
-    _initAuth(CONFIG, true);
+    _initAuth(CONFIG);
 
-    expect(OidcClient).toHaveBeenCalledWith({ ...CONFIG, fetchProfile: true });
+    expect(OidcClient).toHaveBeenCalledWith(CONFIG);
   });
 
   it("returns client and unsub function", () => {
-    const result = _initAuth(CONFIG, false);
+    const result = _initAuth(CONFIG);
 
     expect(result.client).toBe(mockClientInstance);
     expect(typeof result.unsub).toBe("function");
   });
 
   it("subscribes to client state changes", () => {
-    _initAuth(CONFIG, true);
+    _initAuth(CONFIG);
 
     expect(mockClientInstance.subscribe).toHaveBeenCalledWith(
       expect.any(Function),
@@ -113,7 +113,7 @@ describe("_initAuth", () => {
   });
 
   it("updates signals when subscriber fires", () => {
-    _initAuth(CONFIG, true);
+    _initAuth(CONFIG);
     const subscriber = mockClientInstance.subscribe.mock.calls[0][0];
 
     subscriber({
@@ -134,7 +134,7 @@ describe("_initAuth", () => {
 
 describe("_destroyAuth", () => {
   it("resets all signals to initial values", () => {
-    _initAuth(CONFIG, true);
+    _initAuth(CONFIG);
     const subscriber = mockClientInstance.subscribe.mock.calls[0][0];
 
     subscriber({
@@ -158,7 +158,7 @@ describe("logout unsubscribes before calling client", () => {
     const unsubFn = vi.fn();
     mockClientInstance.subscribe.mockReturnValueOnce(unsubFn);
 
-    _initAuth(CONFIG, true);
+    _initAuth(CONFIG);
     const auth = useAuth();
 
     auth.actions.logout();

@@ -17,8 +17,6 @@ const AuthContext = createContext<AuthContextValue>();
 interface AuthProviderProps {
   /** OIDC configuration including issuer, clientId, and redirectUri. */
   config: OidcClientConfig;
-  /** Whether to fetch the userinfo profile after token exchange. Defaults to true. */
-  fetchProfile?: boolean;
   /** Callback invoked after a successful login with the returnTo path. */
   onLogin?: (returnTo: string) => void;
   /** Callback invoked when an authentication error occurs. */
@@ -52,10 +50,7 @@ export const AuthProvider: ParentComponent<AuthProviderProps> = (props) => {
   let client: OidcClient | null = null;
 
   onMount(() => {
-    const oidcClient = new OidcClient({
-      ...props.config,
-      fetchProfile: props.fetchProfile ?? true,
-    });
+    const oidcClient = new OidcClient(props.config);
     client = oidcClient;
 
     const unsub = oidcClient.subscribe((newState) => {

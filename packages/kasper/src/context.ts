@@ -21,9 +21,8 @@ let _unsub: (() => void) | null = null;
 /** @internal */
 export function _initAuth(
   config: OidcClientConfig,
-  fetchProfile: boolean,
 ): { client: OidcClient; unsub: () => void } {
-  const client = new OidcClient({ ...config, fetchProfile });
+  const client = new OidcClient(config);
   _client = client;
   _config = config;
   _actions = {

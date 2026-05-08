@@ -11,8 +11,6 @@ import type { OidcClientConfig } from "oidc-js";
 export interface AuthProviderOptions {
   /** Core OIDC configuration (issuer, clientId, redirectUri, scopes, etc.). */
   config: OidcClientConfig;
-  /** Whether to fetch the userinfo profile after token exchange. Defaults to `true`. */
-  fetchProfile?: boolean;
   /**
    * Called after a successful login callback with the `returnTo` path.
    * If not provided, the adapter uses Angular's `Router.navigateByUrl` to navigate.

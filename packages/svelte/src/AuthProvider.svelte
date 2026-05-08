@@ -24,8 +24,6 @@
   interface Props {
     /** OIDC configuration including issuer, clientId, and redirectUri. */
     config: OidcClientConfig;
-    /** Whether to fetch the userinfo profile after token exchange. Defaults to true. */
-    fetchProfile?: boolean;
     /** Callback invoked after a successful login with the returnTo path. */
     onLogin?: (returnTo: string) => void;
     /** Callback invoked when an authentication error occurs. */
@@ -34,9 +32,9 @@
     children: Snippet;
   }
 
-  let { config, fetchProfile = true, onLogin, onError, children }: Props = $props();
+  let { config, onLogin, onError, children }: Props = $props();
 
-  const manager = new AuthStateManager(config, fetchProfile);
+  const manager = new AuthStateManager(config);
   setAuthContext(manager);
 
   const unsub = manager.client.subscribe((state) => {

@@ -5,7 +5,6 @@ import { _initAuth, _destroyAuth } from "./context.js";
 
 interface AuthProviderArgs {
   config: OidcClientConfig;
-  fetchProfile?: boolean;
   onLogin?: (returnTo: string) => void;
   onError?: (error: Error) => void;
 }
@@ -29,11 +28,10 @@ export class AuthProvider extends Component<AuthProviderArgs> {
 
   onMount(): void {
     const config = this.args.config;
-    const fetchProfile = this.args.fetchProfile ?? true;
     const onLogin = this.args.onLogin;
     const onError = this.args.onError;
 
-    const { client, unsub } = _initAuth(config, fetchProfile);
+    const { client, unsub } = _initAuth(config);
     this._client = client;
     this._unsub = unsub;
 

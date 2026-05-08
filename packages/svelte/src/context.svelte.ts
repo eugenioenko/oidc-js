@@ -26,9 +26,9 @@ export class AuthStateManager {
   readonly client: OidcClient;
   readonly actions: AuthActions;
 
-  constructor(config: OidcClientConfig, fetchProfile: boolean) {
+  constructor(config: OidcClientConfig) {
     this.config = config;
-    this.client = new OidcClient({ ...config, fetchProfile });
+    this.client = new OidcClient(config);
 
     this.actions = {
       login: (options?: LoginOptions) => {

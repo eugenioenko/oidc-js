@@ -89,7 +89,7 @@ describe("AuthController", () => {
     const { OidcClient } = await vi.importMock<typeof import("oidc-js")>("oidc-js");
 
     const host = createMockHost();
-    const ctrl = new AuthController(host, { config: CONFIG, fetchProfile: false });
+    const ctrl = new AuthController(host, { config: { ...CONFIG, fetchProfile: false } });
     ctrl.hostConnected();
 
     expect(OidcClient).toHaveBeenCalledWith({ ...CONFIG, fetchProfile: false });
