@@ -60,6 +60,10 @@ export interface LoginOptions {
 export interface OidcClientConfig extends OidcConfig {
   /** Whether to fetch the userinfo profile after token exchange. Defaults to true. */
   fetchProfile?: boolean;
+  /** Whether to proactively refresh the access token before it expires. Defaults to true. */
+  autoRefresh?: boolean;
+  /** Polling interval in seconds for the auto-refresh check. Defaults to 10. */
+  autoRefreshInterval?: number;
 }
 
 /**

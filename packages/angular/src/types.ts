@@ -1,6 +1,6 @@
-import type { OidcConfig } from "oidc-js-core";
-
 export type { IdTokenClaims, AuthUser, AuthTokens, LoginOptions } from "oidc-js";
+
+import type { OidcClientConfig } from "oidc-js";
 
 /**
  * Configuration options for {@link provideAuth}.
@@ -10,9 +10,7 @@ export type { IdTokenClaims, AuthUser, AuthTokens, LoginOptions } from "oidc-js"
  */
 export interface AuthProviderOptions {
   /** Core OIDC configuration (issuer, clientId, redirectUri, scopes, etc.). */
-  config: OidcConfig;
-  /** Whether to fetch the userinfo profile after token exchange. Defaults to `true`. */
-  fetchProfile?: boolean;
+  config: OidcClientConfig;
   /**
    * Called after a successful login callback with the `returnTo` path.
    * If not provided, the adapter uses Angular's `Router.navigateByUrl` to navigate.

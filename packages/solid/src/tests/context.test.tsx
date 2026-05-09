@@ -166,7 +166,7 @@ describe("AuthProvider", () => {
     let authRef: ReturnType<typeof useAuth> | null = null;
 
     render(() => (
-      <AuthProvider config={CONFIG} fetchProfile={true}>
+      <AuthProvider config={{ ...CONFIG, fetchProfile: true }}>
         {(() => {
           authRef = useAuth();
           return <div>{authRef.isAuthenticated ? "authed" : "not-authed"}</div>;

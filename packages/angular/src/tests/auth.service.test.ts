@@ -43,8 +43,7 @@ const CONFIG = {
 };
 
 const mockOptions: Record<string, unknown> = {
-  config: CONFIG,
-  fetchProfile: true,
+  config: { ...CONFIG, fetchProfile: true },
 };
 
 vi.mock("@angular/core", () => {

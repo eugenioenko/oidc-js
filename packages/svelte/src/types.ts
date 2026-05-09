@@ -1,8 +1,6 @@
-import type { OidcConfig } from "oidc-js-core";
-
 export type { IdTokenClaims, AuthUser, AuthTokens, LoginOptions } from "oidc-js";
 
-import type { AuthUser, AuthTokens, LoginOptions } from "oidc-js";
+import type { OidcClientConfig, AuthUser, AuthTokens, LoginOptions } from "oidc-js";
 import type { OidcUser } from "oidc-js-core";
 
 /** Actions available to interact with the OIDC authentication flow. */
@@ -20,7 +18,7 @@ export interface AuthActions {
 /** Reactive authentication context value provided by {@link AuthProvider}. */
 export interface AuthContextValue {
   /** The OIDC configuration used by the provider. */
-  readonly config: OidcConfig;
+  readonly config: OidcClientConfig;
   /** The authenticated user, or null if not logged in. */
   readonly user: AuthUser | null;
   /** Whether the user is currently authenticated. */

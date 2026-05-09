@@ -35,7 +35,7 @@ user?.profile?.preferred_username;
 By default, `AuthProvider` fetches the user profile after login. You can disable this:
 
 ```tsx
-<AuthProvider config={config} fetchProfile={false}>
+<AuthProvider config={{ ...config, fetchProfile: false }}>
   <App />
 </AuthProvider>
 ```

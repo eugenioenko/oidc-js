@@ -1,8 +1,6 @@
-import type { OidcConfig } from "oidc-js-core";
-
 export type { IdTokenClaims, AuthUser, AuthTokens, LoginOptions } from "oidc-js";
 
-import type { AuthUser, AuthTokens, LoginOptions } from "oidc-js";
+import type { OidcClientConfig, AuthUser, AuthTokens, LoginOptions } from "oidc-js";
 import type { OidcUser } from "oidc-js-core";
 
 /**
@@ -28,7 +26,7 @@ export interface AuthActions {
  */
 export interface AuthContextValue {
   /** The OIDC configuration used to initialize the provider. */
-  config: OidcConfig;
+  config: OidcClientConfig;
   /** The authenticated user, or null if not logged in. */
   user: AuthUser | null;
   /** Whether the user is currently authenticated. */

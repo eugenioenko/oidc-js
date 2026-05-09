@@ -102,7 +102,7 @@ describe("oidcPlugin", () => {
   it("creates OidcClient with config and fetchProfile", async () => {
     const { OidcClient } = await vi.importMock<typeof import("oidc-js")>("oidc-js");
 
-    const { app, root } = mountAppWithPlugin({ fetchProfile: false });
+    const { app, root } = mountAppWithPlugin({ config: { ...CONFIG, fetchProfile: false } });
 
     expect(OidcClient).toHaveBeenCalledWith({ ...CONFIG, fetchProfile: false });
 

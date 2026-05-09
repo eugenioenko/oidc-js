@@ -63,10 +63,7 @@ export class AuthService {
     this.router = inject(Router);
     const destroyRef = inject(DestroyRef);
 
-    this.client = new OidcClient({
-      ...this.options.config,
-      fetchProfile: this.options.fetchProfile,
-    });
+    this.client = new OidcClient(this.options.config);
 
     const unsub = this.client.subscribe((state: AuthState) => {
       this._user.set(state.user);

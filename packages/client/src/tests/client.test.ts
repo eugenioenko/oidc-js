@@ -330,4 +330,174 @@ describe("OidcClient", () => {
       expect(fn).not.toHaveBeenCalled();
     });
   });
+
+  describe("autoRefresh", () => {
+    function setupAuthenticatedClient(configOverrides?: Partial<OidcClientConfig>) {
+      Object.defineProperty(window, "location", {
+        value: {
+          href: "http://localhost:3000?code=auth_code&state=test-state",
+          search: "?code=auth_code&state=test-state",
+          pathname: "/",
+          hash: "",
+        },
+        writable: true,
+        configurable: true,
+      });
+
+      sessionStorage.setItem(
+        "oidc-js:auth-state",
+        JSON.stringify({
+          codeVerifier: "test-verifier",
+          state: "test-state",
+          nonce: "test-nonce",
+          redirectUri: "http://localhost:3000/callback",
+        }),
+      );
+
+      return new OidcClient({ ...CONFIG, fetchProfile: false, ...configOverrides });
+    }
+
+    it("calls refresh when token is near expiry", async () => {
+      const expiringSoonToken = makeJwt({ sub: "user-1", exp: nowSeconds() + 10 });
+      const tokenResponse = { ...TOKEN_RESPONSE, access_token: expiringSoonToken };
+      mockFetchResponses(DISCOVERY, tokenResponse);
+
+      const client = setupAuthenticatedClient({ autoRefreshInterval: 0.1, expiryBuffer: 30 });
+      await client.init();
+
+      const freshToken = makeJwt({ sub: "user-1", exp: nowSeconds() + 7200 });
+      mockFetchResponses({
+        access_token: freshToken,
+        token_type: "Bearer",
+        refresh_token: "rt_new",
+      });
+
+      await vi.waitFor(() => {
+        expect(client.state.tokens.access).toBe(freshToken);
+      }, { timeout: 1000 });
+
+      client.destroy();
+    });
+
+    it("does not refresh when token is not near expiry", async () => {
+      mockFetchResponses(DISCOVERY, TOKEN_RESPONSE);
+
+      const client = setupAuthenticatedClient({ autoRefreshInterval: 0.1 });
+      await client.init();
+
+      const callCountAfterInit = fetchMock.mock.calls.length;
+
+      await new Promise((r) => setTimeout(r, 300));
+
+      expect(fetchMock.mock.calls.length).toBe(callCountAfterInit);
+
+      client.destroy();
+    });
+
+    it("does not start when autoRefresh is false", async () => {
+      const expiringSoonToken = makeJwt({ sub: "user-1", exp: nowSeconds() + 10 });
+      const tokenResponse = { ...TOKEN_RESPONSE, access_token: expiringSoonToken };
+      mockFetchResponses(DISCOVERY, tokenResponse);
+
+      const client = setupAuthenticatedClient({ autoRefresh: false, autoRefreshInterval: 0.1, expiryBuffer: 30 });
+      await client.init();
+
+      const callCountAfterInit = fetchMock.mock.calls.length;
+
+      await new Promise((r) => setTimeout(r, 300));
+
+      expect(fetchMock.mock.calls.length).toBe(callCountAfterInit);
+
+      client.destroy();
+    });
+
+    it("stops on logout", async () => {
+      const expiringSoonToken = makeJwt({ sub: "user-1", exp: nowSeconds() + 10 });
+      const tokenResponse = { ...TOKEN_RESPONSE, access_token: expiringSoonToken };
+      mockFetchResponses(DISCOVERY, tokenResponse);
+
+      const client = setupAuthenticatedClient({ autoRefreshInterval: 0.1, expiryBuffer: 30 });
+      await client.init();
+
+      client.logout();
+
+      const callCountAfterLogout = fetchMock.mock.calls.length;
+
+      await new Promise((r) => setTimeout(r, 300));
+
+      expect(fetchMock.mock.calls.length).toBe(callCountAfterLogout);
+    });
+
+    it("stops polling after a failed refresh", async () => {
+      const expiringSoonToken = makeJwt({ sub: "user-1", exp: nowSeconds() + 10 });
+      const tokenResponse = { ...TOKEN_RESPONSE, access_token: expiringSoonToken };
+      mockFetchResponses(DISCOVERY, tokenResponse);
+
+      const client = setupAuthenticatedClient({ autoRefreshInterval: 0.1, expiryBuffer: 30 });
+      await client.init();
+
+      fetchMock.mockRejectedValueOnce(new Error("network error"));
+
+      await vi.waitFor(() => {
+        expect(fetchMock.mock.calls.length).toBeGreaterThan(2);
+      }, { timeout: 1000 });
+
+      const callCountAfterFailure = fetchMock.mock.calls.length;
+
+      await new Promise((r) => setTimeout(r, 300));
+
+      expect(fetchMock.mock.calls.length).toBe(callCountAfterFailure);
+      expect(client.state.isAuthenticated).toBe(true);
+
+      client.destroy();
+    });
+
+    it("restarts after a failed auto-refresh followed by a manual refresh", async () => {
+      const expiringSoonToken = makeJwt({ sub: "user-1", exp: nowSeconds() + 10 });
+      const tokenResponse = { ...TOKEN_RESPONSE, access_token: expiringSoonToken };
+      mockFetchResponses(DISCOVERY, tokenResponse);
+
+      const client = setupAuthenticatedClient({ autoRefreshInterval: 0.1, expiryBuffer: 30 });
+      await client.init();
+
+      // Auto-refresh fires and fails → interval stops
+      fetchMock.mockRejectedValueOnce(new Error("network error"));
+
+      await vi.waitFor(() => {
+        expect(fetchMock.mock.calls.length).toBeGreaterThan(2);
+      }, { timeout: 1000 });
+
+      // Manual refresh succeeds → interval restarts
+      const freshToken = makeJwt({ sub: "user-1", exp: nowSeconds() + 10 });
+      mockFetchResponses({ access_token: freshToken, token_type: "Bearer", refresh_token: "rt_new" });
+      await client.refresh();
+
+      // Auto-refresh should fire again with the new (still near-expiry) token
+      const secondFreshToken = makeJwt({ sub: "user-1", exp: nowSeconds() + 7200 });
+      mockFetchResponses({ access_token: secondFreshToken, token_type: "Bearer", refresh_token: "rt_new2" });
+
+      await vi.waitFor(() => {
+        expect(client.state.tokens.access).toBe(secondFreshToken);
+      }, { timeout: 1000 });
+
+      client.destroy();
+    });
+
+    it("stops on destroy", async () => {
+      const expiringSoonToken = makeJwt({ sub: "user-1", exp: nowSeconds() + 10 });
+      const tokenResponse = { ...TOKEN_RESPONSE, access_token: expiringSoonToken };
+      mockFetchResponses(DISCOVERY, tokenResponse);
+
+      const client = setupAuthenticatedClient({ autoRefreshInterval: 0.1, expiryBuffer: 30 });
+      await client.init();
+
+      client.destroy();
+
+      const callCountAfterDestroy = fetchMock.mock.calls.length;
+
+      await new Promise((r) => setTimeout(r, 300));
+
+      expect(fetchMock.mock.calls.length).toBe(callCountAfterDestroy);
+    });
+  });
 });

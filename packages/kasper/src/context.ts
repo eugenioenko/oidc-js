@@ -1,6 +1,5 @@
 import { signal, batch } from "kasper-js";
-import { OidcClient, type AuthState, type LoginOptions } from "oidc-js";
-import type { OidcConfig } from "oidc-js-core";
+import { OidcClient, type OidcClientConfig, type AuthState, type LoginOptions } from "oidc-js";
 import type { AuthContextValue, AuthActions } from "./types.js";
 
 const _user = signal<AuthState["user"]>(null);
@@ -15,16 +14,15 @@ const _tokens = signal<AuthState["tokens"]>({
 });
 
 let _client: OidcClient | null = null;
-let _config: OidcConfig | null = null;
+let _config: OidcClientConfig | null = null;
 let _actions: AuthActions | null = null;
 let _unsub: (() => void) | null = null;
 
 /** @internal */
 export function _initAuth(
-  config: OidcConfig,
-  fetchProfile: boolean,
+  config: OidcClientConfig,
 ): { client: OidcClient; unsub: () => void } {
-  const client = new OidcClient({ ...config, fetchProfile });
+  const client = new OidcClient(config);
   _client = client;
   _config = config;
   _actions = {

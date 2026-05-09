@@ -8,15 +8,13 @@ import {
   useMemo,
 } from "preact/hooks";
 import type { ComponentChildren } from "preact";
-import { OidcClient, type AuthState, type LoginOptions } from "oidc-js";
-import type { OidcConfig } from "oidc-js-core";
+import { OidcClient, type OidcClientConfig, type AuthState, type LoginOptions } from "oidc-js";
 import type { AuthContextValue } from "./types.js";
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 interface AuthProviderProps {
-  config: OidcConfig;
-  fetchProfile?: boolean;
+  config: OidcClientConfig;
   onLogin?: (returnTo: string) => void;
   onError?: (error: Error) => void;
   children: ComponentChildren;
@@ -32,7 +30,6 @@ interface AuthProviderProps {
  */
 export function AuthProvider({
   config,
-  fetchProfile = true,
   onLogin,
   onError,
   children,
@@ -53,7 +50,7 @@ export function AuthProvider({
   onErrorRef.current = onError;
 
   useEffect(() => {
-    const client = new OidcClient({ ...config, fetchProfile });
+    const client = new OidcClient(config);
     clientRef.current = client;
 
     const unsub = client.subscribe(setState);
@@ -74,7 +71,7 @@ export function AuthProvider({
       unsub();
       client.destroy();
     };
-  }, [config, fetchProfile]);
+  }, [config]);
 
   const login = useCallback(
     async (options?: LoginOptions) => {

@@ -1,8 +1,6 @@
-import type { OidcConfig } from "oidc-js-core";
-
 export type { IdTokenClaims, AuthUser, AuthTokens, LoginOptions } from "oidc-js";
 
-import type { AuthTokens, LoginOptions } from "oidc-js";
+import type { OidcClientConfig, AuthTokens, LoginOptions } from "oidc-js";
 import type { OidcUser } from "oidc-js-core";
 
 /**
@@ -24,9 +22,7 @@ export interface AuthActions {
  */
 export interface AuthControllerOptions {
   /** OIDC configuration including issuer, clientId, and redirectUri. */
-  config: OidcConfig;
-  /** Whether to fetch the userinfo profile after token exchange. Defaults to true. */
-  fetchProfile?: boolean;
+  config: OidcClientConfig;
   /**
    * Called after a successful login callback with the `returnTo` path.
    * If not provided, the controller calls `window.history.replaceState` to update the URL.

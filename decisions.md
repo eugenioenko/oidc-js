@@ -315,3 +315,16 @@ Architectural and design decisions for the oidc-js project. Each entry captures 
 **Decision**: Option 3. `trackTraffic(page)` now returns `{ requests(), navigations(), sequence() }`. The sequence log records fetch requests as `GET /path` or `POST /path` and navigations as `NAV /path`, in the order Playwright observes them. All three are asserted in tests that check traffic.
 
 **Rationale**: The combined sequence is the source of truth for protocol ordering. The separate `requests()` and `navigations()` remain as convenience filters for tests that only need to check "which fetches happened" without reasoning about navigation interleaving. The assumed race condition from decision 023 turned out to be incorrect. Playwright's `page.on("request")` fires deterministically for both fetch and document requests, and the combined log is stable across runs. Named constants (`GET_WELLKNOWN`, `POST_TOKEN`, `GET_USERINFO`, `NAV_AUTHORIZE`, `NAV_LOGOUT`) make the sequence assertions read like a protocol spec.
+
+### 027 - Proactive token refresh via setInterval polling (2026-05-08)
+
+**Context**: Token expiration was only detected reactively — by `RequireAuth` at render time or by HTTP interceptors catching 401s. This meant consumers using plain `fetch` had to manually check for 401 on every request, and `RequireAuth` briefly unmounted children when it detected expiration (losing form state).
+
+**Alternatives considered**:
+1. Single `setTimeout` scheduled for `expiresAt - buffer` — simple but unreliable (browsers throttle background tabs, laptops sleep, timer fires late or not at all)
+2. `setInterval` polling with a short interval (e.g. 10s) that checks `Date.now() >= expiresAt - expiryBuffer` each tick
+3. Service Worker or `BroadcastChannel` based approach — complex, not universally supported
+
+**Decision**: Option 2. A `setInterval` in `OidcClient` polls every `autoRefreshInterval` seconds (default 10) and triggers `refresh()` when `isExpiredAt(expiresAt, expiryBuffer)` returns true. Enabled by default (`autoRefresh: true`). On refresh failure, the interval stops (no endpoint hammering); a successful manual refresh or new login restarts it.
+
+**Rationale**: This is the same approach `oidc-client-ts` uses (their `Timer` class polls every 5s). A short interval is drift-proof (always compares real time), sleep-proof (first tick after wake catches expiration), and cheap (one number comparison per tick). The implementation lives in `OidcClient`, so all framework adapters benefit via the existing subscribe/notify mechanism. The `expiryBuffer` config (already existed) controls how early the refresh fires — the token is still valid during the refresh request, so `RequireAuth` never sees an expired token and children stay mounted.

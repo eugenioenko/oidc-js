@@ -6,6 +6,8 @@
   import ProtectedB from "./routes/ProtectedB.svelte";
 
   const fetchProfile = localStorage.getItem("e2e-fetchProfile") !== "false";
+  const autoRefreshInterval = Number(localStorage.getItem("e2e-autoRefreshInterval"));
+
   const idpPort = import.meta.env.VITE_IDP_PORT ?? "9999";
   const appPort = import.meta.env.VITE_APP_PORT ?? "5173";
 
@@ -15,6 +17,8 @@
     redirectUri: `http://localhost:${appPort}/callback`,
     scopes: ["openid", "profile", "email", "offline_access"],
     postLogoutRedirectUri: `http://localhost:${appPort}`,
+    fetchProfile,
+    autoRefreshInterval: autoRefreshInterval || undefined,
   };
 
   let path = $state(window.location.pathname);
@@ -38,7 +42,7 @@
   });
 </script>
 
-<AuthProvider {config} {fetchProfile} onLogin={handleLogin}>
+<AuthProvider config={config} onLogin={handleLogin}>
   {#snippet children()}
     {#if path === "/callback"}
       <Callback />

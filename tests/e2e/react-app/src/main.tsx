@@ -5,6 +5,8 @@ import { useCallback } from "react";
 import { App } from "./App.js";
 
 const fetchProfile = localStorage.getItem("e2e-fetchProfile") !== "false";
+const autoRefreshInterval = Number(localStorage.getItem("e2e-autoRefreshInterval"));
+
 const idpPort = import.meta.env.VITE_IDP_PORT ?? "9999";
 const appPort = import.meta.env.VITE_APP_PORT ?? "5173";
 
@@ -14,6 +16,8 @@ const config = {
   redirectUri: `http://localhost:${appPort}/callback`,
   scopes: ["openid", "profile", "email", "offline_access"],
   postLogoutRedirectUri: `http://localhost:${appPort}`,
+  fetchProfile,
+  autoRefreshInterval: autoRefreshInterval || undefined,
 };
 
 function Root() {
@@ -23,7 +27,7 @@ function Root() {
   }, [navigate]);
 
   return (
-    <AuthProvider config={config} fetchProfile={fetchProfile} onLogin={onLogin}>
+    <AuthProvider config={config} onLogin={onLogin}>
       <App />
     </AuthProvider>
   );

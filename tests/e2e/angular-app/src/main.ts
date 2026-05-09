@@ -7,6 +7,8 @@ import { AppComponent } from "./app/app.component";
 import { routes } from "./app/app.routes";
 
 const fetchProfile = localStorage.getItem("e2e-fetchProfile") !== "false";
+const autoRefreshInterval = Number(localStorage.getItem("e2e-autoRefreshInterval"));
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const viteEnv = (import.meta as any).env ?? {};
 const idpPort = viteEnv.VITE_IDP_PORT ?? "9999";
@@ -18,6 +20,8 @@ const config = {
   redirectUri: `http://localhost:${appPort}/callback`,
   scopes: ["openid", "profile", "email", "offline_access"],
   postLogoutRedirectUri: `http://localhost:${appPort}`,
+  fetchProfile,
+  autoRefreshInterval: autoRefreshInterval || undefined,
 };
 
 bootstrapApplication(AppComponent, {
@@ -25,7 +29,6 @@ bootstrapApplication(AppComponent, {
     provideRouter(routes),
     provideAuth({
       config,
-      fetchProfile,
     }),
   ],
 }).catch((err) => console.error(err));

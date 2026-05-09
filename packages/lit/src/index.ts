@@ -12,4 +12,5 @@ export type {
 
 export type { RequireAuthOptions } from "./require-auth.js";
 
+export type { OidcClientConfig } from "oidc-js";
 export type { OidcConfig, OidcUser, TokenSet } from "oidc-js-core";

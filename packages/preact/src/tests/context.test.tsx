@@ -177,7 +177,7 @@ describe("AuthProvider", () => {
     }
 
     render(
-      h(AuthProvider, { config: CONFIG, fetchProfile: true }, h(Consumer, null)),
+      h(AuthProvider, { config: { ...CONFIG, fetchProfile: true } }, h(Consumer, null)),
     );
 
     await waitFor(() => {
@@ -245,7 +245,7 @@ describe("AuthProvider", () => {
     }
 
     render(
-      h(AuthProvider, { config: CONFIG, fetchProfile: false }, h(Consumer, null)),
+      h(AuthProvider, { config: { ...CONFIG, fetchProfile: false } }, h(Consumer, null)),
     );
 
     await waitFor(() => {

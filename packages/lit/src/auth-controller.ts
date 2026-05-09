@@ -1,6 +1,5 @@
 import type { ReactiveController, ReactiveControllerHost } from "lit";
-import { OidcClient, type AuthState, type AuthUser, type AuthTokens, type LoginOptions } from "oidc-js";
-import type { OidcConfig } from "oidc-js-core";
+import { OidcClient, type OidcClientConfig, type AuthState, type AuthUser, type AuthTokens, type LoginOptions } from "oidc-js";
 import type { AuthControllerOptions } from "./types.js";
 
 /**
@@ -85,7 +84,7 @@ export class AuthController implements ReactiveController {
   }
 
   /** The OIDC configuration passed to this controller. */
-  get config(): OidcConfig {
+  get config(): OidcClientConfig {
     return this.options.config;
   }
 
@@ -94,8 +93,8 @@ export class AuthController implements ReactiveController {
    * Creates the {@link OidcClient}, subscribes to state changes, and initializes the OIDC flow.
    */
   hostConnected(): void {
-    const { config, fetchProfile, onLogin, onError } = this.options;
-    const client = new OidcClient({ ...config, fetchProfile });
+    const { config, onLogin, onError } = this.options;
+    const client = new OidcClient(config);
     this.client = client;
 
     this.unsubscribe = client.subscribe((state: AuthState) => {

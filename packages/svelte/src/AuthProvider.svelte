@@ -16,16 +16,14 @@
   ```
 -->
 <script lang="ts">
-  import type { OidcConfig } from "oidc-js-core";
+  import type { OidcClientConfig } from "oidc-js";
   import type { Snippet } from "svelte";
   import { onDestroy } from "svelte";
   import { AuthStateManager, setAuthContext } from "./context.svelte.js";
 
   interface Props {
     /** OIDC configuration including issuer, clientId, and redirectUri. */
-    config: OidcConfig;
-    /** Whether to fetch the userinfo profile after token exchange. Defaults to true. */
-    fetchProfile?: boolean;
+    config: OidcClientConfig;
     /** Callback invoked after a successful login with the returnTo path. */
     onLogin?: (returnTo: string) => void;
     /** Callback invoked when an authentication error occurs. */
@@ -34,9 +32,9 @@
     children: Snippet;
   }
 
-  let { config, fetchProfile = true, onLogin, onError, children }: Props = $props();
+  let { config, onLogin, onError, children }: Props = $props();
 
-  const manager = new AuthStateManager(config, fetchProfile);
+  const manager = new AuthStateManager(config);
   setAuthContext(manager);
 
   const unsub = manager.client.subscribe((state) => {

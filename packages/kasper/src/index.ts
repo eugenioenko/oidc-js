@@ -10,4 +10,5 @@ export type {
   Signal,
   LoginOptions,
 } from "./types.js";
+export type { OidcClientConfig } from "oidc-js";
 export type { OidcConfig, OidcUser, TokenSet } from "oidc-js-core";

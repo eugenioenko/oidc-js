@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import type { OidcConfig } from "oidc-js-core";
+import type { OidcClientConfig } from "oidc-js";
 
 const mockClientInstance = {
   subscribe: vi.fn((_cb: (state: unknown) => void) => vi.fn()),
@@ -27,7 +27,7 @@ vi.mock("oidc-js", () => ({
 import { AuthProvider } from "../auth-provider.js";
 import { _destroyAuth, useAuth } from "../context.js";
 
-const CONFIG: OidcConfig = {
+const CONFIG: OidcClientConfig = {
   issuer: "https://auth.example.com",
   clientId: "my-app",
   redirectUri: "http://localhost:3000/callback",
@@ -45,8 +45,7 @@ afterEach(() => {
 });
 
 interface AuthProviderArgs {
-  config: OidcConfig;
-  fetchProfile?: boolean;
+  config: OidcClientConfig;
   onLogin?: (returnTo: string) => void;
   onError?: (error: Error) => void;
 }
@@ -71,14 +70,14 @@ describe("AuthProvider", () => {
     expect(mockClientInstance.init).toHaveBeenCalled();
   });
 
-  it("defaults fetchProfile to true", async () => {
+  it("passes config directly to OidcClient", async () => {
     const { OidcClient } =
       await vi.importMock<typeof import("oidc-js")>("oidc-js");
 
     const provider = createProvider({ config: CONFIG });
     provider.onMount();
 
-    expect(OidcClient).toHaveBeenCalledWith({ ...CONFIG, fetchProfile: true });
+    expect(OidcClient).toHaveBeenCalledWith(CONFIG);
   });
 
   it("passes fetchProfile=false when configured", async () => {
@@ -86,8 +85,7 @@ describe("AuthProvider", () => {
       await vi.importMock<typeof import("oidc-js")>("oidc-js");
 
     const provider = createProvider({
-      config: CONFIG,
-      fetchProfile: false,
+      config: { ...CONFIG, fetchProfile: false },
     });
     provider.onMount();
 

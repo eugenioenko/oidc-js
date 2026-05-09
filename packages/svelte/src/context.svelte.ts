@@ -1,6 +1,5 @@
 import { getContext, setContext } from "svelte";
-import { OidcClient, type AuthState, type LoginOptions } from "oidc-js";
-import type { OidcConfig } from "oidc-js-core";
+import { OidcClient, type OidcClientConfig, type AuthState, type LoginOptions } from "oidc-js";
 import type { AuthContextValue, AuthActions } from "./types.js";
 
 const AUTH_CONTEXT_KEY = Symbol("oidc-js-auth");
@@ -23,13 +22,13 @@ export class AuthStateManager {
     expiresAt: null,
   });
 
-  readonly config: OidcConfig;
+  readonly config: OidcClientConfig;
   readonly client: OidcClient;
   readonly actions: AuthActions;
 
-  constructor(config: OidcConfig, fetchProfile: boolean) {
+  constructor(config: OidcClientConfig) {
     this.config = config;
-    this.client = new OidcClient({ ...config, fetchProfile });
+    this.client = new OidcClient(config);
 
     this.actions = {
       login: (options?: LoginOptions) => {

@@ -13,6 +13,7 @@ import {
   parseUserinfoResponse,
   buildLogoutUrl,
   decodeJwtPayload,
+  isExpiredAt,
   DEFAULT_EXPIRY_BUFFER,
   type OidcDiscovery,
   type OidcUser,
@@ -65,6 +66,7 @@ export class OidcClient {
   private subscribers = new Set<Subscriber>();
   private abortController: AbortController | null = null;
   private refreshPromise: Promise<AuthTokens> | null = null;
+  private autoRefreshTimer: ReturnType<typeof setInterval> | null = null;
 
   private _state: AuthState = {
     user: null,
@@ -178,6 +180,8 @@ export class OidcClient {
           isLoading: false,
         });
 
+        this.startAutoRefresh();
+
         return { returnTo };
       }
 
@@ -228,6 +232,7 @@ export class OidcClient {
    * with the current ID token hint and `postLogoutRedirectUri` from config.
    */
   logout(): void {
+    this.stopAutoRefresh();
     const idToken = this._state.tokens.id;
 
     this.setState({
@@ -305,6 +310,8 @@ export class OidcClient {
       error: null,
     });
 
+    this.startAutoRefresh();
+
     return newTokens;
   }
 
@@ -331,8 +338,32 @@ export class OidcClient {
    * Tears down the client by aborting any in-flight requests and removing all subscribers.
    */
   destroy(): void {
+    this.stopAutoRefresh();
     this.abortController?.abort();
     this.subscribers.clear();
+  }
+
+  private startAutoRefresh(): void {
+    if (this.config.autoRefresh === false) return;
+    if (this.autoRefreshTimer) return;
+
+    const intervalSeconds = this.config.autoRefreshInterval ?? 10;
+    const buffer = this.config.expiryBuffer ?? DEFAULT_EXPIRY_BUFFER;
+
+    this.autoRefreshTimer = setInterval(() => {
+      const { expiresAt } = this._state.tokens;
+      if (!this._state.isAuthenticated || !this._state.tokens.refresh) return;
+      if (!isExpiredAt(expiresAt, buffer)) return;
+
+      this.refresh().catch(() => { this.stopAutoRefresh(); });
+    }, intervalSeconds * 1000);
+  }
+
+  private stopAutoRefresh(): void {
+    if (this.autoRefreshTimer) {
+      clearInterval(this.autoRefreshTimer);
+      this.autoRefreshTimer = null;
+    }
   }
 
   /**
