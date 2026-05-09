@@ -153,21 +153,13 @@ describe("_destroyAuth", () => {
   });
 });
 
-describe("logout unsubscribes before calling client", () => {
-  it("unsubscribes from state changes before logout redirect", () => {
-    const unsubFn = vi.fn();
-    mockClientInstance.subscribe.mockReturnValueOnce(unsubFn);
-
+describe("logout", () => {
+  it("calls client.logout()", () => {
     _initAuth(CONFIG);
     const auth = useAuth();
 
     auth.actions.logout();
 
-    expect(unsubFn).toHaveBeenCalled();
     expect(mockClientInstance.logout).toHaveBeenCalled();
-
-    const unsubOrder = unsubFn.mock.invocationCallOrder[0];
-    const logoutOrder = mockClientInstance.logout.mock.invocationCallOrder[0];
-    expect(unsubOrder).toBeLessThan(logoutOrder);
   });
 });

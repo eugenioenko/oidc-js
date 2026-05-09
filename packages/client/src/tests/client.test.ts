@@ -258,7 +258,7 @@ describe("OidcClient", () => {
   });
 
   describe("logout", () => {
-    it("clears state", async () => {
+    it("redirects to end_session_endpoint without clearing state", async () => {
       Object.defineProperty(window, "location", {
         value: {
           href: "http://localhost:3000?code=auth_code&state=test-state",
@@ -281,6 +281,42 @@ describe("OidcClient", () => {
       );
 
       mockFetchResponses(DISCOVERY, TOKEN_RESPONSE);
+      const client = new OidcClient({ ...CONFIG, fetchProfile: false });
+
+      await client.init();
+      expect(client.state.isAuthenticated).toBe(true);
+
+      client.logout();
+
+      expect(window.location.href).toContain("https://auth.example.com/logout");
+      expect(client.state.isAuthenticated).toBe(true);
+    });
+
+    it("clears state when no end_session_endpoint", async () => {
+      const discoveryNoLogout = { ...DISCOVERY, end_session_endpoint: undefined };
+
+      Object.defineProperty(window, "location", {
+        value: {
+          href: "http://localhost:3000?code=auth_code&state=test-state",
+          search: "?code=auth_code&state=test-state",
+          pathname: "/",
+          hash: "",
+        },
+        writable: true,
+        configurable: true,
+      });
+
+      sessionStorage.setItem(
+        "oidc-js:auth-state",
+        JSON.stringify({
+          codeVerifier: "test-verifier",
+          state: "test-state",
+          nonce: "test-nonce",
+          redirectUri: "http://localhost:3000/callback",
+        }),
+      );
+
+      mockFetchResponses(discoveryNoLogout, TOKEN_RESPONSE);
       const client = new OidcClient({ ...CONFIG, fetchProfile: false });
 
       await client.init();

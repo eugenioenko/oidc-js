@@ -30,10 +30,6 @@ export function _initAuth(
       client.login(options);
     },
     logout: () => {
-      // Unsubscribe before logout to prevent RequireAuth from reacting
-      // to the intermediate unauthenticated state and racing with the
-      // logout redirect by triggering a login redirect.
-      _unsub?.();
       client.logout();
     },
     refresh: () => client.refresh(),

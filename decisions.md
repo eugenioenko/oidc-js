@@ -328,3 +328,16 @@ Architectural and design decisions for the oidc-js project. Each entry captures 
 **Decision**: Option 2. A `setInterval` in `OidcClient` polls every `autoRefreshInterval` seconds (default 10) and triggers `refresh()` when `isExpiredAt(expiresAt, expiryBuffer)` returns true. Enabled by default (`autoRefresh: true`). On refresh failure, the interval stops (no endpoint hammering); a successful manual refresh or new login restarts it.
 
 **Rationale**: This is the same approach `oidc-client-ts` uses (their `Timer` class polls every 5s). A short interval is drift-proof (always compares real time), sleep-proof (first tick after wake catches expiration), and cheap (one number comparison per tick). The implementation lives in `OidcClient`, so all framework adapters benefit via the existing subscribe/notify mechanism. The `expiryBuffer` config (already existed) controls how early the refresh fires — the token is still valid during the refresh request, so `RequireAuth` never sees an expired token and children stay mounted.
+
+### 028 - Redirect before clearing state in logout (2026-05-08)
+
+**Context**: `OidcClient.logout()` cleared auth state (`isAuthenticated: false`) before redirecting to the `end_session_endpoint`. In frameworks with synchronous reactivity (e.g. Kasper signals), this triggered `RequireAuth` to call `login()` before the logout redirect executed, winning the redirect race. In frameworks with batched updates (React, Vue), the race was probabilistic but still possible.
+
+**Alternatives considered**:
+1. Adapter-level workaround — unsubscribe from state changes before calling `logout()` (what Kasper did)
+2. Redirect first, only clear state when no `end_session_endpoint` is available
+3. Use `batch()` or similar to defer subscriber notifications until after the redirect
+
+**Decision**: Option 2. `logout()` now redirects to the `end_session_endpoint` and returns immediately without clearing state. State is only cleared locally when no redirect is available. The Kasper adapter's unsubscribe workaround was removed.
+
+**Rationale**: The page is navigating away — clearing in-memory state before a redirect is unnecessary since a fresh `init()` on return starts with clean state. Option 1 was a framework-specific bandaid that didn't fix the root cause for other adapters. Option 3 wouldn't help because `batch()` groups signal writes within a single `setState` call, but `logout()` does one `setState` followed by a redirect — the batch completes before the redirect, so subscribers still fire. Fixing in the client means all adapters benefit without per-framework workarounds.
