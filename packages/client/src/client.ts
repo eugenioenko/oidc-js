@@ -226,21 +226,15 @@ export class OidcClient {
   }
 
   /**
-   * Logs the user out by clearing local auth state and redirecting to the OP's end-session endpoint.
+   * Logs the user out by redirecting to the OP's end-session endpoint.
    *
    * If the discovery document has an `end_session_endpoint`, the browser is redirected there
    * with the current ID token hint and `postLogoutRedirectUri` from config.
+   * State is only cleared locally when no end-session redirect is available.
    */
   logout(): void {
     this.stopAutoRefresh();
     const idToken = this._state.tokens.id;
-
-    this.setState({
-      user: null,
-      tokens: EMPTY_TOKENS,
-      isAuthenticated: false,
-      error: null,
-    });
 
     if (this.discovery) {
       const logoutUrl = buildLogoutUrl(
@@ -250,8 +244,16 @@ export class OidcClient {
       );
       if (logoutUrl) {
         window.location.href = logoutUrl;
+        return;
       }
     }
+
+    this.setState({
+      user: null,
+      tokens: EMPTY_TOKENS,
+      isAuthenticated: false,
+      error: null,
+    });
   }
 
   /**
