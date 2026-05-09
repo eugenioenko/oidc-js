@@ -215,7 +215,7 @@ describe("AuthProvider", () => {
     expect(result!.error).not.toBeNull();
   });
 
-  it("actions.logout clears state", async () => {
+  it("actions.logout redirects to end_session_endpoint without clearing state", async () => {
     Object.defineProperty(window, "location", {
       value: {
         href: "http://localhost:3000?code=auth_code&state=test-state",
@@ -256,7 +256,7 @@ describe("AuthProvider", () => {
       result!.actions.logout();
     });
 
-    expect(result!.isAuthenticated).toBe(false);
-    expect(result!.user).toBeNull();
+    expect(window.location.href).toContain("https://auth.example.com/logout");
+    expect(result!.isAuthenticated).toBe(true);
   });
 });
