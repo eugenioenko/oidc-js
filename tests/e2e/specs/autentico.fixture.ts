@@ -3,11 +3,10 @@ import { execSync, spawn } from "child_process";
 import { randomBytes, generateKeyPairSync } from "crypto";
 import { createWriteStream, existsSync, mkdirSync, rmSync } from "fs";
 import { join } from "path";
+import { AUTENTICO_BIN, AUTENTICO_DIR } from "../autentico.js";
 
 const IDP_PORT = process.env.E2E_IDP_PORT ?? "9999";
 const APP_PORT = process.env.E2E_APP_PORT ?? "5173";
-const AUTENTICO_DIR = join(import.meta.dirname, "..", ".autentico");
-const AUTENTICO_BIN = join(AUTENTICO_DIR, "autentico");
 const DB_DIR = join(AUTENTICO_DIR, "db");
 const LOG_DIR = join(AUTENTICO_DIR, "logs");
 const AUTENTICO_URL = `http://localhost:${IDP_PORT}`;
@@ -22,6 +21,7 @@ const TEST_EMAIL = "testuser@test.com";
 const ACCESS_TOKEN_SECRET = randomBytes(32).toString("hex");
 const REFRESH_TOKEN_SECRET = randomBytes(32).toString("hex");
 const CSRF_SECRET_KEY = randomBytes(32).toString("hex");
+const TOTP_ENCRYPTION_KEY = randomBytes(32).toString("base64");
 const PRIVATE_KEY = generateKeyPairSync("rsa", { modulusLength: 2048 })
   .privateKey.export({ type: "pkcs1", format: "pem" });
 const PRIVATE_KEY_B64 = Buffer.from(PRIVATE_KEY as string).toString("base64");
@@ -106,6 +106,7 @@ export const test = base.extend<{ autentico: void }>({
       AUTENTICO_ACCESS_TOKEN_SECRET: ACCESS_TOKEN_SECRET,
       AUTENTICO_REFRESH_TOKEN_SECRET: REFRESH_TOKEN_SECRET,
       AUTENTICO_CSRF_SECRET_KEY: CSRF_SECRET_KEY,
+      AUTENTICO_TOTP_ENCRYPTION_KEY: TOTP_ENCRYPTION_KEY,
       AUTENTICO_PRIVATE_KEY: PRIVATE_KEY_B64,
       AUTENTICO_DB_FILE_PATH: DB_FILE,
       AUTENTICO_APP_URL: AUTENTICO_URL,
